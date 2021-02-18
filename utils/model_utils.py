@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 
 
@@ -53,8 +54,9 @@ def build_parent_path_mat(parent_child_mat, num_edges=None):
 
 def build_parent_path_mat_dag(parent_child_mat, num_edges=None):
     """
-    param parent_child_mat: np binary array, rows-> parent cols-> child, first row must be root
+    param parent_child_mat: np binary array, rows-> parent cols-> child
     -note that the parent-child mat must be topologically ordered
+    param num_edges: can be passed in directly, or left as None and counted in the upper diagonal
     return: parent_path matrix: np array, rows->edges cols->nodes
     """
     num_nodes = parent_child_mat.shape[0]
@@ -103,3 +105,21 @@ def build_parent_path_mat_dag(parent_child_mat, num_edges=None):
     print(str(edges_broken) + ' edges pruned during parent path construction')
     # taking the transpose so that every column holds all the relevant edges for a node
     return np.transpose(parent_path)
+
+"""
+Takes in list of relevant indices, 
+for use with the dataloader class for batching when full dataset is an array in memory
+"""
+class IndicesDataset(torch.utils.data.Dataset):
+  def __init__(self, sample_indices):
+        self.sample_indices = sample_indices
+
+  def __len__(self):
+        return len(self.sample_indices)
+
+  def __getitem__(self, index):
+        'Generates an index for one sample of data'
+        # Select sample
+        sample_idx = self.sample_indices[index]
+
+        return sample_idx
