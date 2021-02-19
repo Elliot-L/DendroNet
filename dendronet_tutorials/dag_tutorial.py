@@ -7,7 +7,7 @@ from simulated_data_applications.generate_graph import gen_random_grid
 from utils.model_utils import build_parent_path_mat_dag, split_indices, IndicesDataset
 
 """
-An example application, suitable as a template / starting point for those looking to use Dendronet on their own data
+An example application, suitable as a template / starting point for those looking to use DendroNet on their own data
 """
 
 # flag to use cuda gpu if available

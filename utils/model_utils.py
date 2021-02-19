@@ -20,9 +20,8 @@ def split_indices(idx_list, seed=0, train_percentage=0.7):
     return train_idx, test_idx
 
 
-# todo: modify this to work with weighted paths as well
 """
-This is for use on trees, use build_parent_path_mat_dag if the data is a non-tree DAG
+-This is for use on trees, use build_parent_path_mat_dag if the data is a non-tree DAG
 """
 def build_parent_path_mat(parent_child_mat, num_edges=None):
     """
