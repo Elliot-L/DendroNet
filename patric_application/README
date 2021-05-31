@@ -1,0 +1,26 @@
+Summary of ongoing tasks:
+
+1. We want to get an idea of how much variance our model performance has
+
+-We should add a list of seeds as an input argument to the experiment.py (we will give it a default setting of 5 integers)
+-Whenever the file is run, the training and testing loops will be executed once per seed
+-Each seed will be used as an input seed for train_test_split, so that we get different splits each time
+-The outputs after each run will be stored, and saved as a list in the output JSON
+
+
+2. We should add L1 loss to our model
+
+-Add an L1 term to the input arguments in experiment.py
+-Apply this L1 penalty term to the root weights during training and add it to the loss
+
+
+3. We want to add early stopping to the model
+
+-Add an integer argument to experiment.py called 'early_stopping_period' or similar, default value 3
+-During training, if we have not set a new best loss in more epochs than the early_stopping_period, break out
+of the training loop and run the test set
+
+4. We want to be able to tune the hyperparameters for our model
+-starting point given in parameter_tuning_template.py
+-fix it up so that for a given drug of interest, the file will run passing in the appropriate paths to the
+data files
