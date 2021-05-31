@@ -1,28 +1,19 @@
 import os
 import argparse
-import numpy as np
 import pandas as pd
-from process_genome_lineage import load_tree_and_leaves
+from patric_application.process_genome_lineage import load_tree_and_leaves
 from queue import Queue
 
 from sklearn.metrics import roc_curve, auc
-
-#Same imports as in dag_tutorial.py
 
 import torch
 import numpy as np
 import torch.nn as nn
 from tqdm import tqdm
 from models.dendronet_models import DendroMatrixLinReg
-from simulated_data_applications.generate_graph import gen_random_grid
 from utils.model_utils import build_parent_path_mat, split_indices, IndicesDataset
 
-"""
-For Georgi: 
--The only relevant parameters for now are the last two (tree-path, label-file), which will point to the outputs from 
-the preprocessor files
--Don't worry about the other parameters yet, we will use them once we are training DendroNet
-"""
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -52,20 +43,7 @@ if __name__ == '__main__':
     data_tree, leaves = load_tree_and_leaves(args.tree_path)
     # annotating leaves with labels and features
     labels_df = pd.read_csv(args.label_file, dtype=str)
-    
-    """
-    Georgi:
-    labels_df contains data about each species: it's ID, phenotype (y), and features (x) 
-    The data is in an annoying format, here's a loop showing how to access it row-by-row
-    and match it to a leaf in the 'leaves' object 
-    """
-    
-    """
-    For Elliot,
-    I don't know if I was suppose to change something here, but I thought that we could initialize
-    the features and target value of the nodes directly here. The rest of the code relies on that.
-    Also, I wasn't sure if leaf.y is suppose to be a integer or a list. Here it is an integer.
-    """
+
     
     for row in labels_df.itertuples():
         #print(row)
@@ -77,7 +55,7 @@ if __name__ == '__main__':
                 leaf.x = features
             
     """
-    For Georgi - here is where you can start the programming task we discussed. There are 3 components we need:
+    There are 3 components we need:
     1. A matrix X, where each row contains the features for a bacteria
     2. A vector y, where each entry contains the phenotype for a bacteria. This should be in the same order as X; i.e.
     entry 0 in y is the phenotype for row 0 in X
@@ -95,13 +73,9 @@ if __name__ == '__main__':
     """
     
     """
-    For Elliot,
     I use a queue to do a breadth first search of the tree, thus creating the list topo_order where nodes are sorted
     the way they need to be in the matrices that are required for DendroNet. Using that list and its order, 
-    I created the X matrix and the y vector, in addition to the parent-child matrix. I didn't create the 
-    mapping list that you asked, because the rows in the parent-child matrix correspond to the rows in X and y i.e. 
-    if your node of interest in is the parent in row i of the parent-child matrix (or the child in column i),
-    then its list of features are found at X[i] and its target value at y[i].
+    I created the X matrix and the y vector, in addition to the parent-child matrix.
     """
     
     # flag to use cuda gpu if available
@@ -114,9 +88,7 @@ if __name__ == '__main__':
     BATCH_SIZE = 8
     EPOCHS = 10
     DPF = 0.1
-    
-    
-    
+
     q = Queue(maxsize = 0)
     topo_order = []
     q.put(data_tree) # inputing the root in the queue
@@ -154,11 +126,6 @@ if __name__ == '__main__':
     num_features = len(X[len(X)-1])
     num_nodes = len(parent_child[0])
     num_edges = len(parent_path_tensor)
-    
-    #print(y)
-    #print(X)
-    #print(parent_child)
-    #print(parent_path_tensor)
 
     print('Data loaded')
     
@@ -187,7 +154,7 @@ if __name__ == '__main__':
     y = torch.tensor(y, dtype=torch.double, device=device)
     
     # creating the loss function and optimizer
-    loss_function = nn.BCEWithLogitsLoss()
+    loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendorLogReg with BCELoss
     if torch.cuda.is_available() and USE_CUDA:
         loss_function = loss_function.cuda()
     optimizer = torch.optim.SGD(dendronet.parameters(), lr=LR)
@@ -213,7 +180,7 @@ if __name__ == '__main__':
             # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
             y_hat = dendronet.forward(X[idx1], idx2)
             y_t = y[idx1].detach().cpu().numpy()
-            y_p = y_hat.detach().cpu().numpy()
+            y_p = y_hat.detach().cpu().numpy()  # I would usually put these through a sigmoid first, I think this still works though
             for i in range(len(y_t)):
                 y_pred.append(y_p[i])
                 y_true.append(y_t[i])
@@ -276,6 +243,16 @@ if __name__ == '__main__':
         
         print('Final Delta loss:', float(delta_loss.detach().cpu().numpy()))
         print('Test set BCE:', float(loss.detach().cpu().numpy()))
+
+        """
+        For Georgi:
+        
+        Let's make a dictionary to hold these results over multiple runs and then save the dict as JSON:
+        {
+        'test_auc': [0.88, 0.92...]
+        }
+        """
+
         """
         with open(args.output_file, 'w') as outfile:
             json.dump(roc_auc, outfile)
