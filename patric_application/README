@@ -24,3 +24,4 @@ of the training loop and run the test set
 -starting point given in parameter_tuning_template.py
 -fix it up so that for a given drug of interest, the file will run passing in the appropriate paths to the
 data files
+- we will have to add DPF, LR and epochs as arguments in the experiment.py file
