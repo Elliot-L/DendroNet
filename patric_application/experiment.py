@@ -1,3 +1,4 @@
+import math
 import os
 import json
 import argparse
@@ -140,7 +141,7 @@ if __name__ == '__main__':
     
     dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
 
-    output = []
+    auc_output = []
 
     for s in args.seed:
 
@@ -171,6 +172,10 @@ if __name__ == '__main__':
         #print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
         #print("test:", 100*len(test_idx)/(len(train_idx)+len(test_idx)),"%")
 
+        epochs_without_improvement = 0
+        previous_loss = math.inf
+        break_main = False
+
         # running the training loop
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
@@ -196,13 +201,25 @@ if __name__ == '__main__':
                 # idx_batch is also used to fetch the appropriate entries from y
                 train_loss = loss_function(y_hat, y[idx_in_X])
                 running_loss += float(train_loss.detach().cpu().numpy())
-                loss = train_loss + (delta_loss * DPF)
+                #I tried to add L1 regularization in the lines below, but really not sure if it is implemented properly
+                root_loss = 0
+                for w in root_weights:
+                    root_loss += abs(float(w))
+                loss = train_loss + (delta_loss * DPF) + (root_loss*args.l1)
                 loss.backward(retain_graph=True)
                 optimizer.step()
+                if loss <= previous_loss:
+                    epochs_without_improvement += 1
+                if epochs_without_improvement == 3:
+                    break_main = True
+                    break
             print('Average BCE loss: ', str(running_loss / step))
             fpr, tpr, _ = roc_curve(y_true, y_pred)
             roc_auc = auc(fpr, tpr)
             print("ROC AUC for epoch: ", roc_auc)
+            if break_main:
+                break
+
 
         # With training complete, we'll run the test set. We could use batching here as well if the test set was large
         with torch.no_grad():
@@ -250,9 +267,10 @@ if __name__ == '__main__':
             print('Final Delta loss:', float(delta_loss.detach().cpu().numpy()))
             print('Test set BCE:', float(loss.detach().cpu().numpy()))
 
-            output.append(roc_auc)
+            auc_output.append(roc_auc)
 
-        output_dict = {'test_auc': output}
+        output_dict = {'test_auc': auc_output}
+
         with open(args.output_file, 'w') as outfile:
             json.dump(output_dict, outfile)
 
