@@ -14,11 +14,16 @@ from tqdm import tqdm
 from models.dendronet_models import DendroMatrixLinReg
 from utils.model_utils import build_parent_path_mat, split_indices, IndicesDataset
 
+def list_through_sigmoid(ls):
+    new_list = []
+    for i in range(len(ls)):
+        new_list.append(torch.sigmoid(ls[i]))
 
+    return new_list
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=100, metavar='N')
+    parser.add_argument('--epochs', type=int, default=10, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seed', type=int, default=[0,1,2,3,4], metavar='S',
@@ -29,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--l1', type=float, default=1.0)
     parser.add_argument('--p', type=int, default=1)
     parser.add_argument('--output-dir', type=str, default='patric', metavar='O')
-    parser.add_argument('--lr', type=float, default=0.0001, metavar='LR')
+    parser.add_argument('--lr', type=float, default=0.001, metavar='LR')
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
@@ -85,12 +90,12 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
 
     # some other hyper-parameters for training
-    LR = 0.001
+    LR = args.lr
     BATCH_SIZE = 8
-    EPOCHS = 10
-    DPF = 0.1
+    EPOCHS = args.epochs
+    DPF = args.dpf
 
-    q = Queue(maxsize = 0)
+    q = Queue(maxsize=0)
     topo_order = []
     q.put(data_tree) # inputing the root in the queue
     while not q.empty():
@@ -107,13 +112,13 @@ if __name__ == '__main__':
     #This will be the mapping between rows in the X and parent_child matrix. Only the features and target values
     #of the leaves of the tree are added to the X matrix and y vector, respectively, while all nodes are added
     #to the parent_child matrix. The list mapping contains a tuple for each leaf of the form 
-    # (row_in_X, row_in_parent_child)
+    #(row_in_X, row_in_parent_child)
         
     X = []
     y = []
     feature_index = 0
     
-    #Filling the X matrix and thre y vector with features and target values, respectively, from the leaves
+    #Filling the X matrix and the y vector with features and target values, respectively, from the leaves
     for index,node in enumerate(topo_order):
         if node in leaves:
             y.append(node.y)
@@ -138,6 +143,7 @@ if __name__ == '__main__':
     output = []
 
     for s in args.seed:
+
         train_idx, test_idx = split_indices(mapping, seed=s)
 
         # creating idx dataset objects for batching
@@ -153,20 +159,17 @@ if __name__ == '__main__':
         test_batch_gen = torch.utils.data.DataLoader(test_set, **params)
 
         # converting X and y to tensors, and transferring to GPU if the cuda flag is set
-
         X = torch.tensor(X, dtype=torch.double, device=device)
         y = torch.tensor(y, dtype=torch.double, device=device)
 
         # creating the loss function and optimizer
-        loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendorLogReg with BCELoss
+        loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendroLogReg with BCELoss
         if torch.cuda.is_available() and USE_CUDA:
             loss_function = loss_function.cuda()
         optimizer = torch.optim.SGD(dendronet.parameters(), lr=LR)
 
-
         #print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
         #print("test:", 100*len(test_idx)/(len(train_idx)+len(test_idx)),"%")
-
 
         # running the training loop
         for epoch in range(EPOCHS):
@@ -178,21 +181,20 @@ if __name__ == '__main__':
             y_pred = []
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
-                #separating corresponding rows in X and parent_path matrix (same as parent_child order)
-                idx1 = idx_batch[0]
-                idx2 = idx_batch[1]
+                #separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
+                idx_in_X = idx_batch[0]
+                idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
-                y_hat = dendronet.forward(X[idx1], idx2)
-                y_t = y[idx1].detach().cpu().numpy()
-                y_p = y_hat.detach().cpu().numpy()  # I would usually put these through a sigmoid first, I think this still works though
+                y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                y_t = y[idx_in_X].detach().cpu().numpy()
+                y_p = torch.sigmoid(y_hat).detach().cpu().numpy()  # I would usually put these through a sigmoid first, I think this still works though
                 for i in range(len(y_t)):
                     y_pred.append(y_p[i])
                     y_true.append(y_t[i])
-
                 # collecting the two loss terms
                 delta_loss = dendronet.delta_loss()
                 # idx_batch is also used to fetch the appropriate entries from y
-                train_loss = loss_function(y_hat, y[idx1])
+                train_loss = loss_function(y_hat, y[idx_in_X])
                 running_loss += float(train_loss.detach().cpu().numpy())
                 loss = train_loss + (delta_loss * DPF)
                 loss.backward(retain_graph=True)
@@ -204,14 +206,14 @@ if __name__ == '__main__':
 
         # With training complete, we'll run the test set. We could use batching here as well if the test set was large
         with torch.no_grad():
-            idx1 = []
-            idx2 = []
+            idx_in_X = []
+            idx_in_pp_mat = []
             for idx in test_idx:
-                idx1.append(idx[0])
-                idx2.append(idx[1])
-            y_hat = dendronet.forward(X[idx1], idx2)
-            y_t = y[idx1].detach().cpu().numpy()
-            y_p = y_hat.detach().cpu().numpy()
+                idx_in_X.append(idx[0])
+                idx_in_pp_mat.append(idx[1])
+            y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+            y_t = y[idx_in_X].detach().cpu().numpy()
+            y_p = torch.sigmoid(y_hat).detach().cpu().numpy()
 
             true_pos = 0
             false_pos = 0
@@ -220,8 +222,8 @@ if __name__ == '__main__':
             total = len(y_hat)
 
             for i in range(len(y_hat)):
-                pred = float(torch.sigmoid(y_hat[i]))
-                real = float((y[idx1])[i])
+                pred = float(y_p[i])
+                real = float(y_t[i])
                 if (pred > 0.5 and real == 1.0):
                     true_pos += 1
                 elif (pred > 0.5 and real == 0.0):
@@ -231,7 +233,7 @@ if __name__ == '__main__':
                 else:
                     false_neg += 1
 
-            loss = loss_function(y_hat, y[idx1])
+            loss = loss_function(y_hat, y[idx_in_X])
             delta_loss = dendronet.delta_loss()
             fpr, tpr, _ = roc_curve(y_t, y_p)
             roc_auc = auc(fpr, tpr)
