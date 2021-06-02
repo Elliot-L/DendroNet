@@ -15,20 +15,14 @@ from tqdm import tqdm
 from models.dendronet_models import DendroMatrixLinReg
 from utils.model_utils import build_parent_path_mat, split_indices, IndicesDataset
 
-def list_through_sigmoid(ls):
-    new_list = []
-    for i in range(len(ls)):
-        new_list.append(torch.sigmoid(ls[i]))
-
-    return new_list
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=10, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seed', type=int, default=[0,1,2,3,4], metavar='S',
-                        help='random seed for train/valid split (default: 0)')
+    parser.add_argument('--seed', type=int, default=[0,1,2,3,4,4], metavar='S',
+                        help='random seed for train/valid split (default: [0,1,2,3,4])')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--dpf', type=float, default=0.1, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
@@ -79,12 +73,6 @@ if __name__ == '__main__':
         the ID field to create this list of tuples as you are filling in the parent-child matrix
     """
     
-    """
-    We use a queue to do a breadth first search of the tree, thus creating the list topo_order where nodes are sorted
-    the way they need to be in the matrices that are required for DendroNet. Using that list and its order, 
-    I created the X matrix and the y vector, in addition to the parent-child matrix.
-    """
-    
     # flag to use cuda gpu if available
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
@@ -95,7 +83,11 @@ if __name__ == '__main__':
     BATCH_SIZE = 8
     EPOCHS = args.epochs
     DPF = args.dpf
-
+    """
+        We use a queue to do a breadth first search of the tree, thus creating the list topo_order where nodes are sorted
+        the way they need to be in the matrices that are required for DendroNet. Using that list and its order, 
+        I created the X matrix and the y vector, in addition to the parent-child matrix.
+    """
     q = Queue(maxsize=0)
     topo_order = []
     q.put(data_tree) # inputing the root in the queue
@@ -107,8 +99,7 @@ if __name__ == '__main__':
                 q.put(des)
     
     parent_child = np.zeros(shape=(len(topo_order), len(topo_order)), dtype=np.int)
-    
-    
+
     mapping = []
     #This will be the mapping between rows in the X and parent_child matrix. Only the features and target values
     #of the leaves of the tree are added to the X matrix and y vector, respectively, while all nodes are added
@@ -130,20 +121,20 @@ if __name__ == '__main__':
             parent_child[index][topo_order.index(child)] = 1        
         
     parent_path_tensor = build_parent_path_mat(parent_child)
-    num_features = len(X[len(X)-1])
+    num_features = len(X[0])
     num_nodes = len(parent_child[0])
     num_edges = len(parent_path_tensor)
 
-    print('Data loaded')
-    
     root_weights = np.zeros(shape=num_features)
     edge_tensor_matrix = np.zeros(shape=(num_features, num_edges))
-    
-    dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
 
     auc_output = []
+    specificity_output = []
+    sensitivity_output = []
 
     for s in args.seed:
+
+        dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
 
         train_idx, test_idx = split_indices(mapping, seed=s)
 
@@ -172,18 +163,14 @@ if __name__ == '__main__':
         #print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
         #print("test:", 100*len(test_idx)/(len(train_idx)+len(test_idx)),"%")
 
-        epochs_without_improvement = 0
-        previous_loss = math.inf
-        break_main = False
-
         # running the training loop
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
             running_loss = 0.0
-            # getting a batch of indices
             y_true = []
             y_pred = []
+            # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
                 #separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
@@ -203,23 +190,16 @@ if __name__ == '__main__':
                 running_loss += float(train_loss.detach().cpu().numpy())
                 #I tried to add L1 regularization in the lines below, but really not sure if it is implemented properly
                 root_loss = 0
-                for w in root_weights:
+                for w in dendronet.root_weights:
                     root_loss += abs(float(w))
                 loss = train_loss + (delta_loss * DPF) + (root_loss*args.l1)
                 loss.backward(retain_graph=True)
                 optimizer.step()
-                if loss <= previous_loss:
-                    epochs_without_improvement += 1
-                if epochs_without_improvement == 3:
-                    break_main = True
-                    break
+
             print('Average BCE loss: ', str(running_loss / step))
             fpr, tpr, _ = roc_curve(y_true, y_pred)
             roc_auc = auc(fpr, tpr)
             print("ROC AUC for epoch: ", roc_auc)
-            if break_main:
-                break
-
 
         # With training complete, we'll run the test set. We could use batching here as well if the test set was large
         with torch.no_grad():
@@ -268,8 +248,11 @@ if __name__ == '__main__':
             print('Test set BCE:', float(loss.detach().cpu().numpy()))
 
             auc_output.append(roc_auc)
+            specificity_output.append(true_neg/(true_neg + false_pos))
+            sensitivity_output.append(true_pos/(true_pos + false_neg))
 
-        output_dict = {'test_auc': auc_output}
+        output_dict = {'test_auc': auc_output, 'test_specificity': specificity_output,
+                       'test_sensitivity': sensitivity_output}
 
         with open(args.output_file, 'w') as outfile:
             json.dump(output_dict, outfile)
