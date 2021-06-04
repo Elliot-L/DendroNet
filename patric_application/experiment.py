@@ -5,9 +5,9 @@ import argparse
 import pandas as pd
 from patric_application.process_genome_lineage import load_tree_and_leaves
 from queue import Queue
-
 from sklearn.metrics import roc_curve, auc
 
+#imports from dag tutorial
 import torch
 import numpy as np
 import torch.nn as nn
@@ -24,11 +24,11 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=[0,1,2,3,4,4], metavar='S',
                         help='random seed for train/valid split (default: [0,1,2,3,4])')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
-    parser.add_argument('--dpf', type=float, default=0.1, metavar='D',
+    parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
     parser.add_argument('--l1', type=float, default=1.0)
     parser.add_argument('--p', type=int, default=1)
-    parser.add_argument('--output-dir', type=str, default='patric', metavar='O')
+    parser.add_argument('--output-dir', type=str, default='data_files', metavar='O')
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR')
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
@@ -37,7 +37,7 @@ if __name__ == '__main__':
                         , help='folder to look in for a stored tree structure')
     parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'erythromycin_firmicutes_samples.csv'),
                         metavar='LF', help='file to look in for labels')
-    parser.add_argument('--output_file', type=str, default=os.path.join('data_files', 'output.json'),
+    parser.add_argument('--output_file', type=str, default=os.path.join('output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     args = parser.parse_args()
 
@@ -83,6 +83,7 @@ if __name__ == '__main__':
     BATCH_SIZE = 8
     EPOCHS = args.epochs
     DPF = args.dpf
+    L1 = args.l1
     """
         We use a queue to do a breadth first search of the tree, thus creating the list topo_order where nodes are sorted
         the way they need to be in the matrices that are required for DendroNet. Using that list and its order, 
@@ -188,11 +189,11 @@ if __name__ == '__main__':
                 # idx_batch is also used to fetch the appropriate entries from y
                 train_loss = loss_function(y_hat, y[idx_in_X])
                 running_loss += float(train_loss.detach().cpu().numpy())
-                #I tried to add L1 regularization in the lines below, but really not sure if it is implemented properly
                 root_loss = 0
+                print(dendronet.root_weights)
                 for w in dendronet.root_weights:
                     root_loss += abs(float(w))
-                loss = train_loss + (delta_loss * DPF) + (root_loss*args.l1)
+                loss = train_loss + (delta_loss * DPF) + (root_loss * L1)
                 loss.backward(retain_graph=True)
                 optimizer.step()
 
@@ -254,7 +255,7 @@ if __name__ == '__main__':
         output_dict = {'test_auc': auc_output, 'test_specificity': specificity_output,
                        'test_sensitivity': sensitivity_output}
 
-        with open(args.output_file, 'w') as outfile:
+        with open(os.path.join(args.output_dir, args.output_file), 'w') as outfile:
             json.dump(output_dict, outfile)
 
         """

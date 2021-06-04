@@ -19,5 +19,5 @@ if __name__ == "__main__":
                                  + str(l1)
                     command = 'python3 experiment.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
                               + ' --lr ' + str(lr) + ' --output-dir ' + output_dir \
-                              + ' --l1 ' + str(l1) + ARGS FOR DATA PATH
+                              + ' --l1 ' + str(l1) #+ ARGS FOR DATA PATH
                     os.system(command)
