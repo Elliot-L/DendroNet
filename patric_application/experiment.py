@@ -3,7 +3,7 @@ import os
 import json
 import argparse
 import pandas as pd
-from patric_application.process_genome_lineage import load_tree_and_leaves
+from parse_patric_tree import load_tree_and_leaves
 from queue import Queue
 from sklearn.metrics import roc_curve, auc
 

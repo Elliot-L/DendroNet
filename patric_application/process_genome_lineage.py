@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from parse_patric_tree import PatricNode, store_tree_and_leaves, load_tree_and_leaves
 
-
 def recursively_copy_levels(parent_node, df, parent_level_index, levels, level_sets, leaves):
     if parent_level_index is not None and parent_node.level != 'species' and parent_node.level != 'genome_id' and parent_node.level != 'genus':
         parent_node.taxonomy_dict[parent_node.level] = parent_node.name
