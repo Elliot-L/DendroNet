@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=10, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seed', type=int, default=[0,1,2,3,4,4], metavar='S',
+    parser.add_argument('--seed', type=int, default=[0,1,2,3,4], metavar='S',
                         help='random seed for train/valid split (default: [0,1,2,3,4])')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
@@ -190,7 +190,6 @@ if __name__ == '__main__':
                 train_loss = loss_function(y_hat, y[idx_in_X])
                 running_loss += float(train_loss.detach().cpu().numpy())
                 root_loss = 0
-                print(dendronet.root_weights)
                 for w in dendronet.root_weights:
                     root_loss += abs(float(w))
                 loss = train_loss + (delta_loss * DPF) + (root_loss * L1)
