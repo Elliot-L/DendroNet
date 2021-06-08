@@ -5,7 +5,7 @@ A preprocessing file for the AMR data using the genome lineage data to construct
 import copy
 import numpy as np
 import pandas as pd
-from parse_patric_tree import PatricNode, store_tree_and_leaves, load_tree_and_leaves
+from patric_application.parse_patric_tree import PatricNode, store_tree_and_leaves, load_tree_and_leaves
 
 def recursively_copy_levels(parent_node, df, parent_level_index, levels, level_sets, leaves):
     if parent_level_index is not None and parent_node.level != 'species' and parent_node.level != 'genome_id' and parent_node.level != 'genus':

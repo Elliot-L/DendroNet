@@ -3,7 +3,7 @@ import os
 import json
 import argparse
 import pandas as pd
-from parse_patric_tree import load_tree_and_leaves
+from patric_application.parse_patric_tree import load_tree_and_leaves
 from queue import Queue
 from sklearn.metrics import roc_curve, auc
 
@@ -14,7 +14,6 @@ import torch.nn as nn
 from tqdm import tqdm
 from models.dendronet_models import DendroMatrixLinReg
 from utils.model_utils import build_parent_path_mat, split_indices, IndicesDataset
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
