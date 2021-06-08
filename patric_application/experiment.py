@@ -253,7 +253,9 @@ if __name__ == '__main__':
         output_dict = {'test_auc': auc_output, 'test_specificity': specificity_output,
                        'test_sensitivity': sensitivity_output}
 
-        with open(os.path.join(args.output_dir, args.output_file), 'w') as outfile:
+        fileName = os.path.join(args.output_dir, args.output_file)
+        os.makedirs(os.path.dirname(fileName), exist_ok=True)
+        with open(os.path.join(fileName), 'w') as outfile:
             json.dump(output_dict, outfile)
 
         """
