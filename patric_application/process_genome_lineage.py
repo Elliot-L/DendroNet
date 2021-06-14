@@ -8,7 +8,7 @@ import pandas as pd
 from patric_application.parse_patric_tree import PatricNode, store_tree_and_leaves, load_tree_and_leaves
 
 def recursively_copy_levels(parent_node, df, parent_level_index, levels, level_sets, leaves):
-    print(leaves)
+    print(parent_level_index)
     if parent_level_index is not None and parent_node.level != 'species' and parent_node.level != 'genome_id' and parent_node.level != 'genus':
         parent_node.taxonomy_dict[parent_node.level] = parent_node.name
     # node passed in was the root
@@ -122,7 +122,7 @@ def create_labelled_tree(data_file='genome_lineage', labels_file='clostridium_sa
 
 # # for testing
 if __name__ == "__main__":
-
+    """"
     antibiotics = ['ciprofloxacin', 'cloramphenicol', 'cotrimoxazole',
                    'fusidicacid', 'gentamicin', 'rifampin', 'trimethoprim', 'vancomycin', 'betalactam']
     # antibiotics = ['betalactam']
@@ -140,4 +140,3 @@ if __name__ == "__main__":
     """
     create_labelled_tree(data_file='data_files/genome_lineage.csv', labels_file='data_files/erythromycin_firmicutes_samples.csv')
     print("done")
-    """"

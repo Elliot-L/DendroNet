@@ -33,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
-    parser.set_argument('--lineage-path', type=str, default=os.path.join('data_file', 'genome_lineage.csv',)
+    parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv',)
                         , help='file containing taxonomic classification for species from PATRIC')
     parser.add_argument('--tree-path', type=str, default=os.path.join('data_files', 'patric_tree_storage', 'erythromycin')
                         , help='folder to look in for a stored tree structure')
@@ -43,7 +43,7 @@ if __name__ == '__main__':
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     args = parser.parse_args()
 
-    parent_child, topo_order, leaves = build_pc_mat(genome_file=args.lineage_file, label_file=args.label_file)
+    parent_child, topo_order, leaves = build_pc_mat(genome_file=args.lineage_path, label_file=args.label_file)
     # annotating leaves with labels and features
     labels_df = pd.read_csv(args.label_file, dtype=str)
 
@@ -89,14 +89,14 @@ if __name__ == '__main__':
 
     for row in labels_df.itertuples():
         for leaf in leaves:
-            if leaf.name == getattr(row, 'ID'):  # we have matched a leaf to it's row in labels_df
+            if leaf == getattr(row, 'ID'):  # we have matched a leaf to it's row in labels_df
                 phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
                 y.append(phenotype)
                 features = eval(getattr(row, 'Features'))  # the x value
                 X.append(features)
-                mapping.append((feature_number , topo_order.index(leaf)))
+                mapping.append((feature_number, topo_order.index(leaf)))
                 feature_number += 1
-        
+
     parent_path_tensor = build_parent_path_mat(parent_child)
     num_features = len(X[0])
     num_nodes = len(parent_child[0])

@@ -25,8 +25,8 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firm
                      # in "nodes". For leaves, the list will be empty.
     for i, level in enumerate(levels):
         for j in range(len(ids)): # iterating through each row of each column of the taxonomic information
-            print(genome_df[level][j])
-            print(level)
+            #print(genome_df[level][j])
+            #print(level)
             if genome_df[level][j] not in nodes:
                 nodes.append(genome_df[level][j])
                 descendents.append([])
@@ -36,14 +36,14 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firm
                     descendents[pos].append(genome_df[levels[i+1]][j]) # adding in the corresponding list in "descendents"
                                                                         # the name of a child (found at the same row, in the right column)
 
-    parent_child = np.zeros(shape=(len(nodes), len(nodes)))
+    parent_child = np.zeros(shape=(len(nodes), len(nodes)), dtype=np.int)
     for i, node in enumerate(nodes):
         for child in descendents[nodes.index(node)]: # enumerating through all the children of a given node
-            parent_child[i][nodes.index(child)] = 1 # a 1 is written as entry where edges are present in the tree
+            parent_child[i][nodes.index(child)] += 1 # a 1 is written as entry where edges are present in the tree
     leaves = []
     for i, l in enumerate(descendents):
         if len(l) == 0:
-            leaves.append(nodes[i]) # creating a list that identifies all leaves (useful for later)
+            leaves.append(nodes[i]) #creating a list that identifies all leaves (useful for later)
     return parent_child, nodes, leaves
 
 """
@@ -66,8 +66,8 @@ def build_pc_mat_for_all_species(genome_file='genome_lineage.csv'):
     descendents = []
     for i, level in enumerate(levels):
         for j in range(len(new_idx)):
-            print(genome_df[level][j])
-            print(level)
+            #print(genome_df[level][j])
+            #print(level)
             if genome_df[level][j] not in nodes:
                 nodes.append(genome_df[level][j])
                 descendents.append([])
@@ -91,3 +91,4 @@ def build_pc_mat_for_all_species(genome_file='genome_lineage.csv'):
 if __name__ == "__main__":
     build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/erythromycin_firmicutes_samples.csv')
     #build_pc_mat_for_all_species(genome_file='data_files/genome_lineage.csv')
+    print("done")

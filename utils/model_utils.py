@@ -33,7 +33,6 @@ def build_parent_path_mat(parent_child_mat, num_edges=None):
     # if num_edges is not passed in, counting the number of edges above the diagonal
     if num_edges is None:
         num_edges = np.sum(np.triu(parent_child_mat, 1))
-
     parent_path = np.zeros(shape=(num_nodes, num_edges), dtype=np.float32)
     edge_index = 0
 

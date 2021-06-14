@@ -119,7 +119,7 @@ if __name__ == '__main__':
             feature_index += 1
         for child in node.descendants:
             parent_child[index][topo_order.index(child)] = 1        
-        
+
     parent_path_tensor = build_parent_path_mat(parent_child)
     num_features = len(X[0])
     num_nodes = len(parent_child[0])
