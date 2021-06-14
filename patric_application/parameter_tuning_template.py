@@ -12,7 +12,7 @@ for antibiotic in args.antibiotics:
     dpf_list = [0.001, 0.01, 0.1, 1.0]
     lr_list = [0.01, 0.001, 0.0001]
     l1_list = [0.0, 0.01, 0.1, 1.0]
-    epoch_list = [100]
+    epoch_list = [10]
 
     tree_path = ''
     feature_csv_path = ''
