@@ -4,8 +4,6 @@ import json
 import argparse
 import pandas as pd
 from build_parent_child_mat import build_pc_mat
-from patric_application.parse_patric_tree import load_tree_and_leaves
-from queue import Queue
 from sklearn.metrics import roc_curve, auc
 
 #imports from dag tutorial
@@ -39,7 +37,7 @@ if __name__ == '__main__':
                         , help='folder to look in for a stored tree structure')
     parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'erythromycin_firmicutes_samples.csv'),
                         metavar='LF', help='file to look in for labels')
-    parser.add_argument('--output_file', type=str, default=os.path.join('output.json'),
+    parser.add_argument('--output_file', type=str, default=os.path.join('output2.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     args = parser.parse_args()
 
@@ -194,7 +192,7 @@ if __name__ == '__main__':
             true_neg = 0
             total = len(y_hat)
 
-            for i in range(len(y_hat)):
+            for i in range(total):
                 pred = float(y_p[i])
                 real = float(y_t[i])
                 if (pred > 0.5 and real == 1.0):
@@ -203,7 +201,7 @@ if __name__ == '__main__':
                     false_pos += 1
                 elif (pred < 0.5 and real == 0.0):
                     true_neg += 1
-                else:
+                elif (pred < 0.5 and real == 1.0):
                     false_neg += 1
 
             loss = loss_function(y_hat, y[idx_in_X])
@@ -214,7 +212,7 @@ if __name__ == '__main__':
             print("accuracy: ", (true_pos + true_neg)/total)
             print("sensitivity: ", true_pos/(true_pos + false_neg))
             print("specificity: ", true_neg/(true_neg + false_pos))
-            print("true positives: ",true_pos)
+            print("true positives: ", true_pos)
             print("true negatives: ", true_neg)
             print("false positives: ", false_pos)
             print("false negatives: ", false_neg)
@@ -227,22 +225,23 @@ if __name__ == '__main__':
             specificity_output.append(true_neg/(true_neg + false_pos))
             sensitivity_output.append(true_pos/(true_pos + false_neg))
 
-        output_dict = {'test_auc': auc_output, 'test_specificity': specificity_output,
-                       'test_sensitivity': sensitivity_output}
+    output_dict = {'test_auc': auc_output, 'test_specificity': specificity_output,
+                   'test_sensitivity': sensitivity_output}
 
-        fileName = os.path.join(args.output_dir, args.output_file)
-        os.makedirs(os.path.dirname(fileName), exist_ok=True)
-        with open(os.path.join(fileName), 'w') as outfile:
-            json.dump(output_dict, outfile)
+    fileName = os.path.join(args.output_dir, args.output_file)
+    os.makedirs(os.path.dirname(fileName), exist_ok=True)
+    with open(os.path.join(fileName), 'w') as outfile:
+        json.dump(output_dict, outfile)
 
-        """
+    """
+
         For Georgi:
         
         Let's make a dictionary to hold these results over multiple runs and then save the dict as JSON:
         {
         'test_auc': [0.88, 0.92...]
         }
-        """
+    """
 
 
 

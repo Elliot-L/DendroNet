@@ -4,11 +4,11 @@ from parse_patric_tree import load_tree_and_leaves
 from queue import Queue
 import numpy as np
 
-new_pc, new_topo_order, new_leaves = build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/erythromycin_firmicutes_samples.csv')
+new_pc, new_topo_order, new_leaves = build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/betalactam_firmicutes_samples.csv')
 
 print("done with first")
 
-old_root, old_leaves = load_tree_and_leaves("data_files/patric_tree_storage/erythromycin")
+old_root, old_leaves = load_tree_and_leaves("data_files/patric_tree_storage/betalactam")
 
 print("tree created")
 
@@ -21,6 +21,13 @@ while not q.empty():
     if len(curr.descendants) > 0:
         for des in curr.descendants:
             q.put(des)
+
+print(len(topo_order))
+print(len(new_topo_order))
+for node in topo_order:
+    if node.name not in new_topo_order:
+        print(node.name)
+
 c = 0
 for node in topo_order:
     if node.name != 'root':

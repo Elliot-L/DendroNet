@@ -7,11 +7,11 @@ This function takes as input the file containing the taxonomic classification of
 file containing the species of interest for a given antibiotic and build a parent_child matrix for the species of interest alone
 
 """
-def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firmicutes_samples.csv'):
+def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firmicutes_samples.csv', level='kingdom', name='Bacteria'):
     label_df = pd.read_csv(label_file, dtype=str)
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
     genome_df = genome_df.rename(columns={'class': 'safe_class'}) #class is a keyword in python
-    genome_df = genome_df[genome_df.kingdom == 'Bacteria']
+    genome_df = genome_df[genome_df[level] == name]
     genome_df = genome_df[(genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safe_class'].notnull())
                           & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
                           & (genome_df['species'].notnull())& (genome_df['genome_id'].notnull())] # removing rows with missing data
