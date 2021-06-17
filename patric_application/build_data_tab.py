@@ -28,7 +28,6 @@ def build_tab(seeds=[0,1,2,3,4]):
                 data['Sensitivity'].append(JSdict['test_sensitivity'][i])
                 data['Specificity'].append(JSdict['test_specificity'][i])
     df = pd.DataFrame(data=data)
-
     return df
 
 
