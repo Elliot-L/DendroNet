@@ -28,6 +28,29 @@ def build_tab(seeds=[0,1,2,3,4]):
                 data['Sensitivity'].append(JSdict['test_sensitivity'][i])
                 data['Specificity'].append(JSdict['test_specificity'][i])
     df = pd.DataFrame(data=data)
+    print(df)
+
+    best_combs = {}
+    averages = {}
+
+    for row in range(0, df.shape[0], 5):
+        average_auc = 0.0
+        for seed in range(len(seeds)):
+            average_auc += df['AUC score'][row + seed]
+        average_auc = average_auc / len(seeds)
+
+        name = df['antibiotic'][row] + '_' +df['group'][row]
+
+        if name in best_combs:
+            if average_auc > averages[name]:
+                best_combs[name] = (df['LR'][row], df['DPF'][row], df['L1'][row])
+                averages[name] = average_auc
+        else:
+            best_combs[name] = (df['LR'][row], df['DPF'][row], df['L1'][row])
+            averages[name] = average_auc
+
+    print(best_combs)
+    print(averages)
     return df
 
 

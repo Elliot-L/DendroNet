@@ -1,20 +1,20 @@
 
 from build_parent_child_mat import build_pc_mat
 from parse_patric_tree import load_tree_and_leaves
-from queue import Queue
 import numpy as np
+from queue import Queue
+import os
+
 
 new_pc, new_topo_order, new_leaves = build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/betalactam_firmicutes_samples.csv')
 
-print("done with first")
+print(new_pc[6])
 
-old_root, old_leaves = load_tree_and_leaves("data_files/patric_tree_storage/betalactam")
-
-print("tree created")
+data_tree, leaves = load_tree_and_leaves(os.path.join('data_files', 'patric_tree_storage', 'betalactam'))
 
 q = Queue(maxsize=0)
 topo_order = []
-q.put(old_root)  # inputing the root in the queue
+q.put(data_tree)  # inputing the root in the queue
 while not q.empty():
     curr = q.get()
     topo_order.append(curr)
@@ -22,45 +22,25 @@ while not q.empty():
         for des in curr.descendants:
             q.put(des)
 
-print(len(topo_order))
-print(len(new_topo_order))
-for node in topo_order:
-    if node.name not in new_topo_order:
-        print(node.name)
-
-c = 0
-for node in topo_order:
-    if node.name != 'root':
-        for des in node.descendants:
-            if new_pc[new_topo_order.index(node.name)][new_topo_order.index(des.name)] == 1:
-                c += 1
-            else:
-                print("ERROR ERROR ERROR")
-print(c)
-
 parent_child = np.zeros(shape=(len(topo_order), len(topo_order)), dtype=np.int)
 
+mapping = []
+
+X = []
+y = []
+feature_index = 0
+
+# Filling the X matrix and the y vector with features and target values, respectively, from the leaves
 for index, node in enumerate(topo_order):
+    if node in leaves:
+        y.append(node.y)
+        X.append(node.x)
+        mapping.append((feature_index, index))
+        feature_index += 1
     for child in node.descendants:
         parent_child[index][topo_order.index(child)] = 1
 
-print("done with second")
-
-new_count = 0
-for row in new_pc:
-    for col in row:
-        if col == 1:
-            new_count += 1
-
-old_count = 0
-
-for row in parent_child:
-    for col in row:
-        if col == 1:
-            old_count += 1
-
-print(new_count)
-print(old_count)
+print(parent_child[7])
 
 
 

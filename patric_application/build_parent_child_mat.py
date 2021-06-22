@@ -14,10 +14,11 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firm
     file_name = os.path.split(label_file)[1]
     antibiotic = file_name.split('_')[0]
     group = file_name.split('_')[1]
-    print(antibiotic)
-    print(group)
-    if os.path.isfile('data_files/parent_child_matrix/'+ antibiotic + '_' + group + '.json') and not force_build:
-        jdict = json.load('data_files/parent_child_matrix/'+ antibiotic + '_' + group + '.json')
+    if os.path.isfile('data_files/parent_child_matrices/'+ antibiotic + '_' + group + '.json') and not force_build:
+        with open('data_files/parent_child_matrices/'+ antibiotic + '_' + group + '.json') as file:
+            js_string = json.load(file)
+        file.close()
+        jdict = jsonpickle.decode(js_string)
         return jdict['parent_child'], jdict['nodes'], jdict['leaves']
 
     label_df = pd.read_csv(label_file, dtype=str)
@@ -112,6 +113,6 @@ def build_pc_mat_for_all_species(genome_file='genome_lineage.csv', set_level='ph
 
 
 if __name__ == "__main__":
-    build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/erythromycin_firmicutes_samples.csv', force_build=True)
+    build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/betalactam_firmicutes_samples.csv')
     #uild_pc_mat_for_all_species(genome_file='data_files/genome_lineage.csv')
     print("done")

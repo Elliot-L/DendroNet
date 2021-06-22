@@ -18,7 +18,7 @@ from utils.model_utils import build_parent_path_mat, split_indices, IndicesDatas
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=100, metavar='N')
-    parser.add_argument('--early-stopping', type=int, default=10, metavar='E',
+    parser.add_argument('--early-stopping', type=int, default=20, metavar='E',
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seed', type=int, default=[0,1,2,3,4], metavar='S',
                         help='random seed for train/valid split (default: [0,1,2,3,4])')
@@ -38,7 +38,7 @@ if __name__ == '__main__':
                         , help='folder to look in for a stored tree structure')
     parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'erythromycin_firmicutes_samples.csv'),
                         metavar='LF', help='file to look in for labels')
-    parser.add_argument('--output_file', type=str, default=os.path.join('output3.json'),
+    parser.add_argument('--output_file', type=str, default=os.path.join('output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files','parent_child_matrices', 'erythromycin_firmicutes.json')
                         , help='File containing information about the parent-child matrix')
@@ -125,19 +125,13 @@ if __name__ == '__main__':
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
 
-        train_idx, test_idx = split_indices(mapping, seed=s)
+        train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
 
         # creating idx dataset objects for batching
         train_set = IndicesDataset(train_idx)
         val_set = IndicesDataset(val_idx)
         test_set = IndicesDataset(test_idx)
-
-        val_idx_in_X = []
-        val_idx_in_pp_mat = []
-        for idx in val_idx:
-            val_idx_in_X.append(idx[0])
-            val_idx_in_pp_mat.append(idx[1])
 
         # Setting some parameters for shuffle batch
         params = {'batch_size': BATCH_SIZE,
@@ -159,7 +153,8 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(dendronet.parameters(), lr=LR)
 
         #print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
-        #print("test:", 100*len(test_idx)/(len(train_idx)+len(test_idx)),"%")
+        #print("train:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
+        #print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
 
         # running the training loop
         best_loss = math.inf
@@ -168,8 +163,9 @@ if __name__ == '__main__':
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
             running_loss = 0.0
-            y_true = []
-            y_pred = []
+            #y_true = []
+            #y_pred = []
+
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
@@ -178,84 +174,99 @@ if __name__ == '__main__':
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                y_t = y[idx_in_X].detach().cpu().numpy()
-                y_p = torch.sigmoid(y_hat).detach().cpu().numpy()  # I would usually put these through a sigmoid first, I think this still works though
+                #y_t = y[idx_in_X].detach().cpu().numpy() #true values for this batch
+                #y_p = torch.sigmoid(y_hat).detach().cpu().numpy()  #predicted values (after sigmoid) for this batch
+                #The two above lines are used for calculation of AUC durint testing
+
+                """"
                 for i in range(len(y_t)):
                     y_pred.append(y_p[i])
                     y_true.append(y_t[i])
+                """
                 # collecting the two loss terms
                 delta_loss = dendronet.delta_loss()
-                # idx_batch is also used to fetch the appropriate entries from y
-                train_loss = loss_function(y_hat, y[idx_in_X])
-                running_loss += float(train_loss.detach().cpu().numpy())
+                train_loss = loss_function(y_hat, y[idx_in_X])  #idx_batch is also used to fetch the appropriate entries from y
                 root_loss = 0
                 for w in dendronet.root_weights:
                     root_loss += abs(float(w))
                 loss = train_loss + (delta_loss * DPF) + (root_loss * L1)
+                running_loss += float(loss)
                 loss.backward(retain_graph=True)
                 optimizer.step()
-            print('Average BCE loss: ', str(running_loss / step))
-            """"
+            print('Average training loss for epoch: ', str(running_loss/step))
+            """
             fpr, tpr, _ = roc_curve(y_true, y_pred)
             roc_auc = auc(fpr, tpr)
             print("ROC AUC for epoch: ", roc_auc)
             """
 
             #Test performance using validation set at each epoch
+            with torch.no_grad():
+                val_loss = 0.0
+                y_true = []
+                y_pred = []
+                for step, idx_batch in enumerate(val_batch_gen):
+                    idx_in_X = idx_batch[0]
+                    idx_in_pp_mat = idx_batch[1]
+                    y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                    y_t = list(y[idx_in_X]) #true values for this batch
+                    y_p = list(torch.sigmoid(y_hat)) #predictions (after sigmoid) for this batch
+                    delta_loss = dendronet.delta_loss()
+                    train_loss = loss_function(y_hat, y[idx_in_X])
+                    root_loss = 0
+                    for w in dendronet.root_weights:
+                        root_loss += abs(float(w))
+                    val_loss += float(train_loss + (delta_loss * DPF) + (root_loss * L1))
+                    y_true.extend(y_t)
+                    y_pred.extend(y_p)
 
-            val_idx_in_X = []
-            val_idx_in_pp_mat = []
-            for idx in val_idx:
-                val_idx_in_X.append(idx[0])
-                val_idx_in_pp_mat.append(idx[1])
-            y_hat = dendronet.forward(X[val_idx_in_X], val_idx_in_pp_mat)
-            y_t = y[val_idx_in_X].detach().cpu().numpy()
-            y_p = torch.sigmoid(y_hat).detach().cpu().numpy()
-            loss = loss_function(y_hat, y[val_idx_in_X])
-            delta_loss = dendronet.delta_loss()
-            train_loss = loss_function(y_hat, y[val_idx_in_X])
-            root_loss = 0
-            for w in dendronet.root_weights:
-                root_loss += abs(float(w))
-            val_loss = float(train_loss + (delta_loss * DPF) + (root_loss * L1))
+                if val_loss < best_loss: #Check if performance has increased on validation set (loss is decreasing)
+                    best_loss = val_loss
+                    early_stopping_count = 0
+                    #print("Improvement!!!")
+                else:
+                    early_stopping_count += 1
+                    #print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_loss))
 
-            if val_loss < best_loss: #Check if performance has increased on validation set (loss is decreasing)
-                best_loss = val_loss
-                early_stopping_count = 0
-                print("Improvement!!!")
-            else:
-                early_stopping_count += 1
-                print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_loss))
+                fpr, tpr, _ = roc_curve(y_true, y_pred)
+                roc_auc = auc(fpr, tpr)
+                print('Average loss on the validation set on this epoch: ', str(val_loss / step))
+                print("ROC AUC for epoch: ", roc_auc)
 
-            fpr, tpr, _ = roc_curve(y_t, y_p)
-            roc_auc = auc(fpr, tpr)
-            print('BCE loss on the validation set on this epoch: ', str(float(val_loss)))
-            print("ROC AUC for epoch: ", roc_auc)
-
-            if early_stopping_count > args.early_stopping: # If performance has not increased for long enough, we stop training
-                print("EARLY STOPPING!")                   # to avoid overfitting
-                break
+                if early_stopping_count > args.early_stopping: # If performance has not increased for long enough, we stop training
+                    #print("EARLY STOPPING!")                   # to avoid overfitting
+                    break
 
         # With training complete, we'll run the test set. We could use batching here as well if the test set was large
         with torch.no_grad():
-            idx_in_X = []
-            idx_in_pp_mat = []
-            for idx in test_idx:
-                idx_in_X.append(idx[0])
-                idx_in_pp_mat.append(idx[1])
-            y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-            y_t = y[idx_in_X].detach().cpu().numpy()
-            y_p = torch.sigmoid(y_hat).detach().cpu().numpy()
+            y_true = torch.tensor([])
+            y_pred = torch.tensor([])
+            bce_loss = 0.0
+            for step, idx_batch in enumerate(test_batch_gen):
+                idx_in_X = idx_batch[0]
+                idx_in_pp_mat = idx_batch[1]
+                y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                y_t = y[idx_in_X]
+                y_p = torch.sigmoid(y_hat)
+                y_pred = torch.cat((y_pred, y_p), 0)
+                y_true = torch.cat((y_true, y_t), 0)
+                bce_loss += loss_function(y_hat, y_t)
+            delta_loss = dendronet.delta_loss()
+            l1_loss = 0
+            for w in dendronet.root_weights:
+                l1_loss += abs(float(w))
+            fpr, tpr, _ = roc_curve(y_true, y_pred)
+            roc_auc = auc(fpr, tpr)
 
             true_pos = 0
             false_pos = 0
             false_neg = 0
             true_neg = 0
-            total = len(y_hat)
+            total = len(y_true)
 
             for i in range(total):
-                pred = float(y_p[i])
-                real = float(y_t[i])
+                pred = float(y_pred[i])
+                real = float(y_true[i])
                 if (pred > 0.5 and real == 1.0):
                     true_pos += 1
                 elif (pred > 0.5 and real == 0.0):
@@ -264,11 +275,6 @@ if __name__ == '__main__':
                     true_neg += 1
                 elif (pred < 0.5 and real == 1.0):
                     false_neg += 1
-
-            loss = loss_function(y_hat, y[idx_in_X])
-            delta_loss = dendronet.delta_loss()
-            fpr, tpr, _ = roc_curve(y_t, y_p)
-            roc_auc = auc(fpr, tpr)
 
             print("accuracy: ", (true_pos + true_neg)/total)
             print("sensitivity: ", true_pos/(true_pos + false_neg))
@@ -280,7 +286,8 @@ if __name__ == '__main__':
             print("ROC AUC for test:", roc_auc )
 
             print('Final Delta loss:', float(delta_loss.detach().cpu().numpy()))
-            print('Test set BCE:', float(loss.detach().cpu().numpy()))
+            print('L1 loss on test set is ', l1_loss)
+            print('Average BCE loss on test set:', float(bce_loss)/step)
 
             auc_output.append(roc_auc)
             specificity_output.append(true_neg/(true_neg + false_pos))
