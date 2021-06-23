@@ -17,8 +17,8 @@ from utils.model_utils import build_parent_path_mat, split_indices, IndicesDatas
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=100, metavar='N')
-    parser.add_argument('--early-stopping', type=int, default=20, metavar='E',
+    parser.add_argument('--epochs', type=int, default=50, metavar='N')
+    parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seed', type=int, default=[0,1,2,3,4], metavar='S',
                         help='random seed for train/valid split (default: [0,1,2,3,4])')
@@ -117,7 +117,8 @@ if __name__ == '__main__':
     root_weights = np.zeros(shape=num_features)
     edge_tensor_matrix = np.zeros(shape=(num_features, num_edges))
 
-    auc_output = []
+    test_auc_output = []
+    val_auc_output = []
     specificity_output = []
     sensitivity_output = []
 
@@ -157,7 +158,7 @@ if __name__ == '__main__':
         #print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
 
         # running the training loop
-        best_loss = math.inf
+        best_auc = 0.0
         early_stopping_count = 0
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
@@ -220,22 +221,24 @@ if __name__ == '__main__':
                     y_true.extend(y_t)
                     y_pred.extend(y_p)
 
-                if val_loss < best_loss: #Check if performance has increased on validation set (loss is decreasing)
-                    best_loss = val_loss
-                    early_stopping_count = 0
-                    #print("Improvement!!!")
-                else:
-                    early_stopping_count += 1
-                    #print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_loss))
-
                 fpr, tpr, _ = roc_curve(y_true, y_pred)
                 roc_auc = auc(fpr, tpr)
                 print('Average loss on the validation set on this epoch: ', str(val_loss / step))
                 print("ROC AUC for epoch: ", roc_auc)
 
+                if roc_auc > best_auc: #Check if performance has increased on validation set (loss is decreasing)
+                    best_auc = roc_auc
+                    early_stopping_count = 0
+                    print("Improvement!!!")
+                else:
+                    early_stopping_count += 1
+                    print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
+
                 if early_stopping_count > args.early_stopping: # If performance has not increased for long enough, we stop training
-                    #print("EARLY STOPPING!")                   # to avoid overfitting
+                    print("EARLY STOPPING!")                   # to avoid overfitting
                     break
+
+        val_auc_output.append(roc_auc)
 
         # With training complete, we'll run the test set. We could use batching here as well if the test set was large
         with torch.no_grad():
@@ -289,11 +292,11 @@ if __name__ == '__main__':
             print('L1 loss on test set is ', l1_loss)
             print('Average BCE loss on test set:', float(bce_loss)/step)
 
-            auc_output.append(roc_auc)
+            test_auc_output.append(roc_auc)
             specificity_output.append(true_neg/(true_neg + false_pos))
             sensitivity_output.append(true_pos/(true_pos + false_neg))
 
-    output_dict = {'test_auc': auc_output, 'test_specificity': specificity_output,
+    output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output, 'test_specificity': specificity_output,
                    'test_sensitivity': sensitivity_output}
 
     fileName = os.path.join(args.output_dir, args.output_file)
