@@ -1,5 +1,6 @@
 import os
-import wget
+#import urllib
+#import wget
 import time
 import pandas as pd
 # example final url:ftp://ftp.patricbrc.org/genomes/511145.12/511145.12.PATRIC.spgene.tab
@@ -11,7 +12,9 @@ import pandas as pd
 #                'fusidicacid', 'gentamicin', 'rifampin', 'trimethoprim', 'vancomycin']
 
 # antibiotics = ['trimethoprim', 'tetracycline', 'isoniazid', 'ethambutol', 'streptomycin']
-antibiotics = ['chloramphenicol']
+#antibiotics = ['chloramphenicol']
+antibiotics = ['betalactam', 'erythromycin']
+
 
 # ciprofloxacin
 # rifampin
@@ -41,6 +44,8 @@ for ab in antibiotics:
     genome_file_dir = 'patric_cli'
     base_out = 'patric_cli/sp_genes/' + ab + '/'
 
+    print(base_out)
+
     for file in os.listdir(genome_file_dir):
         if ab in file:
             print(file)
@@ -54,9 +59,19 @@ for ab in antibiotics:
             print(genome)
             fp = base_url + genome + '/' + genome + extension
             outfile = base_out + genome + '_spgene.tab'
-            wget.download(fp, outfile)
+            command = 'wget -P ' + outfile + ' ' + fp
+            #urllib.urlretrieve(fp, filename=outfile)
+            #wget.download(fp, outfile)
         except:
             errors.append(genome)
     print('done ' + str(ab))
 print('genomes with errors:')
 print(errors)
+
+""""
+import urllib
+urllib.urlretrieve("http://google.com/index.html", filename="local/index.html")
+ 
+os.system.command('wget...')
+
+"""

@@ -20,8 +20,8 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=50, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seed', type=int, default=[0,1,2,3,4], metavar='S',
-                        help='random seed for train/valid split (default: [0,1,2,3,4])')
+    parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], metavar='S',
+                        help='random seed for train/test/validation split (default: [0,1,2,3,4])')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')

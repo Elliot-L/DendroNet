@@ -41,7 +41,7 @@ def build_tab(seeds=[0,1,2,3,4]):
         test_average_auc = 0.0
         for seed in range(len(seeds)):
             val_average_auc += df['Val AUC'][row + seed]
-            test_average_auc += df['Test AUX'][row + seed]
+            test_average_auc += df['Test AUC'][row + seed]
         val_average_auc = val_average_auc / len(seeds)
         test_average_auc = test_average_auc / len(seeds)
 
@@ -52,7 +52,7 @@ def build_tab(seeds=[0,1,2,3,4]):
                 best_combs[name] = (df['LR'][row], df['DPF'][row], df['L1'][row])
                 val_averages[name] = val_average_auc
         else:
-            best_combs[name] = (df['LR'][row], df['DPF'][row], df['L1'][row])
+            best_combs[name] = ("LR:", df['LR'][row], "DPF:", df['DPF'][row], "L1", df['L1'][row])
             val_averages[name] = val_average_auc
             test_averages[name] = test_average_auc
 

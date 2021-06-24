@@ -35,10 +35,11 @@ if __name__ == "__main__":
                                     + ' --lr ' + str(lr) + ' --output-dir ' + output_dir \
                                     + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
                                     + ' --label-file ' + 'data_files/' + antibiotic + '_firmicutes_samples.csv' \
-                                    + ' --seed ' + str(args.seed)
+                                    #+ ' --seed ' + str(args.seed).replace("[", "").replace("]", "").replace(",", "")
+                        print(command)
                         os.system(command)
 
-    df = build_tab(args.seeds)
+    df = build_tab(args.seed)
 
 
 
