@@ -60,8 +60,8 @@ for ab in antibiotics:
                 df.rename(columns={'Genome ID': 'ID'}, inplace=True)
             genomes = genomes.union(set(df['ID']))
     print(df)
-    print(genomes)
     for genome in genomes:
+        print(genome)
         try:
             print(genome)
             fp = base_url + genome + '/' + genome + extension
