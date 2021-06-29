@@ -36,7 +36,9 @@ for ab in antibiotics:
 
     base_url = 'ftp://ftp.patricbrc.org/genomes/'
     extension = '.PATRIC.spgene.tab'
-    genomes = set()
+    firmicutes_genomes = set()
+    proteobacteria_genomes = set()
+    other_genomes = set()
     """
     below lines were used for retrieving data for the january submission
     """
@@ -58,14 +60,40 @@ for ab in antibiotics:
             df = pd.read_csv(os.path.join(genome_file_dir, file), sep=',', dtype=str)
             if 'Genome ID' in df.columns:
                 df.rename(columns={'Genome ID': 'ID'}, inplace=True)
-            genomes = genomes.union(set(df['ID']))
-    print(df)
-    for genome in genomes:
-        print(genome)
+            if 'proteobacteria' in file:
+                proteobacteria_genomes = proteobacteria_genomes.union(set(df['ID']))
+            elif 'firmicutes' in file:
+                fimicutes_genomes = firmicutes_genomes.union(set(df['ID']))
+            else:
+                other_genomes = other_genomes.union(set(df['ID']))
+            print(df)
+    for genome in proteobacteria_genomes:
         try:
             print(genome)
             fp = base_url + genome + '/' + genome + extension
-            outfile = base_out + genome + '_spgene.tab'
+            outfile = base_out + 'proteobacteria/' + genome + '_spgene.tab'
+            command = 'wget -P ' + outfile + ' ' + fp
+            os.system(command)
+            #urllib.urlretrieve(fp, filename=outfile)
+            #wget.download(fp, outfile)
+        except:
+            errors.append(genome)
+    for genome in firmicutes_genomes:
+        try:
+            print(genome)
+            fp = base_url + genome + '/' + genome + extension
+            outfile = base_out + 'firmicutes/' + genome + '_spgene.tab'
+            command = 'wget -P ' + outfile + ' ' + fp
+            os.system(command)
+            #urllib.urlretrieve(fp, filename=outfile)
+            #wget.download(fp, outfile)
+        except:
+            errors.append(genome)
+    for genome in other_genomes:
+        try:
+            print(genome)
+            fp = base_url + genome + '/' + genome + extension
+            outfile = base_out + 'other/' + genome + '_spgene.tab'
             command = 'wget -P ' + outfile + ' ' + fp
             os.system(command)
             #urllib.urlretrieve(fp, filename=outfile)
