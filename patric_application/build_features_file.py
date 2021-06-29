@@ -9,5 +9,9 @@ for directory in os.listdir(folder):
         print(genome)
         df = pd.read_csv(os.path.join(folder, directory, genome), sep='\t')
         print(df)
-        print(df['function classification'])
+        print(df.columns)
+        for col in df.columns:
+            print(col)
+            if 'function' in col:
+                print(df[col])
     break
