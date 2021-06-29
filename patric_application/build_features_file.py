@@ -10,8 +10,9 @@ for directory in os.listdir(folder):
         df = pd.read_csv(os.path.join(folder, directory, genome), sep='\t')
         print(df)
         print(df.columns)
-        for col in df.columns:
-            print(col)
-            if 'function' in col:
-                print(df[col])
+        c = 0
+        for func in df['function']:
+            if func.isnull():
+                c += 1
+
     break
