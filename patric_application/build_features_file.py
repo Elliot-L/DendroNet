@@ -12,7 +12,8 @@ for directory in os.listdir(folder):
         print(df.columns)
         c = 0
         for func in df['function']:
-            if func == 'NaN':
+            print(func)
+            if type(func) is str:
                 c += 1
         print(c)
 
