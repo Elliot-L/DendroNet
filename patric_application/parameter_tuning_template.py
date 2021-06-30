@@ -43,7 +43,7 @@ if __name__ == "__main__":
                                         #+ ' --seed ' + str(args.seed)
                             os.system(command)
 
-    df, best_combs, val_averages, test_averages = build_tab(args.seeds)
+    df, best_combs, val_averages, test_averages = build_tab(args.seed)
     os.makedirs(os.path.dirname(os.path.join('data_files', 'Results')), exist_ok=True)
 
     df.to_csv(os.path.join('data_files', 'Results', 'brute_results_' + str(args.antibiotics) + '.csv'), index=False)
