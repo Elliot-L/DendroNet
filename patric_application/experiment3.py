@@ -18,12 +18,12 @@ from utils.model_utils import build_parent_path_mat, split_indices, IndicesDatas
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=100, metavar='N')
-    parser.add_argument('--early-stopping', type=int, default=10, metavar='E',
+    parser.add_argument('--epochs', type=int, default=200, metavar='N')
+    parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], metavar='S',
+    parser.add_argument('--seed', type=int, default=[0, 1, 2], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
-    parser.add_argument('--save-seed', type=int, default=[0, 1, 2, 3, 4], metavar='SS',
+    parser.add_argument('--save-seed', type=int, default=[0, 1], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotte and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
@@ -302,11 +302,14 @@ if __name__ == '__main__':
             sensitivity_output.append(true_pos/(true_pos + false_neg))
 
         plt.plot(aucs_for_plot)
-        plt.show()
-        antibiotic = args.label_file.split('_')[0]
-        group = args.label_file.split('_')[1]
+        _, file_info = os.path.split(args.label_file)
+        antibiotic = file_info.split('_')[0]
+        group = file_info.split('_')[1]
+        os.makedirs(os.path.dirname(os.path.join('data_files', 'AUC_plots')), exist_ok=True)
         if s in args.save_seed:
-            plt.savefig(os.path.join('data_files', 'AUC_plots', antibiotic + '_' + group + '_seed_' + str(s) + '.png'))
+            plt.savefig(os.path.join('data_files', 'AUC_plots', antibiotic + '_' + group + '_' \
+                                     + str(args.lr) + '_' + str(args.dpf) + '_' + str(args.l1) + '_' + str(args.early_stopping) \
+                                     + '_seed_' + str(s) + '.png'))
 
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output, 'test_specificity': specificity_output,
                    'test_sensitivity': sensitivity_output}

@@ -10,6 +10,7 @@ def build_tab(seeds=[0,1,2,3,4]):
     data['LR'] = []
     data['DPF'] = []
     data['L1'] = []
+    data['Early Stopping'] = []
     data['Seed'] = []
     data['Val AUC'] = []
     data['Test AUC'] = []
@@ -24,6 +25,7 @@ def build_tab(seeds=[0,1,2,3,4]):
                 data['LR'].append(dir.split("_")[4])
                 data['DPF'].append(dir.split("_")[3])
                 data['L1'].append(dir.split("_")[5])
+                data['Early Stopping'].append(dir.split("_"))[6]
                 data['Seed'].append(seed)
                 data['Val AUC'].append(JSdict['val_auc'][i])
                 data['Test AUC'].append(JSdict['test_auc'][i])
@@ -59,7 +61,7 @@ def build_tab(seeds=[0,1,2,3,4]):
     print(best_combs)
     print(val_averages)
     print(test_averages)
-    return df
+    return df, best_combs, val_averages, test_averages
 
 
 
