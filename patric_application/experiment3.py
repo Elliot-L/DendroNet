@@ -301,6 +301,14 @@ if __name__ == '__main__':
             specificity_output.append(true_neg/(true_neg + false_pos))
             sensitivity_output.append(true_pos/(true_pos + false_neg))
 
+        output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output, 'test_specificity': specificity_output,
+                       'test_sensitivity': sensitivity_output}
+
+        fileName = os.path.join(args.output_dir, args.output_file)
+        os.makedirs(os.path.dirname(fileName), exist_ok=True)
+        with open(os.path.join(fileName), 'w') as outfile:
+            json.dump(output_dict, outfile)
+
         plt.plot(aucs_for_plot)
         _, file_info = os.path.split(args.label_file)
         antibiotic = file_info.split('_')[0]
@@ -311,13 +319,7 @@ if __name__ == '__main__':
                                      + str(args.lr) + '_' + str(args.dpf) + '_' + str(args.l1) + '_' + str(args.early_stopping) \
                                      + '_seed_' + str(s) + '.png'))
 
-    output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output, 'test_specificity': specificity_output,
-                   'test_sensitivity': sensitivity_output}
 
-    fileName = os.path.join(args.output_dir, args.output_file)
-    os.makedirs(os.path.dirname(fileName), exist_ok=True)
-    with open(os.path.join(fileName), 'w') as outfile:
-        json.dump(output_dict, outfile)
 
     """
 

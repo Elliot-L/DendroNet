@@ -16,7 +16,7 @@ def build_tab(seeds=[0,1,2,3,4]):
     data['Test AUC'] = []
     data['Sensitivity'] = []
     data['Specificity'] = []
-    for dir in os.listdir('data_files\patric_tuning'):
+    for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
         with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
             JSdict = json.load(file)
             for i, seed in enumerate(seeds):
