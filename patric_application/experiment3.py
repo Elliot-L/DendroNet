@@ -6,6 +6,7 @@ import jsonpickle
 import pandas as pd
 from build_parent_child_mat import build_pc_mat
 from sklearn.metrics import roc_curve, auc
+from matplotlib import pyplot as plt
 
 #imports from dag tutorial
 import torch
@@ -17,18 +18,20 @@ from utils.model_utils import build_parent_path_mat, split_indices, IndicesDatas
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=50, metavar='N')
-    parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
+    parser.add_argument('--epochs', type=int, default=100, metavar='N')
+    parser.add_argument('--early-stopping', type=int, default=10, metavar='E',
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
+    parser.add_argument('--save-seed', type=int, default=[0, 1, 2, 3, 4], metavar='SS',
+                        help='seeds for which the training (AUC score) will be plotte and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
     parser.add_argument('--l1', type=float, default=1.0)
     parser.add_argument('--p', type=int, default=1)
     parser.add_argument('--output-dir', type=str, default='data_files', metavar='O')
-    parser.add_argument('--lr', type=float, default=0.001, metavar='LR')
+    parser.add_argument('--lr', type=float, default=0.0001, metavar='LR')
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
@@ -154,12 +157,13 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(dendronet.parameters(), lr=LR)
 
         #print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
-        #print("train:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
+        #print("val:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
         #print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
 
         # running the training loop
         best_auc = 0.0
         early_stopping_count = 0
+        aucs_for_plot = []
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
@@ -226,6 +230,8 @@ if __name__ == '__main__':
                 print('Average loss on the validation set on this epoch: ', str(val_loss / step))
                 print("ROC AUC for epoch: ", roc_auc)
 
+                aucs_for_plot.append(roc_auc)
+
                 if roc_auc > best_auc: #Check if performance has increased on validation set (loss is decreasing)
                     best_auc = roc_auc
                     early_stopping_count = 0
@@ -237,7 +243,6 @@ if __name__ == '__main__':
                 if early_stopping_count > args.early_stopping: # If performance has not increased for long enough, we stop training
                     print("EARLY STOPPING!")                   # to avoid overfitting
                     break
-
         val_auc_output.append(roc_auc)
 
         # With training complete, we'll run the test set. We could use batching here as well if the test set was large
@@ -295,6 +300,13 @@ if __name__ == '__main__':
             test_auc_output.append(roc_auc)
             specificity_output.append(true_neg/(true_neg + false_pos))
             sensitivity_output.append(true_pos/(true_pos + false_neg))
+
+        plt.plot(aucs_for_plot)
+        plt.show()
+        antibiotic = args.label_file.split('_')[0]
+        group = args.label_file.split('_')[1]
+        if s in args.save_seed:
+            plt.savefig(os.path.join('data_files', 'AUC_plots', antibiotic + '_' + group + '_seed_' + str(s) + '.png'))
 
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output, 'test_specificity': specificity_output,
                    'test_sensitivity': sensitivity_output}
