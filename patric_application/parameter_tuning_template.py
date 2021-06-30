@@ -10,8 +10,8 @@ parser.add_argument('--genome-lineage', type=str, default='data_files/genome_lin
 parser.add_argument('--dpfs', type=float, default=[0.001, 0.01, 0.1, 1.0], help='Default is [0.001, 0.01, 0.1, 1.0]')
 parser.add_argument('--lrs', type=float, default=[0.01, 0.001, 0.0001], help='Default is [0.01, 0.001, 0.0001]')
 parser.add_argument('--l1s', type=float, default=[0.0, 0.01, 0.1, 1.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
-parser.add_argument('--early_stopping', default=[3, 5, 10], help='Default is [3, 5, 10]')
-parser.add_argument('--epochs', type=int, default=[2], help='Default is 1000')
+parser.add_argument('--early_stopping', default=[3, 5], help='Default is [3, 5, 10]')
+parser.add_argument('--epochs', type=int, default=[200], help='Default is 1000')
 parser.add_argument('--seed', type=int, default=[0, 1, 2], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 args = parser.parse_args()
 if __name__ == "__main__":
