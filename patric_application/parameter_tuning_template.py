@@ -33,8 +33,7 @@ if __name__ == "__main__":
                 for epoch in epoch_list:
                     for l1 in l1_list:
                         for e_stop in e_stop_list:
-                            output_dir = os.path.join('data_files', 'patric_tuning', + antibiotic + '_firmicutes_samples' \
-                                        + '_' + str(dpf) + '_' + str(lr) + '_' + str(l1) + '_' + str(e_stop))
+                            output_dir = os.path.join('data_files', 'patric_tuning', antibiotic + '_firmicutes_samples' + '_' + str(dpf) + '_' + str(lr) + '_' + str(l1) + '_' + str(e_stop))
                             command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
                                         + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-dir ' + output_dir \
                                         + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
