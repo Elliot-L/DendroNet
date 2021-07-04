@@ -43,7 +43,7 @@ if __name__ == '__main__':
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output_file', type=str, default=os.path.join('output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
-    parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files','parent_child_matrices', 'erythromycin_firmicutes.json')
+    parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files', 'parent_child_matrices', 'erythromycin_firmicutes.json')
                         , help='File containing information about the parent-child matrix')
     args = parser.parse_args()
 
@@ -247,8 +247,8 @@ if __name__ == '__main__':
 
         # With training complete, we'll run the test set. We could use batching here as well if the test set was large
         with torch.no_grad():
-            y_true = torch.tensor([])
-            y_pred = torch.tensor([])
+            y_true = []
+            y_pred = []
             bce_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
                 idx_in_X = idx_batch[0]
@@ -256,9 +256,11 @@ if __name__ == '__main__':
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 y_t = y[idx_in_X]
                 y_p = torch.sigmoid(y_hat)
-                y_pred = torch.cat((y_pred, y_p), 0)
-                y_true = torch.cat((y_true, y_t), 0)
+                # y_pred = torch.cat((y_pred, y_p), 0)
+                # y_true = torch.cat((y_true, y_t), 0)
                 bce_loss += loss_function(y_hat, y_t)
+                y_true.extend(list(y_t))
+                y_pred.extend(list(y_p))
             delta_loss = dendronet.delta_loss()
             l1_loss = 0
             for w in dendronet.root_weights:

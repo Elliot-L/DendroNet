@@ -3,7 +3,7 @@ import os
 import jsonpickle
 import json
 
-def build_tab(antibiotic, seeds=[0, 1, 2]):
+def build_tab(antibiotic, seeds=[0, 1, 2, 3, 4]):
     df_file = os.path.join('data_files', 'Results', 'brute_results_' + antibiotic + '.csv')
     if os.path.isfile(df_file):
         df = pd.read_csv(df_file)
@@ -77,11 +77,6 @@ def build_tab(antibiotic, seeds=[0, 1, 2]):
         json.dump(output_list, outfile)
 
     return df, best_combs, val_averages, test_averages
-
-
-
-
-
 
 
 if __name__ == "__main__":

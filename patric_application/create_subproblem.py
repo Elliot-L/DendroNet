@@ -5,7 +5,7 @@ import subprocess
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', type=str, default='Firmicutes', metavar='G')
+    parser.add_argument('--group', type=str, default='Proteobacteria', metavar='G')
     parser.add_argument('--level', type=str, default='phylum', metavar='L')
     parser.add_argument('--antibiotic', type=str,default='ciprofloxacin', metavar='A')
     args = parser.parse_args()
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     c = 0
     for row in range(amr_df.shape[0]):
-        if amr_df['antibiotic'][row] == args.antibiotic:
+        if amr_df['antibiotic'][row] == args.antibiotic and amr_df['genome_id'][row] in genomes_of_interest:
             c += 1
     print(c)
 
