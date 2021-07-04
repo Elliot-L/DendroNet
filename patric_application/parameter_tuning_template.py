@@ -12,7 +12,7 @@ parser.add_argument('--lrs', type=float, default=[0.01, 0.001, 0.0001], help='De
 parser.add_argument('--l1s', type=float, default=[0.0, 0.01, 0.1, 1.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
 parser.add_argument('--early_stopping', default=[3, 5], help='Default is [3, 5, 10]')
 parser.add_argument('--epochs', type=int, default=[200], help='Default is 1000')
-parser.add_argument('--seed', type=int, default=[0, 1, 2], help='Default is [0 ,1 ,2 ,3 ,4 ]')
+parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 args = parser.parse_args()
 if __name__ == "__main__":
 
@@ -43,15 +43,8 @@ if __name__ == "__main__":
                                         #+ ' --seed ' + str(args.seed)
                             os.system(command)
 
-    df, best_combs, val_averages, test_averages = build_tab(args.seed)
-    os.makedirs(os.path.dirname(os.path.join('data_files', 'Results')), exist_ok=True)
+        df, best_combs, val_averages, test_averages = build_tab(args.seed, antibiotic=antibiotic)
 
-    df.to_csv(os.path.join('data_files', 'Results', 'brute_results_' + str(args.antibiotics) + '.csv'), index=False)
-
-    output_list = [best_combs, val_averages, test_averages]
-
-    with open(os.path.join('data_files', 'Results', 'refined_results' + str(args.antibiotics) + '.json'), 'w') as outfile:
-        json.dump(output_list, outfile)
 
 
 

@@ -3,8 +3,11 @@ import os
 import jsonpickle
 import json
 
-def build_tab(df_file=None ,seeds=[0, 1, 2]):
-    if df_file == None:
+def build_tab(antibiotic, seeds=[0, 1, 2]):
+    df_file = os.path.join('data_files', 'Results', 'brute_results_' + antibiotic + '.csv')
+    if os.path.isfile(df_file):
+        df = pd.read_csv(df_file)
+    else:
         data = {}
         data['antibiotic'] = []
         data['group'] = []
@@ -26,15 +29,13 @@ def build_tab(df_file=None ,seeds=[0, 1, 2]):
                     data['LR'].append(dir.split("_")[4])
                     data['DPF'].append(dir.split("_")[3])
                     data['L1'].append(dir.split("_")[5])
-                    data['Early Stopping'].append(dir.split("_")[6])
+                    data['Early Stopping'].append(float(dir.split("_")[6]))
                     data['Seed'].append(seed)
                     data['Val AUC'].append(JSdict['val_auc'][i])
                     data['Test AUC'].append(JSdict['test_auc'][i])
                     data['Sensitivity'].append(JSdict['test_sensitivity'][i])
                     data['Specificity'].append(JSdict['test_specificity'][i])
         df = pd.DataFrame(data=data)
-    else:
-        df = pd.read_csv(os.path.join('data_files', 'Results', df_file))
 
     print(df)
 
@@ -68,11 +69,11 @@ def build_tab(df_file=None ,seeds=[0, 1, 2]):
     print(test_averages)
 
     os.makedirs(os.path.join('data_files', 'Results'), exist_ok=True)
-    df.to_csv(os.path.join('data_files', 'Results', 'brute_results_' + str(set(data['antibiotic'])) + '.csv'), index=False)
+    df.to_csv(os.path.join('data_files', 'Results', 'brute_results_' + antibiotic + '.csv'), index=False)
 
     output_list = [best_combs, val_averages, test_averages]
 
-    with open(os.path.join('data_files', 'Results', 'refined_results' + str(set(data['antibiotic'])) + '.json'), 'w') as outfile:
+    with open(os.path.join('data_files', 'Results', 'refined_results_' + antibiotic + '.json'), 'w') as outfile:
         json.dump(output_list, outfile)
 
     return df, best_combs, val_averages, test_averages
@@ -84,4 +85,4 @@ def build_tab(df_file=None ,seeds=[0, 1, 2]):
 
 
 if __name__ == "__main__":
-    build_tab()
+    build_tab('betalactam')
