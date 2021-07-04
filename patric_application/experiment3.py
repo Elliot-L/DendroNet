@@ -315,7 +315,7 @@ if __name__ == '__main__':
         _, file_info = os.path.split(args.label_file)
         antibiotic = file_info.split('_')[0]
         group = file_info.split('_')[1]
-        os.makedirs(os.path.dirname(os.path.join('data_files', 'AUC_plots')), exist_ok=True)
+        os.makedirs(os.path.join('data_files', 'AUC_plots'), exist_ok=True)
         if s in args.save_seed:
             plt.savefig(os.path.join('data_files', 'AUC_plots', antibiotic + '_' + group + '_' \
                                      + str(args.lr) + '_' + str(args.dpf) + '_' + str(args.l1) + '_' + str(args.early_stopping) \
