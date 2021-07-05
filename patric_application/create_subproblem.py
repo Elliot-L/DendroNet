@@ -72,8 +72,8 @@ if __name__ == '__main__':
                     sp_df = pd.read_csv(sp_file, sep='\t')
                 except pd.errors.EmptyDataError as e:
                     error.append(genome)
-                    break
-                print(error)
+                    print(error)
+                    continue
 
                 sp_df = sp_df[(sp_df['function'].notnull())]
                 feat_dict = {}
