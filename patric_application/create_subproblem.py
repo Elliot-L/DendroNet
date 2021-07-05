@@ -66,14 +66,14 @@ if __name__ == '__main__':
                     subprocess.call(['wget', '-O', sp_file, fp])
                 except:
                     error.append(genome)
-            print(error)
+                print(error)
             if genome not in error and os.path.isfile(sp_file):
                 try:
                     sp_df = pd.read_csv(sp_file, sep='\t')
                 except pd.errors.EmptyDataError as e:
                     error.append(genome)
                     break
-            print(error)
+                print(error)
 
                 sp_df = sp_df[(sp_df['function'].notnull())]
                 feat_dict = {}
