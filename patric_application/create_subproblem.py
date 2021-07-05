@@ -50,13 +50,14 @@ if __name__ == '__main__':
         if amr_df['antibiotic'][row] == args.antibiotic and amr_df['genome_id'][row] in genomes_of_interest:
             c += 1
     print(c)
-
+    used_genomes = []
     for row in range(amr_df.shape[0]):
         genome = amr_df['genome_id'][row]
-        if genome in genomes_of_interest and amr_df['antibiotic'][row] == args.antibiotic:
+        if genome in genomes_of_interest and amr_df['antibiotic'][row] == args.antibiotic and genome not in used_genomes:
+            used_genomes.append(genome)
             fp = base_url + str(genome) + '/' + str(genome) + extension
             sp_file = os.path.join(base_out, str(genome) + '_spgenes.tab')
-
+            print("trying download for :" + str(genome))
             if not os.path.isfile(sp_file):
                 try:
                     # command = 'wget -P ' + outfile + ' ' + fp
@@ -64,26 +65,26 @@ if __name__ == '__main__':
                     subprocess.call(['wget', '-O', sp_file, fp])
                 except:
                     error.append(genome)
+            print(error)
+            if genome not in error:
+                sp_df = pd.read_csv(sp_file, sep='\t')
+                sp_df = sp_df[(sp_df['function'].notnull())]
+                feat_dict = {}
 
-            print("done for genome: " + str(genome))
-            sp_df = pd.read_csv(sp_file, sep='\t')
-            sp_df = sp_df[(sp_df['function'].notnull())]
-            feat_dict = {}
+                for function in sp_df['function']:
+                    if function not in feat_dict.keys():
+                        feat_dict[function] = 1
+                    else:
+                        feat_dict[function] += 1
 
-            for function in sp_df['function']:
-                if function not in feat_dict.keys():
-                    feat_dict[function] = 1
-                else:
-                    feat_dict[function] += 1
-
-            ids_dict[genome] = feat_dict
-            ids.append(genome)
-            if amr_df['resistant_phenotype'][row] == 'resistant' or amr_df['resistant_phenotype'][row] == 'intermediate':
-                phenotypes.append([1.0])
-            elif amr_df['resistant_phenotype'][row] == 'susceptible':
-                phenotypes.append([0.0])
-            antibiotics.append([args.antibiotic])
-            annotations.append([True])
+                ids_dict[genome] = feat_dict
+                ids.append(genome)
+                if amr_df['resistant_phenotype'][row] == 'resistant' or amr_df['resistant_phenotype'][row] == 'intermediate':
+                    phenotypes.append([1.0])
+                elif amr_df['resistant_phenotype'][row] == 'susceptible':
+                    phenotypes.append([0.0])
+                antibiotics.append([args.antibiotic])
+                annotations.append([True])
 
     for id in ids_dict.keys():
         functions = functions.intersection(ids_dict[id].keys())
