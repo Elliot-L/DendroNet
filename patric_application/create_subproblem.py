@@ -50,6 +50,7 @@ if __name__ == '__main__':
         if amr_df['antibiotic'][row] == args.antibiotic and amr_df['genome_id'][row] in genomes_of_interest:
             c += 1
     print(c)
+
     used_genomes = []
     for row in range(amr_df.shape[0]):
         genome = amr_df['genome_id'][row]
@@ -70,33 +71,38 @@ if __name__ == '__main__':
                 try:
                     sp_df = pd.read_csv(sp_file, sep='\t')
                 except pd.errors.EmptyDataError as e:
+                    error.append(genome)
                     break
+            print(error)
 
                 sp_df = sp_df[(sp_df['function'].notnull())]
                 feat_dict = {}
 
                 for function in sp_df['function']:
                     if function not in feat_dict.keys():
-                        feat_dict[function] = 1
+                        feat_dict[function] = 1.0
                     else:
-                        feat_dict[function] += 1
+                        feat_dict[function] += 1.0
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
                 if amr_df['resistant_phenotype'][row] == 'resistant' or amr_df['resistant_phenotype'][row] == 'intermediate':
-                    phenotypes.append([1.0])
+                    phenotypes.append([1])
                 elif amr_df['resistant_phenotype'][row] == 'susceptible':
-                    phenotypes.append([0.0])
+                    phenotypes.append([0])
                 antibiotics.append([args.antibiotic])
                 annotations.append([True])
 
     for id in ids_dict.keys():
-        functions = functions.intersection(ids_dict[id].keys())
+        functions = functions.union(ids_dict[id].keys())
 
     for id in ids:
         genome_features = []
         for func in functions:
-            genome_features.append(ids_dict[id][func])
+            if func in ids_dict[id].keys():
+                genome_features.append(ids_dict[id][func])
+            else:
+                genome_features.append(0.0)
         features.append(genome_features)
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
