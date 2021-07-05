@@ -23,7 +23,7 @@ if __name__ == '__main__':
     genomes_of_interest = set(genomes_of_interest)
     print(len(genomes_of_interest))
 
-    amr_file = os.path.join('data_files', 'amr_phenotypes')
+    amr_file = os.path.join('data_files', 'amr_phenotypes.csv')
     amr_df = pd.read_csv(amr_file, sep='\t')
     amr_df = amr_df[(amr_df['resistant_phenotype'].notnull())]
     amr_df.set_index(pd.Index(range(amr_df.shape[0])), inplace=True)

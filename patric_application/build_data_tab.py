@@ -21,20 +21,21 @@ def build_tab(antibiotic, seeds=[0, 1, 2, 3, 4]):
         data['Sensitivity'] = []
         data['Specificity'] = []
         for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
-            with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
-                JSdict = json.load(file)
-                for i, seed in enumerate(seeds):
-                    data['antibiotic'].append(dir.split("_")[0])
-                    data['group'].append(dir.split("_")[1])
-                    data['LR'].append(dir.split("_")[4])
-                    data['DPF'].append(dir.split("_")[3])
-                    data['L1'].append(dir.split("_")[5])
-                    data['Early Stopping'].append(float(dir.split("_")[6]))
-                    data['Seed'].append(seed)
-                    data['Val AUC'].append(JSdict['val_auc'][i])
-                    data['Test AUC'].append(JSdict['test_auc'][i])
-                    data['Sensitivity'].append(JSdict['test_sensitivity'][i])
-                    data['Specificity'].append(JSdict['test_specificity'][i])
+            if antibiotic in dir:
+                with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
+                    JSdict = json.load(file)
+                    for i, seed in enumerate(seeds):
+                        data['antibiotic'].append(dir.split("_")[0])
+                        data['group'].append(dir.split("_")[1])
+                        data['LR'].append(dir.split("_")[4])
+                        data['DPF'].append(dir.split("_")[3])
+                        data['L1'].append(dir.split("_")[5])
+                        data['Early Stopping'].append(float(dir.split("_")[6]))
+                        data['Seed'].append(seed)
+                        data['Val AUC'].append(JSdict['val_auc'][i])
+                        data['Test AUC'].append(JSdict['test_auc'][i])
+                        data['Sensitivity'].append(JSdict['test_sensitivity'][i])
+                        data['Specificity'].append(JSdict['test_specificity'][i])
         df = pd.DataFrame(data=data)
 
     print(df)
