@@ -88,7 +88,7 @@ if __name__ == '__main__':
                 ids.append(genome)
                 if amr_df['resistant_phenotype'][row] == 'resistant' or amr_df['resistant_phenotype'][row] == 'intermediate':
                     phenotypes.append([1])
-                elif amr_df['resistant_phenotype'][row] == 'susceptible':
+                else:  # elif amr_df['resistant_phenotype'][row] == 'susceptible'
                     phenotypes.append([0])
                 antibiotics.append([args.antibiotic])
                 annotations.append([True])
@@ -106,6 +106,7 @@ if __name__ == '__main__':
         features.append(genome_features)
 
     print(len(ids), len(phenotypes), len(annotations), len(antibiotics), len(features))
+    print(set(amr_df['resistant_phenotypes']))
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'dataset.csv'), index=False)
