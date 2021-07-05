@@ -66,7 +66,7 @@ if __name__ == '__main__':
                 except:
                     error.append(genome)
             print(error)
-            if genome not in error:
+            if genome not in error and os.path.isfile(sp_file):
                 sp_df = pd.read_csv(sp_file, sep='\t')
                 sp_df = sp_df[(sp_df['function'].notnull())]
                 feat_dict = {}
