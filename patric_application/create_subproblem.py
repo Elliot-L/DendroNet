@@ -65,7 +65,7 @@ if __name__ == '__main__':
                 except:
                     error.append(genome)
 
-            print("done for genome: " + genome)
+            print("done for genome: " + str(genome))
             sp_df = pd.read_csv(sp_file, sep='\t')
             sp_df = sp_df[(sp_df['function'].notnull())]
             feat_dict = {}
