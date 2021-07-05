@@ -105,6 +105,8 @@ if __name__ == '__main__':
                 genome_features.append(0.0)
         features.append(genome_features)
 
+    print(len(ids), len(phenotypes), len(annotations), len(antibiotics), len(features))
+
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'dataset.csv'), index=False)
 
