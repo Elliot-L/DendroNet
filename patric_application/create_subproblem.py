@@ -64,6 +64,8 @@ if __name__ == '__main__':
                     subprocess.call(['wget', '-O', sp_file, fp])
                 except:
                     error.append(genome)
+
+            print("done for genome: " + genome)
             sp_df = pd.read_csv(sp_file, sep='\t')
             sp_df = sp_df[(sp_df['function'].notnull())]
             feat_dict = {}
