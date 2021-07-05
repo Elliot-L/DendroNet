@@ -109,7 +109,7 @@ if __name__ == '__main__':
     print(set(amr_df['resistant_phenotype']))
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
-    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'dataset.csv'), index=False)
+    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.antibiotic + '_' + args.group + '_' + 'samples.csv'), index=False)
 
 
 
