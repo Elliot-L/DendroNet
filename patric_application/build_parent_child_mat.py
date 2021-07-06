@@ -30,7 +30,9 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firm
                           & (genome_df['species'].notnull())& (genome_df['genome_id'].notnull())] # removing rows with missing data
     ids = list(set(label_df['ID'])) # These are the IDs of the species of interest (for which we have data for a specific antibiotic)
     print(len(ids))
+    print(len(set(ids)))
     genome_df = genome_df[genome_df['genome_id'].isin(ids)] # collecting taxonomic information only for species of interest
+    print(genome_df.shape)
     new_idx = range(len(ids))
     genome_df.set_index(pd.Index(new_idx), inplace=True) # Reindexing (part of the rows were removed)
     levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
