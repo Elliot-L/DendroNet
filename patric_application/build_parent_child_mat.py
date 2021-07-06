@@ -29,18 +29,15 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firm
                           & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
                           & (genome_df['species'].notnull())& (genome_df['genome_id'].notnull())] # removing rows with missing data
     ids = list(set(label_df['ID'])) # These are the IDs of the species of interest (for which we have data for a specific antibiotic)
-    print(len(ids))
-    print(len(set(ids)))
     genome_df = genome_df[genome_df['genome_id'].isin(ids)] # collecting taxonomic information only for species of interest
-    print(genome_df.shape)
-    new_idx = range(len(ids))
+    new_idx = range(genome_df.shape[0])
     genome_df.set_index(pd.Index(new_idx), inplace=True) # Reindexing (part of the rows were removed)
     levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
     nodes = [] # list that will contain the nodes in topological order
     descendents = [] # list that will contain lists containing the direct descendents of the node at corresponding position
                      # in "nodes". For leaves, the list will be empty.
     for i, level in enumerate(levels):
-        for j in range(len(ids)): # iterating through each row and each column of the taxonomic information
+        for j in range(genome_df.shape[0]): # iterating through each row and each column of the taxonomic information
             #print(genome_df[level][j])
             #print(level)
             if genome_df[level][j] not in nodes:
