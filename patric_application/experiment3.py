@@ -41,7 +41,7 @@ if __name__ == '__main__':
                         , help='folder to look in for a stored tree structure')
     parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'erythromycin_firmicutes_samples.csv'),
                         metavar='LF', help='file to look in for labels')
-    parser.add_argument('--output_file', type=str, default=os.path.join('output.json'),
+    parser.add_argument('--output-file', type=str, default=os.path.join('output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files', 'parent_child_matrices', 'erythromycin_firmicutes.json')
                         , help='File containing information about the parent-child matrix')
