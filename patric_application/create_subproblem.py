@@ -101,28 +101,31 @@ if __name__ == '__main__':
     print("threshold: ", threshold)
     print(functions)
 
-    for id in ids:
+    for idx in ids:
         genome_features = []
         for func in functions:
-            if func in ids_dict[id].keys():
-                genome_features.append(ids_dict[id][func])
+            if func in ids_dict[idx].keys():
+                genome_features.append(ids_dict[idx][func])
             else:
                 genome_features.append(0.0)
         features.append(genome_features)
 
-    useless_features = []
-
-    for i, feat in enumerate(functions):
+    useful_features = functions.copy()
+    col = 0
+    while col < len(useful_features):
         c = 0
         for feat_list in features:
-            if feat_list[i] > 0.0:
+            if feat_list[col] > 0.0:
                 c += 1
         if c < threshold:
-            useless_features.append((i, feat))
+            useful_features.remove(functions[col])
             for feat_list in features:
-                del feat_list[i]
-    print(len(useless_features))
-    print(useless_features)
+                del feat_list[col]
+            col -= 1
+        col += 1
+    print(len(functions))
+    print(len(useful_features))
+    print(useful_features)
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.antibiotic + '_' + args.group + '_' + 'samples.csv'), index=False)
