@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
-                if amr_df['resistant_phenotype'][row] == 'resistant' or amr_df['resistant_phenotype'][row] == 'intermediate':
+                if amr_df['resistant_phenotype'][row] == 'resistant' or amr_df['resistant_phenotype'][row] == 'intermediate' or amr_df['resistant_phenotype'][row] == 'non_susceptible' or amr_df['resistant_phenotype'][row] == 'reduced_susceptibility':
                     phenotypes.append([1])
                 else:  # elif amr_df['resistant_phenotype'][row] == 'susceptible'
                     phenotypes.append([0])
@@ -95,6 +95,8 @@ if __name__ == '__main__':
 
     for id in ids_dict.keys():
         functions = functions.union(ids_dict[id].keys())
+
+    threshold = int(len(functions)/10)
 
     for id in ids:
         genome_features = []
@@ -105,8 +107,19 @@ if __name__ == '__main__':
                 genome_features.append(0.0)
         features.append(genome_features)
 
-    print(len(ids), len(phenotypes), len(annotations), len(antibiotics), len(features))
-    print(set(amr_df['resistant_phenotype']))
+    useless_features = []
+
+    for i, feat in enumerate(function):
+        c = 0
+        for feat_list in features:
+            if feat_list[i] != 0.0:
+                c += 1
+        if c < threshold:
+            useless_features.append((i, feat))
+            for feat_list in features:
+                del feat_list[i]
+    print(len(useless_features))
+    print(useless_features)
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.antibiotic + '_' + args.group + '_' + 'samples.csv'), index=False)

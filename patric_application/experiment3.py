@@ -160,16 +160,23 @@ if __name__ == '__main__':
         #print("val:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
         #print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
 
-        # running the training loop
         best_auc = 0.0
         early_stopping_count = 0
         aucs_for_plot = []
+
+        all_y_train_idx = []
+        all_pp_train_idx = []
+        for tup in train_idx:
+            all_y_train_idx.append(tup[0])
+            all_pp_train_idx.append(tup[1])
+
+        y_train_true = y[all_y_train_idx].detach().cpu().numpy()  # true values for whole training set
+
+        # running the training loop
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
             running_loss = 0.0
-            #y_true = []
-            #y_pred = []
 
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
@@ -179,15 +186,7 @@ if __name__ == '__main__':
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                #y_t = y[idx_in_X].detach().cpu().numpy() #true values for this batch
-                #y_p = torch.sigmoid(y_hat).detach().cpu().numpy()  #predicted values (after sigmoid) for this batch
-                #The two above lines are used for calculation of AUC durint testing
 
-                """"
-                for i in range(len(y_t)):
-                    y_pred.append(y_p[i])
-                    y_true.append(y_t[i])
-                """
                 # collecting the two loss terms
                 delta_loss = dendronet.delta_loss()
                 train_loss = loss_function(y_hat, y[idx_in_X])  #idx_batch is also used to fetch the appropriate entries from y
@@ -199,11 +198,14 @@ if __name__ == '__main__':
                 loss.backward(retain_graph=True)
                 optimizer.step()
             print('Average training loss for epoch: ', str(running_loss/step))
-            """
-            fpr, tpr, _ = roc_curve(y_true, y_pred)
+
+            # train set after weights are update
+            y_pred = torch.sigmoid(dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()  #predicted values (after sigmoid) for whole
+
+            fpr, tpr, _ = roc_curve(y_train_true, y_pred)
             roc_auc = auc(fpr, tpr)
-            print("ROC AUC for epoch: ", roc_auc)
-            """
+            print("training ROC AUC for epoch: ", roc_auc)
+
 
             #Test performance using validation set at each epoch
             with torch.no_grad():
