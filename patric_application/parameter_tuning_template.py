@@ -4,7 +4,7 @@ from build_data_tab import build_tab
 import json
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--antibiotics', type=str, default='erythromycin', metavar='ANT')
+parser.add_argument('--antibiotic', type=str, default='erythromycin', metavar='ANT')
 parser.add_argument('--group', type=str, default='firmicutes', metavar='GR')
 parser.add_argument('--genome-lineage', type=str, default='data_files/genome_lineage.csv')
 #parser.add_argument('--label-file', type=str, default='data_files/erythromycin_firmicutes_sample.csv')
