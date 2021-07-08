@@ -5,7 +5,7 @@ import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--antibiotics', type=str, default='erythromycin', metavar='ANT')
-parser.add_argument('--group', types=str, default='firmicutes', metavar='GR')
+parser.add_argument('--group', type=str, default='firmicutes', metavar='GR')
 parser.add_argument('--genome-lineage', type=str, default='data_files/genome_lineage.csv')
 #parser.add_argument('--label-file', type=str, default='data_files/erythromycin_firmicutes_sample.csv')
 parser.add_argument('--dpfs', type=float, default=[0.001, 0.01, 0.1, 1.0], help='Default is [0.001, 0.01, 0.1, 1.0]')
