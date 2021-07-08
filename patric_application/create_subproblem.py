@@ -96,7 +96,10 @@ if __name__ == '__main__':
     for id in ids_dict.keys():
         functions = functions.union(ids_dict[id].keys())
 
-    threshold = int(len(functions)/10)
+    threshold = int(len(functions)/4)
+
+    print("threshold: ", threshold)
+    print(functions)
 
     for id in ids:
         genome_features = []
@@ -112,7 +115,7 @@ if __name__ == '__main__':
     for i, feat in enumerate(function):
         c = 0
         for feat_list in features:
-            if feat_list[i] != 0.0:
+            if feat_list[i] > 0.0:
                 c += 1
         if c < threshold:
             useless_features.append((i, feat))
