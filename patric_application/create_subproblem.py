@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     useless_features = []
 
-    for i, feat in enumerate(function):
+    for i, feat in enumerate(functions):
         c = 0
         for feat_list in features:
             if feat_list[i] > 0.0:
