@@ -120,7 +120,7 @@ if __name__ == '__main__':
             if feat_list[col] > 0.0:
                 c += 1
         if c < threshold:
-            useful_features.remove(functions[col])
+            del useful_features[col]
             for feat_list in features:
                 del feat_list[col]
             col -= 1
