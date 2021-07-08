@@ -55,7 +55,6 @@ if __name__ == '__main__':
     for row in range(amr_df.shape[0]):
         genome = amr_df['genome_id'][row]
         if genome in genomes_of_interest and amr_df['antibiotic'][row] == args.antibiotic and genome not in used_genomes:
-            used_genomes.append(genome)
             fp = base_url + str(genome) + '/' + str(genome) + extension
             sp_file = os.path.join(base_out, str(genome) + '_spgenes.tab')
             print("trying download for :" + str(genome))
@@ -74,7 +73,7 @@ if __name__ == '__main__':
                     error.append(genome)
                     print(error)
                     continue
-
+                used_genomes.append(genome)
                 sp_df = sp_df[(sp_df['function'].notnull())]
                 feat_dict = {}
 
@@ -98,10 +97,9 @@ if __name__ == '__main__':
 
     functions = list(functions)
 
-    threshold = int(len(functions)/4)
+    threshold = int(len(used_genomes)/4)
 
     print("threshold: ", threshold)
-    print(functions)
 
     for idx in ids:
         genome_features = []
@@ -127,7 +125,6 @@ if __name__ == '__main__':
         col += 1
     print(len(functions))
     print(len(useful_features))
-    print(useful_features)
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.antibiotic + '_' + args.group + '_' + 'samples.csv'), index=False)
