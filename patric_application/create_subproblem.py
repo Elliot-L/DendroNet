@@ -96,6 +96,8 @@ if __name__ == '__main__':
     for id in ids_dict.keys():
         functions = functions.union(ids_dict[id].keys())
 
+    functions = list(functions)
+
     threshold = int(len(functions)/4)
 
     print("threshold: ", threshold)
