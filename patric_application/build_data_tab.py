@@ -3,7 +3,7 @@ import os
 import jsonpickle
 import json
 
-def build_tab(antibiotic, seeds=[0, 1, 2, 3, 4]):
+def build_tab(antibiotic, group, seeds=[0, 1, 2, 3, 4]):
     df_file = os.path.join('data_files', 'Results', 'brute_results_' + antibiotic + '.csv')
     if os.path.isfile(df_file):
         df = pd.read_csv(df_file)
@@ -21,7 +21,8 @@ def build_tab(antibiotic, seeds=[0, 1, 2, 3, 4]):
         data['Sensitivity'] = []
         data['Specificity'] = []
         for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
-            if antibiotic in dir:
+            if antibiotic in dir and group in dir:
+                print(dir)
                 with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
                     JSdict = json.load(file)
                     for i, seed in enumerate(seeds):
@@ -82,4 +83,4 @@ def build_tab(antibiotic, seeds=[0, 1, 2, 3, 4]):
 
 
 if __name__ == "__main__":
-    build_tab('ciprofloxacin')
+    build_tab(antibiotic='ciprofloxacin', group='Proteobacteria')
