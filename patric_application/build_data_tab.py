@@ -25,6 +25,7 @@ def build_tab(antibiotic, seeds=[0, 1, 2, 3, 4]):
                 with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
                     JSdict = json.load(file)
                     for i, seed in enumerate(seeds):
+                        print(i, seed)
                         data['antibiotic'].append(dir.split("_")[0])
                         data['group'].append(dir.split("_")[1])
                         data['LR'].append(dir.split("_")[4])
