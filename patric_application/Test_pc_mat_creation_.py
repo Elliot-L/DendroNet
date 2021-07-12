@@ -6,7 +6,7 @@ from queue import Queue
 import os
 
 
-new_pc, new_topo_order, new_leaves = build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/betalactam_firmicutes_samples.csv')
+new_pc, new_topo_order, new_leaves = build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/subproblems/firmicutes_batalactam/betalactam_firmicutes_samples.csv')
 
 print(new_pc[6])
 

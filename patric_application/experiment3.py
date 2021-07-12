@@ -43,7 +43,7 @@ if __name__ == '__main__':
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-file', type=str, default=os.path.join('output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
-    parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files', 'parent_child_matrices', 'erythromycin_firmicutes.json')
+    parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files', 'parent_child_matrices', 'firmicutes_erythromycin.json')
                         , help='File containing information about the parent-child matrix')
     args = parser.parse_args()
 

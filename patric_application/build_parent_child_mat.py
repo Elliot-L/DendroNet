@@ -113,6 +113,6 @@ def build_pc_mat_for_all_species(genome_file='genome_lineage.csv', set_level='ph
 
 
 if __name__ == "__main__":
-    build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/betalactam_firmicutes_samples.csv')
+    build_pc_mat(genome_file='data_files/genome_lineage.csv', label_file='data_files/subproblems/firmicutes_batalactam/betalactam_firmicutes_samples.csv')
     #uild_pc_mat_for_all_species(genome_file='data_files/genome_lineage.csv')
     print("done")

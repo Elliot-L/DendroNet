@@ -32,16 +32,18 @@ if __name__ == "__main__":
             for epoch in epoch_list:
                 for l1 in l1_list:
                     for e_stop in e_stop_list:
-                        output_dir = os.path.join('data_files', 'patric_tuning', args.antibiotic + '_' + args.group + '_samples' + '_' + str(dpf) + '_' + str(lr) + '_' + str(l1) + '_' + str(e_stop))
-                        command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
-                                    + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-dir ' + output_dir \
-                                    + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
-                                    + ' --label-file ' + 'data_files/subproblems/' + args.group + '_' + args.antibiotic + '/' + args.antibiotic + '_' + args.group + '_samples.csv' \
-                                    + ' --matrix-file ' + 'data_files/parent_child_matrices/' + args.antibiotic + '_' + args.group + '.json' \
-                                    #+ ' --seed ' + str(args.seed)
-                        os.system(command)
+                        dir_name = args.antibiotic + '_' + args.group + '_samples' + '_' + str(dpf) + '_' + str(lr) + '_' + str(l1) + '_' + str(e_stop)
+                        if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)):
+                            output_dir = os.path.join('data_files', 'patric_tuning', dir_name)
+                            command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
+                                        + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-dir ' + output_dir \
+                                        + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
+                                        + ' --label-file ' + 'data_files/subproblems/' + args.group + '_' + args.antibiotic + '/' + args.antibiotic + '_' + args.group + '_samples.csv' \
+                                        + ' --matrix-file ' + 'data_files/parent_child_matrices/' + args.antibiotic + '_' + args.group + '.json' \
+                                        #+ ' --seed ' + str(args.seed)
+                            os.system(command)
 
-    df, best_combs, val_averages, test_averages = build_tab(antibiotic=antibiotic, seeds=args.seed)
+    df, best_combs, val_averages, test_averages = build_tab(antibiotic=args.antibiotic, seeds=args.seed)
 
 
 
