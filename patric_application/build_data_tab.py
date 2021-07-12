@@ -81,4 +81,4 @@ def build_tab(antibiotic, seeds=[0, 1, 2, 3, 4]):
 
 
 if __name__ == "__main__":
-    build_tab('betalactam')
+    build_tab('ciprofloxacin')
