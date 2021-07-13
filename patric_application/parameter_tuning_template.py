@@ -43,7 +43,7 @@ if __name__ == "__main__":
                                         #+ ' --seed ' + str(args.seed)
                             os.system(command)
 
-    df, best_combs, val_averages, test_averages = build_tab(antibiotic=args.antibiotic, seeds=args.seed)
+    df, best_combs, val_averages, test_averages = build_tab(antibiotic=args.antibiotic, group=args.group, seeds=args.seed)
 
 
 
