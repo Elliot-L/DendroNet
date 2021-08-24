@@ -215,6 +215,7 @@ if __name__ == '__main__':
             print('Average BCE loss on test set:', float(test_loss) / step)
 
             test_auc.append(roc_auc)
+
         output_dict = {'val_auc': val_auc, 'test_auc': test_auc}
 
         fileName = args.output_path
