@@ -3,14 +3,12 @@ import os
 import jsonpickle
 import json
 
-def build_tab(antibiotic, group, seeds=[0, 1, 2, 3, 4]):
-    df_file = os.path.join('data_files', 'Results', 'brute_results_' + antibiotic + '.csv')
+def build_tab(antibiotic, group, model, seeds=[0, 1, 2, 3, 4]):
+    df_file = os.path.join('data_files', 'Results', 'brute_results_' + antibiotic + '_' + group + '_' + model + '.csv')
     if os.path.isfile(df_file):
         df = pd.read_csv(df_file)
     else:
         data = {}
-        data['antibiotic'] = []
-        data['group'] = []
         data['LR'] = []
         data['DPF'] = []
         data['L1'] = []
@@ -18,17 +16,13 @@ def build_tab(antibiotic, group, seeds=[0, 1, 2, 3, 4]):
         data['Seed'] = []
         data['Val AUC'] = []
         data['Test AUC'] = []
-        data['Sensitivity'] = []
-        data['Specificity'] = []
+
         for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
-            if antibiotic in dir and group in dir:
-                print(dir)
+            if antibiotic in dir and group in dir and model in dir:
+                #print(dir)
                 with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
                     JSdict = json.load(file)
                     for i, seed in enumerate(seeds):
-                        print(i, seed)
-                        data['antibiotic'].append(dir.split("_")[0])
-                        data['group'].append(dir.split("_")[1])
                         data['LR'].append(dir.split("_")[4])
                         data['DPF'].append(dir.split("_")[3])
                         data['L1'].append(dir.split("_")[5])
@@ -36,8 +30,6 @@ def build_tab(antibiotic, group, seeds=[0, 1, 2, 3, 4]):
                         data['Seed'].append(seed)
                         data['Val AUC'].append(JSdict['val_auc'][i])
                         data['Test AUC'].append(JSdict['test_auc'][i])
-                        data['Sensitivity'].append(JSdict['test_sensitivity'][i])
-                        data['Specificity'].append(JSdict['test_specificity'][i])
         df = pd.DataFrame(data=data)
 
     print(df)
@@ -55,7 +47,7 @@ def build_tab(antibiotic, group, seeds=[0, 1, 2, 3, 4]):
         val_average_auc = val_average_auc / len(seeds)
         test_average_auc = test_average_auc / len(seeds)
 
-        name = df['antibiotic'][row] + '_' + df['group'][row]
+        name = antibiotic + '_' + group
 
         if name in best_combs:
             if val_average_auc > val_averages[name]:
@@ -72,15 +64,15 @@ def build_tab(antibiotic, group, seeds=[0, 1, 2, 3, 4]):
     print(test_averages)
 
     os.makedirs(os.path.join('data_files', 'Results'), exist_ok=True)
-    df.to_csv(os.path.join('data_files', 'Results', 'brute_results_' + antibiotic + '.csv'), index=False)
+    df.to_csv(os.path.join(df_file, index=False))
 
     output_list = [best_combs, val_averages, test_averages]
 
-    with open(os.path.join('data_files', 'Results', 'refined_results_' + antibiotic + '.json'), 'w') as outfile:
+    with open(os.path.join('data_files', 'Results', 'refined_results_' + antibiotic + group + model + '.json'), 'w') as outfile:
         json.dump(output_list, outfile)
 
     return df, best_combs, val_averages, test_averages
 
 
 if __name__ == "__main__":
-    build_tab(antibiotic='ciprofloxacin', group='Proteobacteria')
+    build_tab(antibiotic='ciprofloxacin', group='Proteobacteria', model='dendronet')

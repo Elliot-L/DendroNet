@@ -30,7 +30,6 @@ if __name__ == '__main__':
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
     parser.add_argument('--l1', type=float, default=1.0)
     parser.add_argument('--p', type=int, default=1)
-    parser.add_argument('--output-dir', type=str, default='data_files', metavar='O')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR')
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
@@ -39,9 +38,9 @@ if __name__ == '__main__':
                         , help='file containing taxonomic classification for species from PATRIC')
     parser.add_argument('--tree-path', type=str, default=os.path.join('data_files', 'patric_tree_storage', 'erythromycin')
                         , help='folder to look in for a stored tree structure')
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'erythromycin_firmicutes_samples.csv'),
+    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_erythromycin', 'erythromycin_firmicutes_samples.csv'),
                         metavar='LF', help='file to look in for labels')
-    parser.add_argument('--output-file', type=str, default=os.path.join('output.json'),
+    parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files', 'parent_child_matrices', 'firmicutes_erythromycin.json')
                         , help='File containing information about the parent-child matrix')
@@ -79,7 +78,7 @@ if __name__ == '__main__':
         species. This could be a list of tuples, i.e. (parent-child-row-index, entry-in-X-index). I would suggest using 
         the ID field to create this list of tuples as you are filling in the parent-child matrix
     """
-    
+
     # flag to use cuda gpu if available
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
@@ -93,10 +92,12 @@ if __name__ == '__main__':
     L1 = args.l1
 
     mapping = []
-    #This will be the mapping between rows in the X and parent_child matrix. Only the features and target values
-    #of the leaves of the tree are added to the X matrix and y vector, respectively, while all nodes are added
-    #to the parent_child matrix. The list mapping contains a tuple for each leaf of the form 
-    #(row_in_X, row_in_parent_child)
+    #  This will be the mapping between rows in the X and parent_child matrix. Only the features and target values
+    #  of the leaves of the tree are added to the X matrix and y vector, respectively, while all nodes are added
+    #  to the parent_child matrix. The list mapping contains a tuple for each leaf of the form
+    #  (row_in_X, row_in_parent_child)
+    #  This is done in order to save computer memory. This way the X matrix can be smaller
+    #  as only the leaves of the tree have features.
 
     X = []
     y = []
@@ -122,11 +123,8 @@ if __name__ == '__main__':
 
     test_auc_output = []
     val_auc_output = []
-    specificity_output = []
-    sensitivity_output = []
 
     for s in args.seed:
-
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
 
         train_idx, test_idx = split_indices(mapping, seed=0)
@@ -156,21 +154,25 @@ if __name__ == '__main__':
             loss_function = loss_function.cuda()
         optimizer = torch.optim.SGD(dendronet.parameters(), lr=LR)
 
-        #print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
-        #print("val:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
-        #print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
+        #  print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
+        #  print("val:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
+        #  print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
 
         best_auc = 0.0
         early_stopping_count = 0
         aucs_for_plot = []
 
+        # Generate two lists containing 1) the index in the matrix y of all the training example (whole train set)
+        # 2) the corresponding positions of these training examples in the parent-path matrix
+        # This is done in order generate a list of all the phenotypes of the training set (train_set_targets), and to
+        # compute the AUC score of the training set after training over all batches is completed
         all_y_train_idx = []
         all_pp_train_idx = []
         for tup in train_idx:
             all_y_train_idx.append(tup[0])
             all_pp_train_idx.append(tup[1])
 
-        y_train_true = y[all_y_train_idx].detach().cpu().numpy()  # true values for whole training set
+        train_set_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
 
         # running the training loop
         for epoch in range(EPOCHS):
@@ -181,15 +183,16 @@ if __name__ == '__main__':
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
-                #separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
+                # separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-
                 # collecting the two loss terms
                 delta_loss = dendronet.delta_loss()
-                train_loss = loss_function(y_hat, y[idx_in_X])  #idx_batch is also used to fetch the appropriate entries from y
+                train_loss = loss_function(y_hat, y[idx_in_X])  # idx_in_X is also used to fetch the appropriate entries from y
+                # a sigmoid is applied to the output of the model to make them fit between 0 and 1
+                # Compute root loss (L1)
                 root_loss = 0
                 for w in dendronet.root_weights:
                     root_loss += abs(float(w))
@@ -197,39 +200,42 @@ if __name__ == '__main__':
                 running_loss += float(loss)
                 loss.backward(retain_graph=True)
                 optimizer.step()
-            print('Average training loss for epoch: ', str(running_loss/step))
+            print('Average training loss per batch for this epoch: ', str(running_loss/step))
 
-            # train set after weights are update
-            y_pred = torch.sigmoid(dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()  #predicted values (after sigmoid) for whole
+            # predicted values (after sigmoid) for whole train set (in the same order as the train_set_targets list)
+            y_pred = torch.sigmoid(dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()
 
-            fpr, tpr, _ = roc_curve(y_train_true, y_pred)
+            fpr, tpr, _ = roc_curve(train_set_targets, y_pred)
             roc_auc = auc(fpr, tpr)
             print("training ROC AUC for epoch: ", roc_auc)
 
-
-            #Test performance using validation set at each epoch
+            # Test performance using validation set at each epoch
             with torch.no_grad():
                 val_loss = 0.0
-                y_true = []
-                y_pred = []
+                all_targets = []
+                all_pred = []
+                # We compute the delta and root loss right away as it doesn't change anymore for this epoch
+                delta_loss = dendronet.delta_loss()
+                root_loss = 0
+                for w in dendronet.root_weights:
+                    root_loss += abs(float(w))
+
                 for step, idx_batch in enumerate(val_batch_gen):
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                    y_t = list(y[idx_in_X]) #true values for this batch
-                    y_p = list(torch.sigmoid(y_hat)) #predictions (after sigmoid) for this batch
-                    delta_loss = dendronet.delta_loss()
+                    targets = list(y[idx_in_X])  # target values for this batch
+                    pred = list(torch.sigmoid(y_hat))  # predictions (after sigmoid) for this batch
                     train_loss = loss_function(y_hat, y[idx_in_X])
-                    root_loss = 0
-                    for w in dendronet.root_weights:
-                        root_loss += abs(float(w))
-                    val_loss += float(train_loss + (delta_loss * DPF) + (root_loss * L1))
-                    y_true.extend(y_t)
-                    y_pred.extend(y_p)
+                    all_targets.extend(targets)
+                    all_pred.extend(pred)
 
-                fpr, tpr, _ = roc_curve(y_true, y_pred)
+                    val_loss += float(train_loss + (delta_loss * DPF) + (root_loss * L1))
+
+
+                fpr, tpr, _ = roc_curve(all_targets, all_pred)
                 roc_auc = auc(fpr, tpr)
-                print('Average loss on the validation set on this epoch: ', str(val_loss / step))
+                print('Average loss on the validation set per batch on this epoch: ', str(val_loss / step))
                 print("ROC AUC for epoch: ", roc_auc)
 
                 aucs_for_plot.append(roc_auc)
@@ -247,45 +253,45 @@ if __name__ == '__main__':
                     break
         val_auc_output.append(roc_auc)
 
-        # With training complete, we'll run the test set. We could use batching here as well if the test set was large
+        # With training complete, we'll run the test set.
         with torch.no_grad():
-            y_true = []
-            y_pred = []
+            all_targets = []
+            all_pred = []
             bce_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                y_t = y[idx_in_X]
-                y_p = torch.sigmoid(y_hat)
-                # y_pred = torch.cat((y_pred, y_p), 0)
-                # y_true = torch.cat((y_true, y_t), 0)
-                bce_loss += loss_function(y_hat, y_t)
-                y_true.extend(list(y_t))
-                y_pred.extend(list(y_p))
+                targets = y[idx_in_X]
+                pred = torch.sigmoid(y_hat)
+                bce_loss += loss_function(y_hat, targets)
+                all_targets.extend(list(targets))
+                all_pred.extend(list(pred))
             delta_loss = dendronet.delta_loss()
             l1_loss = 0
             for w in dendronet.root_weights:
                 l1_loss += abs(float(w))
-            fpr, tpr, _ = roc_curve(y_true, y_pred)
+            fpr, tpr, _ = roc_curve(all_targets, all_pred)
             roc_auc = auc(fpr, tpr)
 
+            """
+            
             true_pos = 0
             false_pos = 0
             false_neg = 0
             true_neg = 0
-            total = len(y_true)
+            total = len(all_targets)
 
             for i in range(total):
-                pred = float(y_pred[i])
-                real = float(y_true[i])
-                if (pred > 0.5 and real == 1.0):
+                pred = float(all_pred[i])
+                target = float(all_targets[i])
+                if (pred > 0.5 and target == 1.0):
                     true_pos += 1
-                elif (pred > 0.5 and real == 0.0):
+                elif (pred > 0.5 and target == 0.0):
                     false_pos += 1
-                elif (pred < 0.5 and real == 0.0):
+                elif (pred < 0.5 and target == 0.0):
                     true_neg += 1
-                elif (pred < 0.5 and real == 1.0):
+                elif (pred < 0.5 and target == 1.0):
                     false_neg += 1
 
             print("accuracy: ", (true_pos + true_neg)/total)
@@ -295,25 +301,18 @@ if __name__ == '__main__':
             print("true negatives: ", true_neg)
             print("false positives: ", false_pos)
             print("false negatives: ", false_neg)
-            print("ROC AUC for test:", roc_auc )
+            
+            """
 
+            print("ROC AUC for test:", roc_auc)
             print('Final Delta loss:', float(delta_loss.detach().cpu().numpy()))
             print('L1 loss on test set is ', l1_loss)
-            print('Average BCE loss on test set:', float(bce_loss)/step)
+            print('Average BCE loss per batch on test set:', float(bce_loss)/step)
 
             test_auc_output.append(roc_auc)
-            specificity_output.append(true_neg/(true_neg + false_pos))
-            sensitivity_output.append(true_pos/(true_pos + false_neg))
-
-        output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output, 'test_specificity': specificity_output,
-                       'test_sensitivity': sensitivity_output}
-
-        fileName = os.path.join(args.output_dir, args.output_file)
-        os.makedirs(os.path.dirname(fileName), exist_ok=True)
-        with open(os.path.join(fileName), 'w') as outfile:
-            json.dump(output_dict, outfile)
 
         plt.plot(aucs_for_plot)
+        plt.show()
         _, file_info = os.path.split(args.label_file)
         antibiotic = file_info.split('_')[0]
         group = file_info.split('_')[1]
@@ -323,19 +322,9 @@ if __name__ == '__main__':
                                      + str(args.lr) + '_' + str(args.dpf) + '_' + str(args.l1) + '_' + str(args.early_stopping) \
                                      + '_seed_' + str(s) + '.png'))
 
+    output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
-
-    """
-
-        For Georgi:
-        
-        Let's make a dictionary to hold these results over multiple runs and then save the dict as JSON:
-        {
-        'test_auc': [0.88, 0.92...]
-        }
-    """
-
-
-
-    
-    
+    fileName = args.output_path
+    os.makedirs(os.path.dirname(fileName), exist_ok=True)
+    with open(fileName, 'w') as outfile:
+        json.dump(output_dict, outfile)

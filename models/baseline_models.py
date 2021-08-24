@@ -12,7 +12,6 @@ class LogRegModel(nn.Module):
     def forward(self, x):
         return torch.sigmoid(self.lin_1(x)).squeeze()
 
-
 class LinRegModel(nn.Module):
     def __init__(self, input_dim, use_bias=False):
         super(LinRegModel, self).__init__()
