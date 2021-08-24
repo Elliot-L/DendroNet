@@ -19,9 +19,11 @@ def build_tab(antibiotic, group, model, seeds=[0, 1, 2, 3, 4]):
 
         for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if antibiotic in dir and group in dir and model in dir:
-                #print(dir)
+                print(dir)
                 with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
                     JSdict = json.load(file)
+                    print(JSdict['val_auc'])
+                    print(JSdict['test_auc'])
                     for i, seed in enumerate(seeds):
                         data['LR'].append(dir.split("_")[4])
                         data['DPF'].append(dir.split("_")[3])
