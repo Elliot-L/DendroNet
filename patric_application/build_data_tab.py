@@ -66,7 +66,7 @@ def build_tab(antibiotic, group, model, seeds=[0, 1, 2, 3, 4]):
     print(test_averages)
 
     os.makedirs(os.path.join('data_files', 'Results'), exist_ok=True)
-    df.to_csv(os.path.join(df_file, index=False))
+    df.to_csv(df_file, index=False)
 
     output_list = [best_combs, val_averages, test_averages]
 
@@ -77,4 +77,4 @@ def build_tab(antibiotic, group, model, seeds=[0, 1, 2, 3, 4]):
 
 
 if __name__ == "__main__":
-    build_tab(antibiotic='ciprofloxacin', group='Proteobacteria', model='dendronet')
+    build_tab(antibiotic='ciprofloxacin', group='Proteobacteria', model='logistic')
