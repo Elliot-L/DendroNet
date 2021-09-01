@@ -23,7 +23,7 @@ if __name__ == '__main__':
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
-    parser.add_argument('--save-seed', type=int, default=[0], metavar='SS',
+    parser.add_argument('--save-seed', type=int, default=[], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
@@ -34,29 +34,12 @@ if __name__ == '__main__':
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
-    parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv', )
-                        , help='file containing taxonomic classification for species from PATRIC')
-    parser.add_argument('--tree-path', type=str, default=os.path.join('data_files', 'patric_tree_storage', 'erythromycin')
-                        , help='folder to look in for a stored tree structure')
     parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_erythromycin', 'erythromycin_firmicutes_samples.csv')
                         , metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
-    parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files', 'parent_child_matrices','firmicutes_erythromycin.json')
-                        , help='File containing information about the parent-child matrix')
     args = parser.parse_args()
 
-    # We get the parent_child matrix using the prexisting file or by creating it
-    if os.path.isfile(args.matrix_file):
-        with open(args.matrix_file) as file:
-            matrix_data = json.load(file)
-        file.close()
-        matrix_dict = jsonpickle.decode(matrix_data)
-        parent_child = matrix_dict['parent_child']
-        topo_order = matrix_dict['nodes']
-        leaves = matrix_dict['leaves']
-    else:
-        parent_child, topo_order, leaves = build_pc_mat(genome_file=args.lineage_path, label_file=args.label_file)
 
     # annotating leaves with labels and features
     labels_df = pd.read_csv(args.label_file, dtype=str)
@@ -77,12 +60,10 @@ if __name__ == '__main__':
     y = []
 
     for row in labels_df.itertuples():
-        for leaf in leaves:
-            if leaf == getattr(row, 'ID'):  # we have matched a leaf to it's row in labels_df
-                phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
-                y.append(phenotype)
-                features = eval(getattr(row, 'Features'))  # the x value
-                X.append(features)
+            phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
+            y.append(phenotype)
+            features = eval(getattr(row, 'Features'))  # the x value
+            X.append(features)
 
     test_auc = []
     val_auc = []
@@ -133,11 +114,10 @@ if __name__ == '__main__':
         all_y_train_idx = []
         for idx in train_idx:
             all_y_train_idx.append(idx)
-
-        y_train_true = y[all_y_train_idx].detach().cpu().numpy()  # true values for whole training set
+        y_train_true = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
+        logistic = logistic.double()
 
         # running the training loop
-        logistic = logistic.double()
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
@@ -223,8 +203,8 @@ if __name__ == '__main__':
         with open(fileName, 'w') as outfile:
             json.dump(output_dict, outfile)
 
-            """
-            
+
+    """"
             true_pos = 0
             false_pos = 0
             false_neg = 0

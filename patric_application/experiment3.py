@@ -19,44 +19,38 @@ from utils.model_utils import build_parent_path_mat, split_indices, IndicesDatas
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=200, metavar='N')
-    parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
+    parser.add_argument('--early-stopping', type=int, default=10, metavar='E',
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
-    parser.add_argument('--save-seed', type=int, default=[0], metavar='SS',
+    parser.add_argument('--save-seed', type=int, default=[], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
-    parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
+    parser.add_argument('--dpf', type=float, default=0.01, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
-    parser.add_argument('--l1', type=float, default=1.0)
+    parser.add_argument('--l1', type=float, default=0.1)
     parser.add_argument('--p', type=int, default=1)
-    parser.add_argument('--lr', type=float, default=0.0001, metavar='LR')
+    parser.add_argument('--lr', type=float, default=0.001, metavar='LR')
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
     parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv',)
                         , help='file containing taxonomic classification for species from PATRIC')
-    parser.add_argument('--tree-path', type=str, default=os.path.join('data_files', 'patric_tree_storage', 'erythromycin')
-                        , help='folder to look in for a stored tree structure')
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_erythromycin', 'erythromycin_firmicutes_samples.csv'),
+    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_betalactam', 'betalactam_firmicutes_samples.csv'),
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
-                        metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
-    parser.add_argument('--matrix-file', type=str, default=os.path.join('data_files', 'parent_child_matrices', 'firmicutes_erythromycin.json')
-                        , help='File containing information about the parent-child matrix')
+                        metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
+    parser.add_argument('--leaf-level', type=str, default='genome_id',
+                        help='taxonomical level down to which the tree will be built')
     args = parser.parse_args()
 
     #We get the parent_child matrix using the prexisting file or by creating it
-    if os.path.isfile(args.matrix_file):
-        with open(args.matrix_file) as file:
-            matrix_data = json.load(file)
-        file.close()
-        matrix_dict = jsonpickle.decode(matrix_data)
-        parent_child = matrix_dict['parent_child']
-        topo_order = matrix_dict['nodes']
-        leaves = matrix_dict['leaves']
-    else:
-        parent_child, topo_order, leaves = build_pc_mat(genome_file=args.lineage_path, label_file=args.label_file)
+    antibiotic = os.path.split(args.label_file)[1].split('_')[0]
+    group = os.path.split(args.label_file)[1].split('_')[1]
+    matrix_file = antibiotic + '_' + group + '_(' + args.leaf_level + ').json'
+    parent_child, topo_order, leaves, node_examples = build_pc_mat(genome_file=args.lineage_path,
+                                                                   label_file=args.label_file,
+                                                                   leaf_level=args.leaf_level)
 
     # annotating leaves with labels and features
     labels_df = pd.read_csv(args.label_file, dtype=str)
@@ -101,8 +95,22 @@ if __name__ == '__main__':
 
     X = []
     y = []
-    feature_number = 0
+    example_number = 0
 
+    for row in labels_df.itertuples():
+        added_in_X_and_y = False
+        for i, example_list in enumerate(node_examples):
+            if getattr(row, 'ID') in example_list:
+                if not added_in_X_and_y:
+                    phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
+                    features = eval(getattr(row, 'Features'))  # the x value
+                    y.append(phenotype)
+                    X.append(features)
+                    added_in_X_and_y = True
+                mapping.append((example_number, i))
+        example_number += 1
+
+    """
     for row in labels_df.itertuples():
         for leaf in leaves:
             if leaf == getattr(row, 'ID'):  # we have matched a leaf to it's row in labels_df
@@ -110,8 +118,9 @@ if __name__ == '__main__':
                 y.append(phenotype)
                 features = eval(getattr(row, 'Features'))  # the x value
                 X.append(features)
-                mapping.append((feature_number, topo_order.index(leaf)))
-                feature_number += 1
+                mapping.append((example_number, topo_order.index(leaf)))
+                example_number += 1
+    """
 
     parent_path_tensor = build_parent_path_mat(parent_child)
     num_features = len(X[0])
@@ -274,7 +283,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_targets, all_pred)
             roc_auc = auc(fpr, tpr)
 
-            """
+            
             
             true_pos = 0
             false_pos = 0
@@ -294,23 +303,13 @@ if __name__ == '__main__':
                 elif (pred < 0.5 and target == 1.0):
                     false_neg += 1
 
-            print("accuracy: ", (true_pos + true_neg)/total)
-            print("sensitivity: ", true_pos/(true_pos + false_neg))
-            print("specificity: ", true_neg/(true_neg + false_pos))
-            print("true positives: ", true_pos)
-            print("true negatives: ", true_neg)
-            print("false positives: ", false_pos)
-            print("false negatives: ", false_neg)
-            
-            """
-
             print("ROC AUC for test:", roc_auc)
             print('Final Delta loss:', float(delta_loss.detach().cpu().numpy()))
             print('L1 loss on test set is ', l1_loss)
             print('Average BCE loss per batch on test set:', float(bce_loss)/step)
 
             test_auc_output.append(roc_auc)
-
+    """
         plt.plot(aucs_for_plot)
         plt.show()
         _, file_info = os.path.split(args.label_file)
@@ -321,10 +320,11 @@ if __name__ == '__main__':
             plt.savefig(os.path.join('data_files', 'AUC_plots', antibiotic + '_' + group + '_' \
                                      + str(args.lr) + '_' + str(args.dpf) + '_' + str(args.l1) + '_' + str(args.early_stopping) \
                                      + '_seed_' + str(s) + '.png'))
-
+    """
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
     fileName = args.output_path
     os.makedirs(os.path.dirname(fileName), exist_ok=True)
     with open(fileName, 'w') as outfile:
         json.dump(output_dict, outfile)
+
