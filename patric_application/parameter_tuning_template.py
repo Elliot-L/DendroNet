@@ -43,10 +43,11 @@ if __name__ == "__main__":
                                                                       args.group + '_' + args.antibiotic,
                                                                       args.antibiotic + '_' + args.group + '_samples.csv')
                                   # + ' --seed ' + str(args.seed)
+                        print(command)
                         os.system(command)
 
-    df, results = build_tab(antibiotic=args.antibiotic, group=args.group,
-                                                            model='dendronet', leaf_level=args.leaf_level)
+    df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)
+
     for dpf in dpf_list:
         for lr in lr_list:
             for epoch in epoch_list:
@@ -66,9 +67,7 @@ if __name__ == "__main__":
                                   # + ' --seed ' + str(args.seed)
                         os.system(command)
 
-    df, results = build_tab(antibiotic=args.antibiotic,
-                                                            group=args.group,
-                                                            model='logistic', leaf_level=args.leaf_level)
+    df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level=args.leaf_level)
 
 
 

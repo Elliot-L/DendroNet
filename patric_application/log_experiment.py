@@ -146,16 +146,15 @@ if __name__ == '__main__':
                 y_pred = []
                 for step, idx_batch in enumerate(val_batch_gen):
                     y_hat = logistic.forward(X[idx_batch])
-                    train_loss = loss_function(y_hat, y[idx_batch])
+                    val_loss += loss_function(y_hat, y[idx_batch].squeeze())
                     y_t = list(y[idx_batch])  # true values for this batch
                     y_p = list(torch.sigmoid(y_hat))  # predictions for this batch
-                    val_loss += float(train_loss)
                     y_true.extend(y_t)
                     y_pred.extend(y_p)
 
                 fpr, tpr, _ = roc_curve(y_true, y_pred)
                 roc_auc = auc(fpr, tpr)
-                print('Average loss on the validation set on this epoch: ', str(val_loss / step))
+                print('Average loss on the validation set on this epoch: ', float(val_loss) / step)
                 print("ROC AUC for epoch: ", roc_auc)
 
                 #aucs_for_plot.append(roc_auc)
