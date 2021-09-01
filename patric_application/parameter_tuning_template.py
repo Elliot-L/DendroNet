@@ -14,6 +14,7 @@ parser.add_argument('--early_stopping', default=[3, 5, 10], help='Default is [3,
 parser.add_argument('--epochs', type=int, default=[200], help='Default is 200')
 parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
+parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 args = parser.parse_args()
 if __name__ == "__main__":
 
@@ -24,49 +25,53 @@ if __name__ == "__main__":
     e_stop_list = args.early_stopping
     epoch_list = args.epochs
 
-    for dpf in dpf_list:
-        for lr in lr_list:
-            for epoch in epoch_list:
-                for l1 in l1_list:
-                    for e_stop in e_stop_list:
+    if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
+        print("DendroNet")
+        for dpf in dpf_list:
+            for lr in lr_list:
+                for epoch in epoch_list:
+                    for l1 in l1_list:
+                        for e_stop in e_stop_list:
 
-                        dir_name = args.antibiotic + '_' + args.group + '_dendronet_' + str(dpf) + '_' + str(lr) + '_' \
-                                   + str(l1) + '_' + str(e_stop) + '_' + args.leaf_level
+                            dir_name = args.antibiotic + '_' + args.group + '_dendronet_' + str(dpf) + '_' + str(lr) + '_' \
+                                       + str(l1) + '_' + str(e_stop) + '_' + args.leaf_level
 
-                        output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
+                            output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
 
-                        command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
-                                    + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
-                                    + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
-                                    + ' --leaf-level ' + str(args.leaf_level) \
-                                    + ' --label-file ' + os.path.join('data_files', 'subproblems',
-                                                                      args.group + '_' + args.antibiotic,
-                                                                      args.antibiotic + '_' + args.group + '_samples.csv')
-                                  # + ' --seed ' + str(args.seed)
-                        os.system(command)
+                            command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
+                                        + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
+                                        + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
+                                        + ' --leaf-level ' + str(args.leaf_level) \
+                                        + ' --label-file ' + os.path.join('data_files', 'subproblems',
+                                                                          args.group + '_' + args.antibiotic,
+                                                                          args.antibiotic + '_' + args.group + '_samples.csv')
+                                      # + ' --seed ' + str(args.seed)
+                            os.system(command)
 
-    df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)
+        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)
 
-    for dpf in dpf_list:
-        for lr in lr_list:
-            for epoch in epoch_list:
-                for l1 in l1_list:
-                    for e_stop in e_stop_list:
-                        dir_name = args.antibiotic + '_' + args.group + '_logistic_' + str(dpf) + '_' \
-                                   + str(lr) + '_' + str(l1) + '_' + str(e_stop)
+    if args.model_to_run == 'both' or args.model_to_run == 'logistic':
+        print("Logistic")
+        for dpf in dpf_list:
+            for lr in lr_list:
+                for epoch in epoch_list:
+                    for l1 in l1_list:
+                        for e_stop in e_stop_list:
+                            dir_name = args.antibiotic + '_' + args.group + '_logistic_' + str(dpf) + '_' \
+                                       + str(lr) + '_' + str(l1) + '_' + str(e_stop)
 
-                        output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
+                            output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
 
-                        command = 'python log_experiment.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
-                                    + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
-                                    + ' --l1 ' + str(l1) \
-                                    + ' --label-file ' + os.path.join('data_files', 'subproblems',
-                                                                      args.group + '_' + args.antibiotic,
-                                                                      args.antibiotic + '_' + args.group + '_samples.csv')
-                                  # + ' --seed ' + str(args.seed)
-                        os.system(command)
+                            command = 'python log_experiment.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
+                                        + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
+                                        + ' --l1 ' + str(l1) \
+                                        + ' --label-file ' + os.path.join('data_files', 'subproblems',
+                                                                          args.group + '_' + args.antibiotic,
+                                                                          args.antibiotic + '_' + args.group + '_samples.csv')
+                                      # + ' --seed ' + str(args.seed)
+                            os.system(command)
 
-    df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level=args.leaf_level)
+        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level=args.leaf_level)
 
 
 
