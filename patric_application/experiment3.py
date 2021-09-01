@@ -47,7 +47,7 @@ if __name__ == '__main__':
     #We get the parent_child matrix using the prexisting file or by creating it
     antibiotic = os.path.split(args.label_file)[1].split('_')[0]
     group = os.path.split(args.label_file)[1].split('_')[1]
-    matrix_file = antibiotic + '_' + group + '_(' + args.leaf_level + ').json'
+    matrix_file = antibiotic + '_' + group + '_' + args.leaf_level + '.json'
     parent_child, topo_order, leaves, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                                    label_file=args.label_file,
                                                                    leaf_level=args.leaf_level)

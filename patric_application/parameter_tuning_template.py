@@ -31,7 +31,7 @@ if __name__ == "__main__":
                     for e_stop in e_stop_list:
 
                         dir_name = args.antibiotic + '_' + args.group + '_dendronet_' + str(dpf) + '_' + str(lr) + '_' \
-                                   + str(l1) + '_' + str(e_stop) + '_(' + args.leaf_level + ')'
+                                   + str(l1) + '_' + str(e_stop) + '_' + args.leaf_level
 
                         output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
 
@@ -43,7 +43,6 @@ if __name__ == "__main__":
                                                                       args.group + '_' + args.antibiotic,
                                                                       args.antibiotic + '_' + args.group + '_samples.csv')
                                   # + ' --seed ' + str(args.seed)
-                        print(command)
                         os.system(command)
 
     df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)

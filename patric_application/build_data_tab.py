@@ -5,7 +5,7 @@ import json
 
 def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
     df_file = os.path.join('data_files', 'Results', 'brute_results_' + antibiotic \
-                           + '_' + group + '_' + model + '_(' + leaf_level + ').csv')
+                           + '_' + group + '_' + model + '_' + leaf_level + '.csv')
 
     data = {}
     data['LR'] = []
