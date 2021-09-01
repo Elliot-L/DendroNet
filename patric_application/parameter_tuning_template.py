@@ -45,7 +45,7 @@ if __name__ == "__main__":
                                   # + ' --seed ' + str(args.seed)
                         os.system(command)
 
-    df, best_combs, val_averages, test_averages = build_tab(antibiotic=args.antibiotic, group=args.group,
+    df, results = build_tab(antibiotic=args.antibiotic, group=args.group,
                                                             model='dendronet', leaf_level=args.leaf_level)
     for dpf in dpf_list:
         for lr in lr_list:
@@ -66,7 +66,7 @@ if __name__ == "__main__":
                                   # + ' --seed ' + str(args.seed)
                         os.system(command)
 
-    df, best_combs, val_averages, test_averages = build_tab(antibiotic=args.antibiotic,
+    df, results = build_tab(antibiotic=args.antibiotic,
                                                             group=args.group,
                                                             model='logistic', leaf_level=args.leaf_level)
 
