@@ -97,6 +97,9 @@ if __name__ == '__main__':
         X = torch.tensor(X, dtype=torch.double, device=device)
         y = torch.tensor(y, dtype=torch.double, device=device)
 
+        print(X)
+        print(y)
+
         # creating the loss function and optimizer
         loss_function = nn.BCEWithLogitsLoss()  # loss function for comparison model
         if torch.cuda.is_available() and USE_CUDA:
