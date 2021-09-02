@@ -158,7 +158,9 @@ if __name__ == '__main__':
         y = torch.tensor(y, dtype=torch.double, device=device)
 
         print(X)
+        print(X.size())
         print(y)
+        print(y.size())
 
         # creating the loss function and optimizer
         loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendroLogReg with BCELoss
