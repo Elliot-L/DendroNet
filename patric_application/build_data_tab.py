@@ -17,7 +17,7 @@ def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
     data['Test AUC'] = []
 
     for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
-        if antibiotic in dir and group in dir and model in dir and leaf_level in dir:
+        if (antibiotic in dir and group in dir and model in dir and leaf_level in dir) or (antibiotic in dir and group in dir and model in dir and leaf_level == 'none'):
             print(dir)
             with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
                 JSdict = json.load(file)
@@ -65,4 +65,4 @@ def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
 
 
 if __name__ == "__main__":
-    build_tab(antibiotic='erythromycin', group='firmicutes', model='samples', leaf_level='genome_id')
+    build_tab(antibiotic='erythromycin', group='firmicutes', model='logistic', leaf_level='none')

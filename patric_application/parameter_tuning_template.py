@@ -50,6 +50,10 @@ if __name__ == "__main__":
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)
 
+        for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
+            if args.group in dir and args.antibiotic in dir and 'dendronet' in dir and args.leaf_level in dir:
+                os.system('rm -r ' + dir)
+
     if args.model_to_run == 'both' or args.model_to_run == 'logistic':
         print("Logistic")
         for dpf in dpf_list:
@@ -71,8 +75,11 @@ if __name__ == "__main__":
                                       # + ' --seed ' + str(args.seed)
                             os.system(command)
 
-        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level=args.leaf_level)
+        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level='none')
 
+        for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
+            if args.group in dir and args.antibiotic in dir and 'logistic' in dir and args.leaf_level in dir:
+                os.system('rm -r ' + dir)
 
 
 
