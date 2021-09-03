@@ -15,12 +15,12 @@ If save_matrix is set to True, the function will save the matrix it has built. I
 the matrix exist already, the value of save_matrix doesn't make a difference. The matrix will not be saved.
 
 """
-def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firmicutes_samples.csv', leaf_level='genome_id', all_genomes=False, force_build=False, save_matrix=True, new_method=False):
+def build_pc_mat(genome_file='genome_lineage.csv', label_file='firmicutes_erythromycin_samples.csv', leaf_level='genome_id', all_genomes=False, force_build=False, save_matrix=True, new_method=False):
     file_name = os.path.split(label_file)[1]
-    antibiotic = file_name.split('_')[0]
-    group = file_name.split('_')[1]
-    if os.path.isfile('data_files/parent_child_matrices/'+ antibiotic + '_' + group + '_' + leaf_level + '.json') and not force_build:
-        with open('data_files/parent_child_matrices/'+ antibiotic + '_' + group + '_' + leaf_level + '.json') as file:
+    group = file_name.split('_')[0]
+    antibiotic = file_name.split('_')[1]
+    if os.path.isfile('data_files/parent_child_matrices/' + group + '_' + antibiotic + '_' + leaf_level + '.json') and not force_build:
+        with open('data_files/parent_child_matrices/' + group + '_' + antibiotic + '_' + leaf_level + '.json') as file:
             js_string = json.load(file)
         jdict = jsonpickle.decode(js_string)
         print("We didn't need to build the matrix")
@@ -103,7 +103,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='erythromycin_firm
         jdict['nodes'] = nodes
         jdict['node_data'] = node_examples
         jdict['leaves'] = leaves
-        with open(os.path.join('data_files', 'parent_child_matrices', antibiotic + '_' + group + '_(' + leaf_level + ').json'), 'w') as outfile:
+        with open(os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_' + leaf_level + '.json'), 'w') as outfile:
             frozen = jsonpickle.encode(jdict)
             json.dump(frozen, outfile)
 

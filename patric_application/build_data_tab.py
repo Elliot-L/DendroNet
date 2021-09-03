@@ -4,8 +4,8 @@ import jsonpickle
 import json
 
 def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
-    df_file = os.path.join('data_files', 'Results', 'brute_results_' + antibiotic \
-                           + '_' + group + '_' + model + '_' + leaf_level + '.csv')
+    df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
+                           + '_' + antibiotic + '_' + leaf_level + '_' + model + '.csv')
 
     data = {}
     data['LR'] = []
@@ -56,9 +56,9 @@ def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
     os.makedirs(os.path.join('data_files', 'Results'), exist_ok=True)
     df.to_csv(df_file, index=False)
 
-    with open(os.path.join('data_files', 'Results', 'refined_results_' + '_'
+    with open(os.path.join('data_files', 'Results', 'refined_results_'
                                                     + antibiotic + '_' + group + '_' + model
-                                                    + '_(' + leaf_level+ ').json'), 'w') as outfile:
+                                                    + '_' + leaf_level + '.json'), 'w') as outfile:
         json.dump(results, outfile)
 
     return df, results

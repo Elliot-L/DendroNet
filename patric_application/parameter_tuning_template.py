@@ -44,7 +44,7 @@ if __name__ == "__main__":
                                         + ' --leaf-level ' + str(args.leaf_level) \
                                         + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                           args.group + '_' + args.antibiotic,
-                                                                          args.antibiotic + '_' + args.group + '_samples.csv')
+                                                                          args.group + '_' + args.antibiotic + '_samples.csv')
                                       # + ' --seed ' + str(args.seed)
                             os.system(command)
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                                         + ' --l1 ' + str(l1) \
                                         + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                           args.group + '_' + args.antibiotic,
-                                                                          args.antibiotic + '_' + args.group + '_samples.csv')
+                                                                          args.group + '_' + args.antibiotic + '_samples.csv')
                                       # + ' --seed ' + str(args.seed)
                             os.system(command)
 
