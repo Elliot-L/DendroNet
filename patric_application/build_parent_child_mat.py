@@ -103,6 +103,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='firmicutes_erythr
         jdict['nodes'] = nodes
         jdict['node_data'] = node_examples
         jdict['leaves'] = leaves
+        os.makedirs(os.path.join('data_files', 'parent_child_matrices'), exist_ok=True)
         with open(os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_' + leaf_level + '.json'), 'w') as outfile:
             frozen = jsonpickle.encode(jdict)
             json.dump(frozen, outfile)

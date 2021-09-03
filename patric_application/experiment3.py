@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.set_defaults(runtest=False)
     parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv',)
                         , help='file containing taxonomic classification for species from PATRIC')
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_betalactam', 'betalactam_firmicutes_samples.csv'),
+    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_betalactam', 'firmicutes_betalactam_samples.csv'),
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
@@ -45,9 +45,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #We get the parent_child matrix using the prexisting file or by creating it
-    antibiotic = os.path.split(args.label_file)[1].split('_')[0]
-    group = os.path.split(args.label_file)[1].split('_')[1]
-    matrix_file = antibiotic + '_' + group + '_' + args.leaf_level + '.json'
+    antibiotic = os.path.split(args.label_file)[1].split('_')[1]
+    group = os.path.split(args.label_file)[1].split('_')[0]
+    matrix_file = group + '_' + antibiotic + '_' + args.leaf_level + '.json'
     parent_child, topo_order, leaves, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                                    label_file=args.label_file,
                                                                    leaf_level=args.leaf_level)
