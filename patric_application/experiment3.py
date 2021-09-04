@@ -185,7 +185,8 @@ if __name__ == '__main__':
         for tup in train_idx:
             all_y_train_idx.append(tup[0])
             all_pp_train_idx.append(tup[1])
-
+        print(all_y_train_idx)
+        print(len(all_y_train_idx))
         train_set_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
 
         # running the training loop
