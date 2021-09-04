@@ -4,8 +4,6 @@ import jsonpickle
 import json
 
 def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
-    df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
-                           + '_' + antibiotic + '_' + leaf_level + '_' + model + '.csv')
 
     data = {}
     data['LR'] = []
@@ -52,13 +50,19 @@ def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
 
     print(results)
     print(df)
+    if leaf_level == 'none':
+        df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
+                               + '_' + antibiotic + '_' + model + '.csv')
+        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + model + '.json'
+    else:
+        df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
+                               + '_' + antibiotic + '_' + model + '_' + leaf_level + '.csv')
+        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + model + '_' + leaf_level + '.json'
 
     os.makedirs(os.path.join('data_files', 'Results'), exist_ok=True)
     df.to_csv(df_file, index=False)
 
-    with open(os.path.join('data_files', 'Results', 'refined_results_'
-                                                    + antibiotic + '_' + group + '_' + model
-                                                    + '_' + leaf_level + '.json'), 'w') as outfile:
+    with open(os.path.join('data_files', 'Results', refined_file), 'w') as outfile:
         json.dump(results, outfile)
 
     return df, results
