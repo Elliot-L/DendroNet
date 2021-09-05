@@ -97,6 +97,8 @@ if __name__ == '__main__':
     y = []
     example_number = 0
 
+    print(node_examples)
+
     for row in labels_df.itertuples():
         added_in_X_and_y = False
         for i, example_list in enumerate(node_examples):
