@@ -112,7 +112,8 @@ if __name__ == '__main__':
                     X.append(features)
                     added_in_X_and_y = True
                 mapping.append((example_number, i))
-        example_number += 1
+        if added_in_X_and_y:
+            example_number += 1
 
     print(len(mapping))
     """
