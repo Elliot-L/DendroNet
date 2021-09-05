@@ -114,6 +114,7 @@ if __name__ == '__main__':
                 mapping.append((example_number, i))
         example_number += 1
 
+    print(len(mapping))
     """
     for row in labels_df.itertuples():
         for leaf in leaves:
