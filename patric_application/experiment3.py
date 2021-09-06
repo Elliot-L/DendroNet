@@ -97,9 +97,6 @@ if __name__ == '__main__':
     y = []
     example_number = 0
 
-    print(node_examples)
-    print(len(node_examples))
-
 
     for row in labels_df.itertuples():
         added_in_X_and_y = False
@@ -115,7 +112,6 @@ if __name__ == '__main__':
         if added_in_X_and_y:
             example_number += 1
 
-    print(len(mapping))
     """
     for row in labels_df.itertuples():
         for leaf in leaves:
@@ -162,11 +158,6 @@ if __name__ == '__main__':
         # converting X and y to tensors, and transferring to GPU if the cuda flag is set
         X = torch.tensor(X, dtype=torch.double, device=device)
         y = torch.tensor(y, dtype=torch.double, device=device)
-
-        print(X)
-        print(X.size())
-        print(y)
-        print(y.size())
 
         # creating the loss function and optimizer
         loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendroLogReg with BCELoss
