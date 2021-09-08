@@ -6,33 +6,23 @@ import subprocess
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--group', type=str, default='Proteobacteria', metavar='G')
-    parser.add_argument('--level', type=str, default='phylum', metavar='L')
-    parser.add_argument('--antibiotic', type=str,default='ciprofloxacin', metavar='A')
+    parser.add_argument('--antibiotic', type=str, default='ciprofloxacin', metavar='A')
+    parser.add_argument('--threshold', type=float, default=0.05, help='fraction of genomes that need to have a ' +
+                        'certain feature for that feature to be selected')
+    parser.add_argument('--force-download', type=str, default='n', help='y/n')
     args = parser.parse_args()
-
-    genomes_of_interest = []
-
-    lineage_file = os.path.join('data_files', 'genome_lineage.csv')
-    lineage_df = pd.read_csv(lineage_file, sep='\t')
-
-    for row in range(lineage_df.shape[0]):
-        if lineage_df[args.level][row] == args.group:
-            genomes_of_interest.append(lineage_df['genome_id'][row])
-
-    print(len(genomes_of_interest))
-    genomes_of_interest = set(genomes_of_interest)
-    print(len(genomes_of_interest))
-
-    amr_file = os.path.join('data_files', 'amr_phenotypes.csv')
-    amr_df = pd.read_csv(amr_file, sep='\t')
-    amr_df = amr_df[(amr_df['resistant_phenotype'].notnull())]
-    amr_df.set_index(pd.Index(range(amr_df.shape[0])), inplace=True)
 
     base_url = 'ftp://ftp.patricbrc.org/genomes/'
     extension = '.PATRIC.spgene.tab'
     base_out = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'spgenes')
     os.makedirs(base_out, exist_ok=True)
     error = []
+
+    basic_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic,
+                              args.group + '_' + args.antibiotic + '_basic.csv')
+    basic_df = pd.read_csv(basic_file, sep='\t')
+    basic_df = basic_df[(basic_df['resistant_phenotype'].notnull())]
+    basic_df.set_index(pd.Index(range(basic_df.shape[0])), inplace=True)
 
     # lists that will be used to build the dataframe at the end
     ids = []
@@ -45,33 +35,37 @@ if __name__ == '__main__':
     # null_functions = set()
     ids_dict = {}
 
+    """
+    
     c = 0
     for row in range(amr_df.shape[0]):
-        if amr_df['antibiotic'][row] == args.antibiotic and amr_df['genome_id'][row] in genomes_of_interest:
+        if basic_df['antibiotic'][row] == args.antibiotic and amr_df['genome_id'][row] in genomes_of_interest:
             c += 1
     print(c)
 
+    """
+
     used_genomes = []
-    for row in range(amr_df.shape[0]):
-        genome = amr_df['genome_id'][row]
-        if genome in genomes_of_interest and amr_df['antibiotic'][row] == args.antibiotic and genome not in used_genomes:
+    for row in range(basic_df.shape[0]):
+        genome = basic_df['genome_id'][row]
+        if genome not in used_genomes and genome not in error:
             fp = base_url + str(genome) + '/' + str(genome) + extension
             sp_file = os.path.join(base_out, str(genome) + '_spgenes.tab')
-            print("trying download for :" + str(genome))
-            if not os.path.isfile(sp_file):
+            print("trying download for : " + str(genome))
+            if not os.path.isfile(sp_file) or args.force_download == 'y':
                 try:
                     # command = 'wget -P ' + outfile + ' ' + fp
                     # os.system(command)
                     subprocess.call(['wget', '-O', sp_file, fp])
                 except:
                     error.append(genome)
-                print(error)
+                    print('error')
             if genome not in error and os.path.isfile(sp_file):
                 try:
                     sp_df = pd.read_csv(sp_file, sep='\t')
                 except pd.errors.EmptyDataError as e:
                     error.append(genome)
-                    print(error)
+                    print('error')
                     continue
                 used_genomes.append(genome)
                 sp_df = sp_df[(sp_df['function'].notnull())]
@@ -85,21 +79,20 @@ if __name__ == '__main__':
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
-                if amr_df['resistant_phenotype'][row] == 'resistant' or amr_df['resistant_phenotype'][row] == 'intermediate' or amr_df['resistant_phenotype'][row] == 'non_susceptible' or amr_df['resistant_phenotype'][row] == 'reduced_susceptibility':
+                if basic_df['resistant_phenotype'][row] == 'Resistant':
                     phenotypes.append([1])
-                else:  # elif amr_df['resistant_phenotype'][row] == 'susceptible'
+                elif basic_df['resistant_phenotype'][row] == 'Susceptible':
                     phenotypes.append([0])
-                antibiotics.append([args.antibiotic])
+                antibiotics.append([basic_df['antibiotic'][row]])
                 annotations.append([True])
 
     for id in ids_dict.keys():
         functions = functions.union(ids_dict[id].keys())
 
     functions = list(functions)
+    min_number = int(len(used_genomes)*args.threshold)
 
-    threshold = int(len(used_genomes)/4)
-
-    print("threshold: ", threshold)
+    #print("threshold: ", threshold)
 
     for idx in ids:
         genome_features = []
@@ -117,7 +110,7 @@ if __name__ == '__main__':
         for feat_list in features:
             if feat_list[col] > 0.0:
                 c += 1
-        if c < threshold:
+        if c < min_number:
             del useful_features[col]
             for feat_list in features:
                 del feat_list[col]

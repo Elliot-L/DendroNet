@@ -48,7 +48,7 @@ if __name__ == '__main__':
     antibiotic = os.path.split(args.label_file)[1].split('_')[1]
     group = os.path.split(args.label_file)[1].split('_')[0]
     matrix_file = group + '_' + antibiotic + '_' + args.leaf_level + '.json'
-    parent_child, topo_order, leaves, node_examples = build_pc_mat(genome_file=args.lineage_path,
+    parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                                    label_file=args.label_file,
                                                                    leaf_level=args.leaf_level)
 
@@ -182,8 +182,7 @@ if __name__ == '__main__':
         for tup in train_idx:
             all_y_train_idx.append(tup[0])
             all_pp_train_idx.append(tup[1])
-        print(all_y_train_idx)
-        print(len(all_y_train_idx))
+
         train_set_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
 
         # running the training loop

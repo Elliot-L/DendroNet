@@ -1,9 +1,10 @@
 import pandas as pd
 import os
 
-def build_feature_matrix(antibiotic='ciprofloxacin', group='proteobacteria'):
 
-    folder = 'data_files/sp_genes/' + antibiotic
+def build_feature_matrix(antibiotic='ciprofloxacin', group='Proteobacteria', threshold=0.05):
+
+    folder = os.path.join('data_files', 'subproblems', group + '_' + antibiotic, 'sp_genes')
 
     #lists for DataFrame
     ids = []
@@ -17,9 +18,7 @@ def build_feature_matrix(antibiotic='ciprofloxacin', group='proteobacteria'):
     ids_dict = {}
 
     for directory in os.listdir(folder):
-        print(directory)
         genome = directory.split('_')[0]
-        print(genome)
         spgenes_file = genome + '.PATRIC.spgene.tab'
         feat_dict = {}
         df = pd.read_csv(os.path.join(folder, directory, spgenes_file), sep='\t')
@@ -29,12 +28,12 @@ def build_feature_matrix(antibiotic='ciprofloxacin', group='proteobacteria'):
                     feat_dict[function] = 1
                 else:
                     feat_dict[function] += 1
-        print(feat_dict)
         ids_dict[genome] = feat_dict
-    print(ids_dict)
 
     for id in ids_dict.keys():
         functions = functions.intersection(set(ids_dict[id].keys()))
+
+    #pheno_file = os.path.join('data_files','subproblems', antibiotic + '_' + group + '.csv')
 
     if antibiotic == 'ciprofloxacin':
         pheno_file = os.path.join('data_files', 'proteobacteria_ciprofloxacin.csv')
@@ -62,7 +61,7 @@ def build_feature_matrix(antibiotic='ciprofloxacin', group='proteobacteria'):
     file_dict = {'ID': ids, 'Antibiotic': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotation, 'Features': features}
     file_df = pd.DataFrame(file_dict)
     #Creating file from which the X matric (feature matrix), and the y vector (target values vector) can be created
-    file_df.to_csv(os.path.join('data_files', 'new_' + antibiotic + '_' + group + '_sample.csv'), index=False)
+    file_df.to_csv(os.path.join('data_files', group + '_' + antibiotic + '_sample.csv'), index=False)
 
 if __name__ == "__main__":
     build_feature_matrix()

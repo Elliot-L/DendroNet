@@ -3,6 +3,14 @@ import os
 #import wget
 import time
 import pandas as pd
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--antibiotic', type=str)
+parser.add_argument('--group', type=str)
+args = parser.parse_args()
+
+
 # example final url:ftp://ftp.patricbrc.org/genomes/511145.12/511145.12.PATRIC.spgene.tab
 
 # antibiotics = ['moxifloxacin', 'azithromycin', 'clarithromycin', 'clindamycin', 'ceftriaxone']
@@ -32,13 +40,12 @@ print(os.getcwd())
 os.chdir(os.path.join('..', 'patric_application'))
 print(os.getcwd())
 
+base_url = 'ftp://ftp.patricbrc.org/genomes/'
+extension = '.PATRIC.spgene.tab'
+
 for ab in antibiotics:
 
-    base_url = 'ftp://ftp.patricbrc.org/genomes/'
-    extension = '.PATRIC.spgene.tab'
-    firmicutes_genomes = set()
-    proteobacteria_genomes = set()
-    other_genomes = set()
+    genomes = set()
     """
     below lines were used for retrieving data for the january submission
     """
@@ -47,25 +54,19 @@ for ab in antibiotics:
     """
     New lines for the retrieval pattern for the whole tree (april submission)
     """
-    genome_file_dir = 'data_files'
-    base_out = 'data_files/sp_genes/' + ab + '/'
 
-    print(base_out)
+    base_out = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'sp_genes')
 
     for file in os.listdir(genome_file_dir):
         if ab in file:
-            print(file)
             # df = pd.read_csv(os.path.join(genome_file_dir, file), sep=',', dtype=str)
             # genomes = genomes.union(set(df['Genome ID']))
             df = pd.read_csv(os.path.join(genome_file_dir, file), sep=',', dtype=str)
             if 'Genome ID' in df.columns:
                 df.rename(columns={'Genome ID': 'ID'}, inplace=True)
-            if 'proteobacteria' in file:
-                proteobacteria_genomes = proteobacteria_genomes.union(set(df['ID']))
-            elif 'firmicutes' in file:
-                fimicutes_genomes = firmicutes_genomes.union(set(df['ID']))
-            else:
-                other_genomes = other_genomes.union(set(df['ID']))
+            if args.group in file:
+                genomes = genomes.union(set(df['ID']))
+
             print(df)
     for genome in proteobacteria_genomes:
         try:
