@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
     basic_df = pd.read_csv(basic_file, sep='\t')
-    basic_df = basic_df[(basic_df['resistant_phenotype'].notnull())]
+    basic_df = basic_df[(basic_df['genome_drug.resistant_phenotype'].notnull())]
     basic_df.set_index(pd.Index(range(basic_df.shape[0])), inplace=True)
 
     # lists that will be used to build the dataframe at the end
@@ -79,11 +79,11 @@ if __name__ == '__main__':
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
-                if basic_df['resistant_phenotype'][row] == 'Resistant':
+                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant':
                     phenotypes.append([1])
-                elif basic_df['resistant_phenotype'][row] == 'Susceptible':
+                elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
                     phenotypes.append([0])
-                antibiotics.append([basic_df['antibiotic'][row]])
+                antibiotics.append([basic_df['drug.antibiotic_name'][row]])
                 annotations.append([True])
 
     for id in ids_dict.keys():
