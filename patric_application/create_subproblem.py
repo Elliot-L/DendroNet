@@ -2,6 +2,7 @@ import argparse
 import os
 import pandas as pd
 import subprocess
+import json
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -18,8 +19,7 @@ if __name__ == '__main__':
     os.makedirs(base_out, exist_ok=True)
     error = []
 
-    basic_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic,
-                              args.group + '_' + args.antibiotic + '_basic.csv')
+    basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
     basic_df = pd.read_csv(basic_file, sep='\t')
     basic_df = basic_df[(basic_df['resistant_phenotype'].notnull())]
     basic_df.set_index(pd.Index(range(basic_df.shape[0])), inplace=True)
@@ -119,8 +119,15 @@ if __name__ == '__main__':
     print(len(functions))
     print(len(useful_features))
 
+    subproblem_infos = {}
+    subproblem_infos['number of examples:'] = len(ids)
+    subproblem_infos['number of features:'] = len(useful_features)
+
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.antibiotic + '_' + args.group + '_' + 'samples.csv'), index=False)
+    with open(os.path.join('data_files','subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos.json'), 'w') as info_file:
+        json.dump(subproblem_infos, info_file)
+
 
 
 

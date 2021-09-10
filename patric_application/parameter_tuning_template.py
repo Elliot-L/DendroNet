@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
         for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in dir and args.antibiotic in dir and 'dendronet' in dir and args.leaf_level in dir:
-                os.system('rm -r ' + dir)
+                os.system('rm -r ' + os.path.join('data_files', 'patric_tuning', dir))
 
     if args.model_to_run == 'both' or args.model_to_run == 'logistic':
         print("Logistic")
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
         for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in dir and args.antibiotic in dir and 'logistic' in dir and args.leaf_level in dir:
-                os.system('rm -r ' + dir)
+                os.system('rm -r ' + os.path.join('data_files', 'patric_tuning', dir))
 
 
 

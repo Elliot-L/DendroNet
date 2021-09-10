@@ -285,7 +285,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_targets, all_pred)
             roc_auc = auc(fpr, tpr)
 
-            
+            """
             
             true_pos = 0
             false_pos = 0
@@ -304,6 +304,7 @@ if __name__ == '__main__':
                     true_neg += 1
                 elif (pred < 0.5 and target == 1.0):
                     false_neg += 1
+            """
 
             print("ROC AUC for test:", roc_auc)
             print('Final Delta loss:', float(delta_loss.detach().cpu().numpy()))
