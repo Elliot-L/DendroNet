@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     used_genomes = []
     for row in range(basic_df.shape[0]):
-        genome = basic_df['genome_id'][row]
+        genome = basic_df['genome_drug.genome_id'][row]
         if genome not in used_genomes and genome not in error:
             fp = base_url + str(genome) + '/' + str(genome) + extension
             sp_file = os.path.join(base_out, str(genome) + '_spgenes.tab')
