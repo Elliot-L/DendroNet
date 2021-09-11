@@ -21,7 +21,9 @@ if __name__ == '__main__':
 
     basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
     basic_df = pd.read_csv(basic_file, sep='\t')
-    basic_df = basic_df[(basic_df['genome_drug.resistant_phenotype'].notnull())]
+    basic_df = basic_df[(basic_df['genome_drug.resistant_phenotype'].notnull()) &
+                        (basic_df['genome_drug.resistant_phenotype'] != 'IS') &
+                        (basic_df['genome_drug.resistant_phenotype'] != 'Not defined')]
     basic_df.set_index(pd.Index(range(basic_df.shape[0])), inplace=True)
 
     # lists that will be used to build the dataframe at the end
@@ -79,7 +81,7 @@ if __name__ == '__main__':
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
-                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant':
+                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate':
                     phenotypes.append([1])
                 elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
                     phenotypes.append([0])
@@ -122,12 +124,6 @@ if __name__ == '__main__':
     subproblem_infos = {}
     subproblem_infos['number of examples:'] = len(ids)
     subproblem_infos['number of features:'] = len(useful_features)
-
-    print(len(ids))
-    print(len(antibiotics))
-    print(len(phenotypes))
-    print(len(annotations))
-    print(len(features))
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.antibiotic + '_' + args.group + '_' + 'samples.csv'), index=False)
