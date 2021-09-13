@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
-                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate':
+                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or basic_df['genome_drug.resistant_phenotype'][row] == 'r':
                     phenotypes.append([1])
                 elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
                     phenotypes.append([0])
@@ -124,11 +124,11 @@ if __name__ == '__main__':
     subproblem_infos = {}
     subproblem_infos['number of examples:'] = len(ids)
     subproblem_infos['number of features:'] = len(useful_features)
+    with open(os.path.join('data_files','subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos.json'), 'w') as info_file:
+        json.dump(subproblem_infos, info_file)
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_' + args.antibiotic + '_' + 'samples.csv'), index=False)
-    with open(os.path.join('data_files','subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos.json'), 'w') as info_file:
-        json.dump(subproblem_infos, info_file)
 
 
 
