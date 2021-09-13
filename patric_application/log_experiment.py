@@ -26,9 +26,6 @@ if __name__ == '__main__':
     parser.add_argument('--save-seed', type=int, default=[], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
-    parser.add_argument('--dpf', type=float, default=1.0, metavar='D',
-                        help='scaling factor applied to delta term in the loss (default: 1.0)')
-    parser.add_argument('--l1', type=float, default=1.0)
     parser.add_argument('--p', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR')
     parser.add_argument('--runtest', dest='runtest', action='store_true')
@@ -53,17 +50,15 @@ if __name__ == '__main__':
     LR = args.lr
     BATCH_SIZE = 8
     EPOCHS = args.epochs
-    DPF = args.dpf
-    L1 = args.l1
 
     X = []
     y = []
 
     for row in labels_df.itertuples():
-            phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
-            y.append(phenotype)
-            features = eval(getattr(row, 'Features'))  # the x value
-            X.append(features)
+        phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
+        y.append(phenotype)
+        features = eval(getattr(row, 'Features'))  # the x value
+        X.append(features)
 
     test_auc = []
     val_auc = []
