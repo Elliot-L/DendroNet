@@ -2,33 +2,56 @@ import pandas as pd
 import os
 import jsonpickle
 import json
+import argparse
+
 
 def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
+    if model == 'dendronet':
+        data = {}
+        data['LR'] = []
+        data['DPF'] = []
+        data['L1'] = []
+        data['Early Stopping'] = []
+        data['Seed'] = []
+        data['Val AUC'] = []
+        data['Test AUC'] = []
 
-    data = {}
-    data['LR'] = []
-    data['DPF'] = []
-    data['L1'] = []
-    data['Early Stopping'] = []
-    data['Seed'] = []
-    data['Val AUC'] = []
-    data['Test AUC'] = []
+        for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
+            if antibiotic in directory and group in directory and model in directory and leaf_level in directory:
+                print(directory)
+                with open(os.path.join('data_files', 'patric_tuning', directory, 'output.json')) as file:
+                    JSdict = json.load(file)
+                    for i, seed in enumerate(seeds):
+                        data['LR'].append(dir.split("_")[4])
+                        data['DPF'].append(dir.split("_")[3])
+                        data['L1'].append(dir.split("_")[5])
+                        data['Early Stopping'].append(float(dir.split("_")[6]))
+                        data['Seed'].append(seed)
+                        data['Val AUC'].append(JSdict['val_auc'][i])
+                        data['Test AUC'].append(JSdict['test_auc'][i])
 
-    for dir in os.listdir(os.path.join('data_files', 'patric_tuning')):
-        if (antibiotic in dir and group in dir and model in dir and leaf_level in dir) or (antibiotic in dir and group in dir and model in dir and leaf_level == 'none'):
-            print(dir)
-            with open(os.path.join('data_files', 'patric_tuning', dir, 'output.json')) as file:
-                JSdict = json.load(file)
-                for i, seed in enumerate(seeds):
-                    data['LR'].append(dir.split("_")[4])
-                    data['DPF'].append(dir.split("_")[3])
-                    data['L1'].append(dir.split("_")[5])
-                    data['Early Stopping'].append(float(dir.split("_")[6]))
-                    data['Seed'].append(seed)
-                    data['Val AUC'].append(JSdict['val_auc'][i])
-                    data['Test AUC'].append(JSdict['test_auc'][i])
+    elif model == 'logistic':
+        data = {}
+        data['LR'] = []
+        data['Early Stopping'] = []
+        data['Seed'] = []
+        data['Val AUC'] = []
+        data['Test AUC'] = []
+
+        for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
+            if antibiotic in directory and group in directory and model in directory and leaf_level == 'none':
+                print(directory)
+                with open(os.path.join('data_files', 'patric_tuning', directory, 'output.json')) as file:
+                    JSdict = json.load(file)
+                    for i, seed in enumerate(seeds):
+                        data['LR'].append(dir.split("_")[3])
+                        data['Early Stopping'].append(float(dir.split("_")[4]))
+                        data['Seed'].append(seed)
+                        data['Val AUC'].append(JSdict['val_auc'][i])
+                        data['Test AUC'].append(JSdict['test_auc'][i])
+
+
     df = pd.DataFrame(data=data)
-
     #print(df)
 
     results = { 'validation_average': -1}
@@ -69,4 +92,10 @@ def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
 
 
 if __name__ == "__main__":
-    build_tab(antibiotic='erythromycin', group='firmicutes', model='logistic', leaf_level='none')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--antibiotic', type=str)
+    parser.add_argument('--group', type=str)
+    parser.add_argument('--model', type=str)
+    parser.add_argument('--leaf-level', type=str)
+    args = parser.parse_args()
+    build_tab(antibiotic=args.antibiotic, group=args.group, model=args.model, leaf_level=args.leaf_level)
