@@ -234,6 +234,8 @@ if __name__ == '__main__':
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                    print(y[idx_in_X])
+                    print(torch.sigmoid(y_hat))
                     targets = list(y[idx_in_X].detach.cpu.numpy())  # target values for this batch
                     pred = list(torch.sigmoid(y_hat).detach.cpu.numpy())  # predictions (after sigmoid) for this batch
                     train_loss = loss_function(y_hat, y[idx_in_X])
