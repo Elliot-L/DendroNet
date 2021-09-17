@@ -273,7 +273,7 @@ if __name__ == '__main__':
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 targets = list(y[idx_in_X].detach().cpu().numpy())
                 pred = list(torch.sigmoid(y_hat).detach().cpu().numpy())
-                bce_loss += loss_function(y_hat, targets)
+                bce_loss += loss_function(y_hat, y[idx_in_X])
                 all_targets.extend(targets)
                 all_pred.extend(pred)
             delta_loss = dendronet.delta_loss()
