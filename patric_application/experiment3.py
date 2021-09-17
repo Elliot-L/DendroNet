@@ -80,7 +80,7 @@ if __name__ == '__main__':
     #device = torch.device("cuda:0")
     # some other hyper-parameters for training
     LR = args.lr
-    BATCH_SIZE = 8
+    BATCH_SIZE = 4
     EPOCHS = args.epochs
     DPF = args.dpf
     L1 = args.l1
