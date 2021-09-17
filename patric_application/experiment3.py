@@ -77,7 +77,7 @@ if __name__ == '__main__':
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
-
+    #device = torch.device("cuda:0")
     # some other hyper-parameters for training
     LR = args.lr
     BATCH_SIZE = 8
@@ -234,14 +234,13 @@ if __name__ == '__main__':
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                    targets = list(y[idx_in_X])  # target values for this batch
-                    pred = list(torch.sigmoid(y_hat))  # predictions (after sigmoid) for this batch
+                    targets = list(y[idx_in_X].detach.cpu.numpy())  # target values for this batch
+                    pred = list(torch.sigmoid(y_hat).detach.cpu.numpy())  # predictions (after sigmoid) for this batch
                     train_loss = loss_function(y_hat, y[idx_in_X])
                     all_targets.extend(targets)
                     all_pred.extend(pred)
 
                     val_loss += float(train_loss + (delta_loss * DPF) + (root_loss * L1))
-
 
                 fpr, tpr, _ = roc_curve(all_targets, all_pred)
                 roc_auc = auc(fpr, tpr)
@@ -272,11 +271,11 @@ if __name__ == '__main__':
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                targets = y[idx_in_X]
-                pred = torch.sigmoid(y_hat)
+                targets = list(y[idx_in_X].detach.cpu.numpy())
+                pred = list(torch.sigmoid(y_hat).detach.cpu.numpy())
                 bce_loss += loss_function(y_hat, targets)
-                all_targets.extend(list(targets))
-                all_pred.extend(list(pred))
+                all_targets.extend(targets)
+                all_pred.extend(pred)
             delta_loss = dendronet.delta_loss()
             l1_loss = 0
             for w in dendronet.root_weights:
