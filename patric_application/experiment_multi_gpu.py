@@ -8,7 +8,7 @@ from build_parent_child_mat import build_pc_mat
 from sklearn.metrics import roc_curve, auc
 from matplotlib import pyplot as plt
 
-#imports from dag tutorial
+# imports from dag tutorial
 import torch
 import numpy as np
 import torch.nn as nn
@@ -34,9 +34,11 @@ if __name__ == '__main__':
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
-    parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv',)
+    parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv', )
                         , help='file containing taxonomic classification for species from PATRIC')
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_betalactam', 'firmicutes_betalactam_samples.csv'),
+    parser.add_argument('--label-file', type=str,
+                        default=os.path.join('data_files', 'subproblems', 'firmicutes_betalactam',
+                                             'firmicutes_betalactam_samples.csv'),
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
@@ -44,13 +46,13 @@ if __name__ == '__main__':
                         help='taxonomical level down to which the tree will be built')
     args = parser.parse_args()
 
-    #We get the parent_child matrix using the prexisting file or by creating it
+    # We get the parent_child matrix using the prexisting file or by creating it
     antibiotic = os.path.split(args.label_file)[1].split('_')[1]
     group = os.path.split(args.label_file)[1].split('_')[0]
     matrix_file = group + '_' + antibiotic + '_' + args.leaf_level + '.json'
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
-                                                                   label_file=args.label_file,
-                                                                   leaf_level=args.leaf_level)
+                                                           label_file=args.label_file,
+                                                           leaf_level=args.leaf_level)
 
     # annotating leaves with labels and features
     labels_df = pd.read_csv(args.label_file, dtype=str)
@@ -62,12 +64,12 @@ if __name__ == '__main__':
     entry 0 in y is the phenotype for row 0 in X
     3. A parent-child matrix for the tree that is defined by the  structure 'data_tree', with some more details below:
         -This parent-child matrix has rows for all nodes in data_tree (including the internal ones)
-        
+
         -Each row corresponds to a parent node, and each column to a child node, i.e. a 1 is entered at 
         position (row 1, col 2) if the node corresponding to row 1 is the parent of the node corresponding to column 2
-        
+
         -The rows should be in descending order; i.e. row/col 0 is the root, row/col 1 and 2 are the first layer below the root
-        
+
         -For each row, we need a mapping which tells us the appropriate entry in X that stores info for the relevant 
         species. This could be a list of tuples, i.e. (parent-child-row-index, entry-in-X-index). I would suggest using 
         the ID field to create this list of tuples as you are filling in the parent-child matrix
@@ -77,7 +79,7 @@ if __name__ == '__main__':
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
-    #device = torch.device("cuda:0")
+    # device = torch.device("cuda:0")
     # some other hyper-parameters for training
     LR = args.lr
     BATCH_SIZE = 8
@@ -135,7 +137,12 @@ if __name__ == '__main__':
     val_auc_output = []
 
     for s in args.seed:
+
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
+
+        if USE_CUDA and (torch.cuda.device_count() > 1):
+            print("Let's use", torch.cuda.device_count(), "GPUs!")
+            dendronet = nn.DataParallel(dendronet)
 
         train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -147,8 +154,8 @@ if __name__ == '__main__':
 
         # Setting some parameters for shuffle batch
         params = {'batch_size': BATCH_SIZE,
-              'shuffle': True,
-              'num_workers': 0}
+                  'shuffle': True,
+                  'num_workers': 0}
 
         train_batch_gen = torch.utils.data.DataLoader(train_set, **params)
         val_batch_gen = torch.utils.data.DataLoader(val_set, **params)
@@ -192,6 +199,7 @@ if __name__ == '__main__':
 
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                print("Outside: " + idx_batch.size())
                 optimizer.zero_grad()
                 # separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
                 idx_in_X = idx_batch[0]
@@ -200,7 +208,8 @@ if __name__ == '__main__':
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 # collecting the two loss terms
                 delta_loss = dendronet.delta_loss()
-                train_loss = loss_function(y_hat, y[idx_in_X])  # idx_in_X is also used to fetch the appropriate entries from y
+                train_loss = loss_function(y_hat,
+                                           y[idx_in_X])  # idx_in_X is also used to fetch the appropriate entries from y
                 # a sigmoid is applied to the output of the model to make them fit between 0 and 1
                 # Compute root loss (L1)
                 root_loss = 0
@@ -210,7 +219,7 @@ if __name__ == '__main__':
                 running_loss += float(loss)
                 loss.backward(retain_graph=True)
                 optimizer.step()
-            print('Average training loss per batch for this epoch: ', str(running_loss/step))
+            print('Average training loss per batch for this epoch: ', str(running_loss / step))
 
             # predicted values (after sigmoid) for whole train set (in the same order as the train_set_targets list)
             y_pred = torch.sigmoid(dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()
@@ -235,7 +244,8 @@ if __name__ == '__main__':
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                     targets = list(y[idx_in_X].detach().cpu().numpy())  # target values for this batch
-                    pred = list(torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions (after sigmoid) for this batch
+                    pred = list(
+                        torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions (after sigmoid) for this batch
                     train_loss = loss_function(y_hat, y[idx_in_X])
                     all_targets.extend(targets)
                     all_pred.extend(pred)
@@ -249,7 +259,7 @@ if __name__ == '__main__':
 
                 aucs_for_plot.append(roc_auc)
 
-                if roc_auc > best_auc: #Check if performance has increased on validation set (loss is decreasing)
+                if roc_auc > best_auc:  # Check if performance has increased on validation set (loss is decreasing)
                     best_auc = roc_auc
                     early_stopping_count = 0
                     print("Improvement!!!")
@@ -257,8 +267,8 @@ if __name__ == '__main__':
                     early_stopping_count += 1
                     print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
 
-                if early_stopping_count > args.early_stopping: # If performance has not increased for long enough, we stop training
-                    print("EARLY STOPPING!")                   # to avoid overfitting
+                if early_stopping_count > args.early_stopping:  # If performance has not increased for long enough, we stop training
+                    print("EARLY STOPPING!")  # to avoid overfitting
                     break
         val_auc_output.append(roc_auc)
 
@@ -284,7 +294,7 @@ if __name__ == '__main__':
             roc_auc = auc(fpr, tpr)
 
             """
-            
+
             true_pos = 0
             false_pos = 0
             false_neg = 0
@@ -307,7 +317,7 @@ if __name__ == '__main__':
             print("ROC AUC for test:", roc_auc)
             print('Final Delta loss:', float(delta_loss.detach().cpu().numpy()))
             print('L1 loss on test set is ', l1_loss)
-            print('Average BCE loss per batch on test set:', float(bce_loss)/step)
+            print('Average BCE loss per batch on test set:', float(bce_loss) / step)
 
             test_auc_output.append(roc_auc)
     """
