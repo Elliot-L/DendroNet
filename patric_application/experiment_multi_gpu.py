@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # device = torch.device("cuda:0")
     # some other hyper-parameters for training
     LR = args.lr
-    BATCH_SIZE = 8
+    BATCH_SIZE = 20
     EPOCHS = args.epochs
     DPF = args.dpf
     L1 = args.l1
@@ -200,7 +200,7 @@ if __name__ == '__main__':
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 print(idx_batch)
-                print("Outside: " + str(len(idx_batch)))
+                print("Outside: " + str(idx_batch[0].size()))
                 optimizer.zero_grad()
                 # separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
                 idx_in_X = idx_batch[0]
