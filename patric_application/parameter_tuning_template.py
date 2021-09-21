@@ -43,7 +43,7 @@ if __name__ == "__main__":
                                         + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
                                         + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
                                         + ' --leaf-level ' + str(args.leaf_level) \
-                                        + ' --batch-size' + str(args.batch_size) \
+                                        + ' --batch-size ' + str(args.batch_size) \
                                         + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                           args.group + '_' + args.antibiotic,
                                                                           args.group + '_' + args.antibiotic + '_samples.csv')
@@ -69,7 +69,7 @@ if __name__ == "__main__":
                     command = 'python log_experiment.py --epochs ' + str(epoch)  \
                               + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr)  \
                               + ' --output-path ' + output_path \
-                              + ' --batch-size' + str(args.batch_size) \
+                              + ' --batch-size ' + str(args.batch_size) \
                               + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                 args.group + '_' + args.antibiotic,
                                                                 args.group + '_' + args.antibiotic + '_samples.csv')
