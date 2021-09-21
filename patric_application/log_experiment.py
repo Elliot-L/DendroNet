@@ -28,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--p', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR')
+    parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
@@ -48,7 +49,7 @@ if __name__ == '__main__':
 
     # some other hyper-parameters for training
     LR = args.lr
-    BATCH_SIZE = 8
+    BATCH_SIZE = args.batch_size
     EPOCHS = args.epochs
 
     X = []

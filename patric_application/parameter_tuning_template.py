@@ -15,6 +15,7 @@ parser.add_argument('--epochs', type=int, default=[200], help='Default is 200')
 parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
+parser.add_argument('--batch-size', type=int, default=8)
 args = parser.parse_args()
 if __name__ == "__main__":
 
@@ -42,6 +43,7 @@ if __name__ == "__main__":
                                         + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
                                         + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
                                         + ' --leaf-level ' + str(args.leaf_level) \
+                                        + ' --batch-size' + str(args.batch_size) \
                                         + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                           args.group + '_' + args.antibiotic,
                                                                           args.group + '_' + args.antibiotic + '_samples.csv')
@@ -67,6 +69,7 @@ if __name__ == "__main__":
                     command = 'python log_experiment.py --epochs ' + str(epoch)  \
                               + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr)  \
                               + ' --output-path ' + output_path \
+                              + ' --batch-size' + str(args.batch_size) \
                               + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                 args.group + '_' + args.antibiotic,
                                                                 args.group + '_' + args.antibiotic + '_samples.csv')
