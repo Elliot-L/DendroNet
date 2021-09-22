@@ -27,6 +27,7 @@ class DendroMatrixLinReg(nn.Module):
         print("node: " + str(node_idx.get_device()))
         print("root: " + str(self.root_weights.get_device()))
         print("delta: " + str(self.delta_mat.get_device()))
+        self.path_mat = self.path_mat.to(x.device)
         print("path: " + str(self.path_mat.get_device()))
         effective_weights = torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
         # this works for linreg with bias-in only
