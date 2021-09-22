@@ -204,8 +204,8 @@ if __name__ == '__main__':
 
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
-                for t in idx_batch:
-                    t.to(device)
+                for i, t in enumerate(idx_batch):
+                    idx_batch[i] = t.to(device)
                 print("Outside: " + str(idx_batch[0].size()))
                 print(idx_batch[0].get_device())
                 optimizer.zero_grad()
@@ -214,6 +214,7 @@ if __name__ == '__main__':
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                print(y_hat.get_device())
                 # collecting the two loss terms
                 delta_loss = dendronet.delta_loss()
                 train_loss = loss_function(y_hat,
@@ -248,11 +249,12 @@ if __name__ == '__main__':
                     root_loss += abs(float(w))
 
                 for step, idx_batch in enumerate(val_batch_gen):
-                    for t in idx_batch:
-                        t.to(device)
+                    for i, t in enumerate(idx_batch):
+                        idx_batch[i] = t.to(device)
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                    print(y_hat.get_device())
                     targets = list(y[idx_in_X].detach().cpu().numpy())  # target values for this batch
                     pred = list(
                         torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions (after sigmoid) for this batch
@@ -288,11 +290,12 @@ if __name__ == '__main__':
             all_pred = []
             bce_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
-                for t in idx_batch:
-                    t.to(device)
+                for i, t in enumerate(idx_batch):
+                    idx_batch[i] = t.to(device)
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                print(y_hat.get_device())
                 targets = list(y[idx_in_X].detach().cpu().numpy())
                 pred = list(torch.sigmoid(y_hat).detach().cpu().numpy())
                 bce_loss += loss_function(y_hat, y[idx_in_X])
