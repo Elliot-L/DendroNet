@@ -216,6 +216,7 @@ if __name__ == '__main__':
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 print(y_hat.get_device())
                 # collecting the two loss terms
+                print(type(dendronet))
                 delta_loss = dendronet.delta_loss()
                 train_loss = loss_function(y_hat,
                                            y[idx_in_X])  # idx_in_X is also used to fetch the appropriate entries from y
