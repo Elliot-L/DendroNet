@@ -144,6 +144,7 @@ if __name__ == '__main__':
         if USE_CUDA and (torch.cuda.device_count() > 1):
             print("Let's use", torch.cuda.device_count(), "GPUs!")
             dendronet = nn.DataParallel(dendronet)
+        dendronet.to(device)
 
         train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -203,6 +204,8 @@ if __name__ == '__main__':
 
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                for t in idx_batch:
+                    t.to(device)
                 print("Outside: " + str(idx_batch[0].size()))
                 print(idx_batch[0].get_device())
                 optimizer.zero_grad()
@@ -245,6 +248,8 @@ if __name__ == '__main__':
                     root_loss += abs(float(w))
 
                 for step, idx_batch in enumerate(val_batch_gen):
+                    for t in idx_batch:
+                        t.to(device)
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
@@ -283,6 +288,8 @@ if __name__ == '__main__':
             all_pred = []
             bce_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
+                for t in idx_batch:
+                    t.to(device)
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
