@@ -200,11 +200,9 @@ if __name__ == '__main__':
 
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
-                print(idx_batch[0].get_device())
                 for i, t in enumerate(idx_batch):
                     idx_batch[i] = t.to(device)
                 print("Outside: " + str(idx_batch[0].size()))
-                print(idx_batch[0].get_device())
                 optimizer.zero_grad()
                 # separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
                 idx_in_X = idx_batch[0]
