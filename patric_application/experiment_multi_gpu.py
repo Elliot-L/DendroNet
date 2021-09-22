@@ -166,6 +166,9 @@ if __name__ == '__main__':
         X = torch.tensor(X, dtype=torch.double, device=device)
         y = torch.tensor(y, dtype=torch.double, device=device)
 
+        print(X.get_device())
+        print(y.get_device())
+
         # creating the loss function and optimizer
         loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendroLogReg with BCELoss
         if torch.cuda.is_available() and USE_CUDA:
@@ -201,6 +204,7 @@ if __name__ == '__main__':
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 print("Outside: " + str(idx_batch[0].size()))
+                print(idx_batch[0].get_device())
                 optimizer.zero_grad()
                 # separating corresponding rows in X (same as y) and parent_path matrix (same as parent_child order)
                 idx_in_X = idx_batch[0]
