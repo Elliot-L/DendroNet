@@ -144,7 +144,7 @@ if __name__ == '__main__':
         if USE_CUDA and (torch.cuda.device_count() > 1):
             print("Let's use", torch.cuda.device_count(), "GPUs!")
             dendronet = nn.DataParallel(dendronet)
-        dendronet.to(device)
+        print(dendronet.device_ids)
 
         train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -217,13 +217,13 @@ if __name__ == '__main__':
                 print(y_hat.get_device())
                 # collecting the two loss terms
                 print(type(dendronet))
-                delta_loss = dendronet.delta_loss()
+                delta_loss = dendronet.module.delta_loss()
                 train_loss = loss_function(y_hat,
                                            y[idx_in_X])  # idx_in_X is also used to fetch the appropriate entries from y
                 # a sigmoid is applied to the output of the model to make them fit between 0 and 1
                 # Compute root loss (L1)
                 root_loss = 0
-                for w in dendronet.root_weights:
+                for w in dendronet.module.root_weights:
                     root_loss += abs(float(w))
                 loss = train_loss + (delta_loss * DPF) + (root_loss * L1)
                 running_loss += float(loss)
@@ -244,9 +244,9 @@ if __name__ == '__main__':
                 all_targets = []
                 all_pred = []
                 # We compute the delta and root loss right away as it doesn't change anymore for this epoch
-                delta_loss = dendronet.delta_loss()
+                delta_loss = dendronet.module.delta_loss()
                 root_loss = 0
-                for w in dendronet.root_weights:
+                for w in dendronet.module.root_weights:
                     root_loss += abs(float(w))
 
                 for step, idx_batch in enumerate(val_batch_gen):
@@ -302,9 +302,9 @@ if __name__ == '__main__':
                 bce_loss += loss_function(y_hat, y[idx_in_X])
                 all_targets.extend(targets)
                 all_pred.extend(pred)
-            delta_loss = dendronet.delta_loss()
+            delta_loss = dendronet.module.delta_loss()
             l1_loss = 0
-            for w in dendronet.root_weights:
+            for w in dendronet.module.root_weights:
                 l1_loss += abs(float(w))
             fpr, tpr, _ = roc_curve(all_targets, all_pred)
             roc_auc = auc(fpr, tpr)
