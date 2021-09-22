@@ -32,8 +32,8 @@ class DendroMatrixLinReg(nn.Module):
         effective_weights = torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
         # this works for linreg with bias-in only
         print("Inside: " + str(x.size()))
-        print(x)
-        print(effective_weights)
+        print(x.size)
+        print(effective_weights.size)
         return torch.sum((x * effective_weights), dim=1)
 
 

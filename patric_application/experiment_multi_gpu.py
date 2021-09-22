@@ -197,7 +197,6 @@ if __name__ == '__main__':
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
             running_loss = 0.0
-
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 for i, t in enumerate(idx_batch):
@@ -209,9 +208,7 @@ if __name__ == '__main__':
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                print(y_hat.get_device())
                 # collecting the two loss terms
-                print(type(dendronet))
                 delta_loss = dendronet.module.delta_loss()
                 train_loss = loss_function(y_hat,
                                            y[idx_in_X])  # idx_in_X is also used to fetch the appropriate entries from y
