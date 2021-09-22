@@ -144,7 +144,6 @@ if __name__ == '__main__':
         if USE_CUDA and (torch.cuda.device_count() > 1):
             print("Let's use", torch.cuda.device_count(), "GPUs!")
             dendronet = nn.DataParallel(dendronet)
-        print(dendronet.device_ids)
 
         train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -166,9 +165,6 @@ if __name__ == '__main__':
         # converting X and y to tensors, and transferring to GPU if the cuda flag is set
         X = torch.tensor(X, dtype=torch.double, device=device)
         y = torch.tensor(y, dtype=torch.double, device=device)
-
-        print(X.get_device())
-        print(y.get_device())
 
         # creating the loss function and optimizer
         loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendroLogReg with BCELoss
@@ -204,6 +200,7 @@ if __name__ == '__main__':
 
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                print(idx_batch[0].get_device())
                 for i, t in enumerate(idx_batch):
                     idx_batch[i] = t.to(device)
                 print("Outside: " + str(idx_batch[0].size()))
