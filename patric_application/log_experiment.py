@@ -70,7 +70,8 @@ if __name__ == '__main__':
         # Used for comparison with DendroNet performance
         # We use a linear regression in order to be able to use BCEWithLogitsLoss as loss function,
         # a more stable version of BCEloss
-        logistic = LinRegModel(len(X[0]), device=device)
+        logistic = LinRegModel(len(X[0]))
+        logistic.to(device)
 
         train_idx, test_idx = split_indices(range(len(X)), seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
