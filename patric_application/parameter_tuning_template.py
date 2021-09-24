@@ -16,6 +16,7 @@ parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], help='Default i
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
+parser.add_argument('--force-train', type=str, default='y', help='Decide if you want the model to recompute for combination that were trained already')
 args = parser.parse_args()
 if __name__ == "__main__":
 
@@ -38,17 +39,18 @@ if __name__ == "__main__":
                                        + str(l1) + '_' + str(e_stop) + '_' + args.leaf_level
 
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
-
-                            command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
-                                        + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
-                                        + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
-                                        + ' --leaf-level ' + str(args.leaf_level) \
-                                        + ' --batch-size ' + str(args.batch_size) \
-                                        + ' --label-file ' + os.path.join('data_files', 'subproblems',
-                                                                          args.group + '_' + args.antibiotic,
-                                                                          args.group + '_' + args.antibiotic + '_samples.csv')
-                                      # + ' --seed ' + str(args.seed)
-                            os.system(command)
+                            print(dir_name)
+                            if not os.path.isdir(dir_name) or args.force_train == 'y':
+                                command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
+                                            + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
+                                            + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
+                                            + ' --leaf-level ' + str(args.leaf_level) \
+                                            + ' --batch-size ' + str(args.batch_size) \
+                                            + ' --label-file ' + os.path.join('data_files', 'subproblems',
+                                                                              args.group + '_' + args.antibiotic,
+                                                                              args.group + '_' + args.antibiotic + '_samples.csv')
+                                          # + ' --seed ' + str(args.seed)
+                                os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)
 
@@ -65,16 +67,17 @@ if __name__ == "__main__":
                                + str(lr) + '_' + str(e_stop)
 
                     output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
-
-                    command = 'python log_experiment.py --epochs ' + str(epoch)  \
-                              + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr)  \
-                              + ' --output-path ' + output_path \
-                              + ' --batch-size ' + str(args.batch_size) \
-                              + ' --label-file ' + os.path.join('data_files', 'subproblems',
-                                                                args.group + '_' + args.antibiotic,
-                                                                args.group + '_' + args.antibiotic + '_samples.csv')
-                    # + ' --seed ' + str(args.seed)
-                    os.system(command)
+                    print(dir_name)
+                    if not os.path.isdir(dir_name) or args.force_train == 'y':
+                        command = 'python log_experiment.py --epochs ' + str(epoch)  \
+                                  + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr)  \
+                                  + ' --output-path ' + output_path \
+                                  + ' --batch-size ' + str(args.batch_size) \
+                                  + ' --label-file ' + os.path.join('data_files', 'subproblems',
+                                                                    args.group + '_' + args.antibiotic,
+                                                                    args.group + '_' + args.antibiotic + '_samples.csv')
+                        # + ' --seed ' + str(args.seed)
+                        os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level='none')
 
