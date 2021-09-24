@@ -144,8 +144,8 @@ if __name__ == '__main__':
                 for step, idx_batch in enumerate(val_batch_gen):
                     y_hat = logistic.forward(X[idx_batch])
                     val_loss += loss_function(y_hat, y[idx_batch])
-                    y_t = list(y[idx_batch])  # true values for this batch
-                    y_p = list(torch.sigmoid(y_hat))  # predictions for this batch
+                    y_t = list(y[idx_batch].detach().cpu().numpy())  # true values for this batch
+                    y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions for this batch
                     y_true.extend(y_t)
                     y_pred.extend(y_p)
 
