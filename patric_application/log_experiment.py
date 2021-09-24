@@ -149,6 +149,8 @@ if __name__ == '__main__':
                     y_true.extend(y_t)
                     y_pred.extend(y_p)
 
+                print(y_true)
+                print(y_pred)
                 fpr, tpr, _ = roc_curve(y_true, y_pred)
                 roc_auc = auc(fpr, tpr)
                 print('Average loss on the validation set on this epoch: ', float(val_loss) / step)
