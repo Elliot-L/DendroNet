@@ -177,8 +177,8 @@ if __name__ == '__main__':
             for step, idx_batch in enumerate(test_batch_gen):
                 y_hat = logistic.forward(X[idx_batch])
                 test_loss += loss_function(y_hat, y[idx_batch])
-                y_t = list(y[idx_batch])
-                y_p = list(torch.sigmoid(y_hat))
+                y_t = list(y[idx_batch].detach().cpu().numpy())
+                y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())
                 # y_pred = torch.cat((y_pred, y_p), 0)
                 # y_true = torch.cat((y_true, y_t), 0)
                 y_true.extend(y_t)
