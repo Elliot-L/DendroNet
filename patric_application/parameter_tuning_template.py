@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
-                            if not os.path.isdir(dir_name) or args.force_train == 'y':
+                            if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train == 'y':
                                 command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
                                             + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
                                             + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
                     output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                     print(dir_name)
-                    if not os.path.isdir(dir_name) or args.force_train == 'y':
+                    if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train == 'y':
                         command = 'python log_experiment.py --epochs ' + str(epoch)  \
                                   + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr)  \
                                   + ' --output-path ' + output_path \
