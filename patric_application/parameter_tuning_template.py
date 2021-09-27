@@ -53,10 +53,11 @@ if __name__ == "__main__":
                                 os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)
-
+        """
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'dendronet' in directory and args.leaf_level in directory:
                 os.system('rm -r ' + os.path.join('data_files', 'patric_tuning', directory))
+        """
 
     if args.model_to_run == 'both' or args.model_to_run == 'logistic':
         print("Logistic")
@@ -80,11 +81,11 @@ if __name__ == "__main__":
                         os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level='none')
-
+        """
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'logistic' in directory and args.leaf_level in directory:
                 os.system('rm -r ' + os.path.join('data_files', 'patric_tuning', directory))
-
+        """
 
 
 
