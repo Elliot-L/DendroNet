@@ -45,7 +45,7 @@ if __name__ == '__main__':
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
-    print(torch.cuda.is_available())
+    print(torch.cuda.current_device())
     print(device)
     # some other hyper-parameters for training
     LR = args.lr
