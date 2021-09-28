@@ -38,7 +38,6 @@ if __name__ == '__main__':
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     args = parser.parse_args()
 
-
     # annotating leaves with labels and features
     labels_df = pd.read_csv(args.label_file, dtype=str)
 
@@ -46,6 +45,7 @@ if __name__ == '__main__':
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
+    print(torch.cuda.is_available())
     print(device)
     # some other hyper-parameters for training
     LR = args.lr
