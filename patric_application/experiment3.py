@@ -7,6 +7,7 @@ import pandas as pd
 from build_parent_child_mat import build_pc_mat
 from sklearn.metrics import roc_curve, auc
 from matplotlib import pyplot as plt
+import time
 
 #imports from dag tutorial
 import torch
@@ -135,7 +136,11 @@ if __name__ == '__main__':
     test_auc_output = []
     val_auc_output = []
 
+    average_time_seed = 0
+
     for s in args.seed:
+        init_time = time.time()
+
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
 
         train_idx, test_idx = split_indices(mapping, seed=0)
@@ -311,6 +316,18 @@ if __name__ == '__main__':
             print('Average BCE loss per batch on test set:', float(bce_loss)/step)
 
             test_auc_output.append(roc_auc)
+
+        final_time = time.time() - init_time
+        average_time_seed += average_time_seed
+
+    average_time_seed = average_time_seed / len(args.seed)
+    print('Average time to train a model: ' + str(average_time_seed) + 'seconds')
+
+    os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
+    time_file = os.path.join('data_files', 'time_performances', 'experiment3_last_run')
+    with open(time_file, 'w') as file:
+        json.dump({'average_per_seed': average_time_seed}, file)
+
     """
         plt.plot(aucs_for_plot)
         plt.show()

@@ -7,6 +7,7 @@ import pandas as pd
 from build_parent_child_mat import build_pc_mat
 from sklearn.metrics import roc_curve, auc
 from matplotlib import pyplot as plt
+import time
 
 # imports from dag tutorial
 import torch
@@ -64,8 +65,10 @@ if __name__ == '__main__':
     test_auc = []
     val_auc = []
 
-    for s in args.seed:
+    average_time_seed = 0  # to test time performance of the training of this model
 
+    for s in args.seed:
+        init_time = time.time()
         # simple linear model to which a sigmoid will be applied in order to make it a logistic model
         # Used for comparison with DendroNet performance
         # We use a linear regression in order to be able to use BCEWithLogitsLoss as loss function,
@@ -199,6 +202,16 @@ if __name__ == '__main__':
         with open(fileName, 'w') as outfile:
             json.dump(output_dict, outfile)
 
+        final_time = time.time() - init_time
+        average_time_seed += final_time
+
+    average_time_seed = average_time_seed / len(args.seed)
+    print('Average time to train a model: ' + str(average_time_seed) + 'seconds')
+
+    os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
+    time_file = os.path.join('data_files', 'time_performances', 'logistic_last_run')
+    with open(time_file, 'w') as file:
+        json.dump({'average_per_seed': average_time_seed}, file)
 
     """"
             true_pos = 0

@@ -17,6 +17,7 @@ parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonom
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
 parser.add_argument('--force-train', type=str, default='y', help='Decide if you want the model to recompute for combination that were trained already')
+parser.add_argument('--gpu_mode', type=str, default='single', help='Using a single or multiple GPUs')
 args = parser.parse_args()
 if __name__ == "__main__":
 
@@ -26,6 +27,10 @@ if __name__ == "__main__":
     l1_list = args.l1s
     e_stop_list = args.early_stopping
     epoch_list = args.epochs
+    if args.multi_gpu == 'single':
+        exp_file = 'experiment3.py'
+    elif args.multi_gpu == 'multiple':
+        exp_file = 'experiment_multi_gpu.py'
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
         print("DendroNet")
@@ -41,7 +46,7 @@ if __name__ == "__main__":
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train == 'y':
-                                command = 'python experiment3.py --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
+                                command = 'python ' + exp_file + ' --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
                                             + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
                                             + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
                                             + ' --leaf-level ' + str(args.leaf_level) \
