@@ -209,7 +209,7 @@ if __name__ == '__main__':
     print('Average time to train a model: ' + str(average_time_seed) + 'seconds')
 
     antibiotic = os.path.split(args.label_file)[1].split(sep='_')[1]
-    group = os.path.split(args.label_file)[0].split(sep='_')[0]
+    group = os.path.split(args.label_file)[1].split(sep='_')[0]
 
     os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
     time_file = os.path.join('data_files', 'time_performances', 'logistic_' + group + '_' + antibiotic)
