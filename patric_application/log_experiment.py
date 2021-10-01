@@ -124,7 +124,7 @@ if __name__ == '__main__':
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
                 y_hat = logistic.forward(X[idx_batch])
-                loss = loss_function(y_hat, y[idx_batch].squeeze())  # idx_batch is also used to fetch the appropriate entries from y
+                loss = loss_function(y_hat, y[idx_batch])  # idx_batch is also used to fetch the appropriate entries from y
                 running_loss += float(loss)
                 loss.backward(retain_graph=True)
                 optimizer.step()
@@ -148,7 +148,7 @@ if __name__ == '__main__':
                     print(y[idx_batch])
                     print(y_hat.size())
                     print(y[idx_batch].size())
-                    val_loss += loss_function(y_hat, y[idx_batch].squeeze())
+                    val_loss += loss_function(y_hat, y[idx_batch])
                     y_t = list(y[idx_batch].detach().cpu().numpy())  # true values for this batch
                     y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions for this batch
                     y_true.extend(y_t)
@@ -181,7 +181,7 @@ if __name__ == '__main__':
             test_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
                 y_hat = logistic.forward(X[idx_batch])
-                test_loss += loss_function(y_hat, y[idx_batch].squeeze())
+                test_loss += loss_function(y_hat, y[idx_batch])
                 y_t = list(y[idx_batch].detach().cpu().numpy())
                 y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())
                 # y_pred = torch.cat((y_pred, y_p), 0)

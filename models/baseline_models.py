@@ -18,7 +18,7 @@ class LinRegModel(nn.Module):
         self.lin_1 = nn.Linear(input_dim, 1, bias=use_bias)
 
     def forward(self, x):
-        return self.lin_1(x).squeeze()
+        return self.lin_1(x)
 
 
 """
