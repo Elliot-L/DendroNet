@@ -339,7 +339,8 @@ if __name__ == '__main__':
     print('Average time to train a model: ' + str(average_time_seed) + 'seconds')
 
     os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
-    time_file = os.path.join('data_files', 'time_performances', 'experiment_multi_gpu_last_run')
+    time_file = os.path.join('data_files', 'time_performances', 'experiment_multi_gpu_' + group + '_' + antibiotic
+                             + '_' + args.leaf_level)
     with open(time_file, 'w') as file:
         json.dump({'average_per_seed': average_time_seed}, file)
 

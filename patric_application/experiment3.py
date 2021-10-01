@@ -53,7 +53,6 @@ if __name__ == '__main__':
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                                    label_file=args.label_file,
                                                                    leaf_level=args.leaf_level)
-
     # annotating leaves with labels and features
     labels_df = pd.read_csv(args.label_file, dtype=str)
 
@@ -324,7 +323,8 @@ if __name__ == '__main__':
     print('Average time to train a model: ' + str(average_time_seed) + 'seconds')
 
     os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
-    time_file = os.path.join('data_files', 'time_performances', 'experiment3_last_run')
+    time_file = os.path.join('data_files', 'time_performances', 'experiment3_' + group + '_' + antibiotic + '_'
+                             + args.leaf_level)
     with open(time_file, 'w') as file:
         json.dump({'average_per_seed': average_time_seed}, file)
 
