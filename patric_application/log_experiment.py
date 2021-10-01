@@ -46,8 +46,6 @@ if __name__ == '__main__':
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
-    print(torch.cuda.current_device())
-    print(device)
     # some other hyper-parameters for training
     LR = args.lr
     BATCH_SIZE = args.batch_size
@@ -150,7 +148,7 @@ if __name__ == '__main__':
                     print(y[idx_batch])
                     print(y_hat.size())
                     print(y[idx_batch].size())
-                    val_loss += loss_function(y_hat, y[idx_batch])
+                    val_loss += loss_function(y_hat, y[idx_batch].squeeze())
                     y_t = list(y[idx_batch].detach().cpu().numpy())  # true values for this batch
                     y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions for this batch
                     y_true.extend(y_t)
@@ -183,7 +181,7 @@ if __name__ == '__main__':
             test_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
                 y_hat = logistic.forward(X[idx_batch])
-                test_loss += loss_function(y_hat, y[idx_batch])
+                test_loss += loss_function(y_hat, y[idx_batch].squeeze())
                 y_t = list(y[idx_batch].detach().cpu().numpy())
                 y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())
                 # y_pred = torch.cat((y_pred, y_p), 0)
