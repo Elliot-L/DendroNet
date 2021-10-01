@@ -27,9 +27,9 @@ if __name__ == "__main__":
     l1_list = args.l1s
     e_stop_list = args.early_stopping
     epoch_list = args.epochs
-    if args.multi_gpu == 'single':
+    if args.gpu_mode == 'single':
         exp_file = 'experiment3.py'
-    elif args.multi_gpu == 'multiple':
+    elif args.gpu_mode == 'multiple':
         exp_file = 'experiment_multi_gpu.py'
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
