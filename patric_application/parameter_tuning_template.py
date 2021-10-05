@@ -17,7 +17,7 @@ parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonom
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
 parser.add_argument('--force-train', type=str, default='y', help='Decide if you want the model to recompute for combination that were trained already')
-parser.add_argument('--gpumode', type=str, default='single', help='Using a single or multiple GPUs')
+parser.add_argument('--gpu-mode', type=str, default='single', help='Using a single or multiple GPUs')
 args = parser.parse_args()
 if __name__ == "__main__":
 
