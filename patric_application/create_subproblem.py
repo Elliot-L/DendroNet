@@ -83,7 +83,8 @@ if __name__ == '__main__':
                 ids.append(genome)
                 if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or basic_df['genome_drug.resistant_phenotype'][row] == 'r':
                     phenotypes.append([1])
-                elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
+                # elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
+                else:
                     phenotypes.append([0])
                 antibiotics.append([basic_df['drug.antibiotic_name'][row]])
                 annotations.append([True])
@@ -120,6 +121,8 @@ if __name__ == '__main__':
         col += 1
     print(len(functions))
     print(len(useful_features))
+
+
 
     subproblem_infos = {}
     subproblem_infos['number of examples:'] = len(ids)
