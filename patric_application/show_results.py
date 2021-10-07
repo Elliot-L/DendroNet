@@ -7,7 +7,7 @@ if __name__ == "__main__":
     data = {}
     data['Group'] = []
     data['Antibiotic'] = []
-    data['Leaf Level']
+    data['Leaf level']
     data['AUC on val']
     data['AUC on val (log)']
     data['AUC on test']
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
             data['Group'].append(group)
             data['Antibiotic'].append(antibiotic)
-            data['Leaf Level'].append(leaf_level)
+            data['Leaf level'].append(leaf_level)
             data['AUC on val'].append(dendro_dict['validation_average'])
             data['AUC on val (log)'].append(log_dict['validation_average'])
             data['AUC on test'].append(dendro_dict['test_average'])
