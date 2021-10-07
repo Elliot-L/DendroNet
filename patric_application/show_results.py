@@ -33,6 +33,7 @@ if __name__ == "__main__":
             data['AUC on val'].append(dendro_dict['validation_average'])
             data['AUC on val (log)'].append(log_dict['validation_average'])
             data['AUC on test'].append(dendro_dict["test_average"])
+            print(log_dict.keys())
             data['AUC on test (log)'].append(log_dict['test_average'])
             df = pd.DataFrame(data=data)
             print(df)
