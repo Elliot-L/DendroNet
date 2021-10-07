@@ -23,20 +23,22 @@ if __name__ == "__main__":
             leaf_level = elements[5]
             with open(os.path.join('data_files', 'Results', result)) as file:
                 dendro_dict = json.load(file)
-
-            with open(os.path.join('data_files', 'Results', 'refined_results_' + group + '_' + antibiotic + '_logistic.json')) as file:
-                log_dict = json.load(file)
+            log_file = os.path.join('data_files', 'Results', 'refined_results_' + group + '_' + antibiotic + '_logistic.json')
+            if os.path.isfile(log_file):
+                with open(log_file) as file:
+                    log_dict = json.load(file)
 
             data['Group'].append(group)
             data['Antibiotic'].append(antibiotic)
             data['Leaf level'].append(leaf_level)
             data['AUC on val'].append(dendro_dict['validation_average'])
-            data['AUC on val (log)'].append(log_dict['validation_average'])
             data['AUC on test'].append(dendro_dict["test_average"])
-            print(log_dict.keys())
-            data['AUC on test (log)'].append(log_dict['test_average'])
-            df = pd.DataFrame(data=data)
-            print(df)
+            if os.path.isfile(log_file) and len(log_dict.keys) > 1:
+                data['AUC on val (log)'].append(log_dict['validation_average'])
+                data['AUC on test (log)'].append(log_dict['test_average'])
+            else:
+                data['AUC on val (log)'].append('-')
+                data['AUC on test (log)'].append('-')
 
     df = pd.DataFrame(data=data)
 
