@@ -7,16 +7,17 @@ if __name__ == "__main__":
     data = {}
     data['Group'] = []
     data['Antibiotic'] = []
-    data['Leaf level']
-    data['AUC on val']
-    data['AUC on val (log)']
-    data['AUC on test']
-    data['AUC on test (log)']
+    data['Leaf level'] = []
+    data['AUC on val'] = []
+    data['AUC on val (log)'] = []
+    data['AUC on test'] = []
+    data['AUC on test (log)'] = []
 
 
     for result in os.listdir(os.path.join('data_files', 'Results')):
         elements = result.split(sep='_')
         if elements[0] == 'refined' and elements[4] == 'dendronet':
+            print(result)
             group = elements[2]
             antibiotic = elements[3]
             leaf_level = elements[5]
