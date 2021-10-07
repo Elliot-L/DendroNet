@@ -23,6 +23,7 @@ if __name__ == "__main__":
             leaf_level = elements[5]
             with open(os.path.join('data_files', 'Results', result)) as file:
                 dendro_dict = json.load(file)
+
             with open(os.path.join('data_files', 'Results', 'refined_results_' + group + '_' + antibiotic + '_logistic.json')) as file:
                 log_dict = json.load(file)
 
@@ -31,8 +32,10 @@ if __name__ == "__main__":
             data['Leaf level'].append(leaf_level)
             data['AUC on val'].append(dendro_dict['validation_average'])
             data['AUC on val (log)'].append(log_dict['validation_average'])
-            data['AUC on test'].append(dendro_dict['test_average'])
+            data['AUC on test'].append(dendro_dict["test_average"])
             data['AUC on test (log)'].append(log_dict['test_average'])
+            df = pd.DataFrame(data=data)
+            print(df)
 
     df = pd.DataFrame(data=data)
 
