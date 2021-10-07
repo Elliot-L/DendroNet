@@ -21,8 +21,10 @@ if __name__ == "__main__":
             group = elements[2]
             antibiotic = elements[3]
             leaf_level = elements[5]
-            dendro_dict = json.load(result)
-            log_dict = json.load('refined_results_' + group + '_' + antibiotic + '_logistic.json')
+            with open(result) as file:
+                dendro_dict = json.load(file)
+            with open('refined_results_' + group + '_' + antibiotic + '_logistic.json') as file:
+                log_dict = json.load(file)
 
             data['Group'].append(group)
             data['Antibiotic'].append(antibiotic)
