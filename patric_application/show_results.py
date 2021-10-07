@@ -33,7 +33,7 @@ if __name__ == "__main__":
             data['Leaf level'].append(leaf_level)
             data['AUC on val'].append(dendro_dict['validation_average'])
             data['AUC on test'].append(dendro_dict["test_average"])
-            if os.path.isfile(log_file) and len(log_dict.keys) > 1:
+            if os.path.isfile(log_file) and len(list(log_dict.keys)) > 1:
                 data['AUC on val (log)'].append(log_dict['validation_average'])
                 data['AUC on test (log)'].append(log_dict['test_average'])
             else:
