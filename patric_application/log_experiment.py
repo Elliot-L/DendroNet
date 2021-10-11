@@ -144,7 +144,9 @@ if __name__ == '__main__':
                 y_pred = []
                 for step, idx_batch in enumerate(val_batch_gen):
                     y_hat = logistic.forward(X[idx_batch])
-                    val_loss += loss_function(y_hat, y[idx_batch].squeeze())
+                    if y_hat.size() == torch.Size([]):
+                        y_hat = torch.unsqueeze(y_hat, 0)
+                    val_loss += loss_function(y_hat, y[idx_batch])
                     y_t = list(y[idx_batch].detach().cpu().numpy())  # true values for this batch
                     y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions for this batch
                     y_true.extend(y_t)
@@ -177,7 +179,9 @@ if __name__ == '__main__':
             test_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
                 y_hat = logistic.forward(X[idx_batch])
-                test_loss += loss_function(y_hat, y[idx_batch].squeeze())
+                if y_hat.size() == torch.Size([]):
+                    y_hat = torch.unsqueeze(y_hat, 0)
+                test_loss += loss_function(y_hat, y[idx_batch])
                 y_t = list(y[idx_batch].detach().cpu().numpy())
                 y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())
                 # y_pred = torch.cat((y_pred, y_p), 0)

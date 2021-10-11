@@ -2,6 +2,12 @@ import os
 import pandas as pd
 import json
 
+def phylo_entropy(matrix):
+    pass
+
+def quad_entropy(matrix):
+    pass
+
 if __name__ == "__main__":
 
     data = {}
@@ -17,10 +23,9 @@ if __name__ == "__main__":
     for result in os.listdir(os.path.join('data_files', 'Results')):
         elements = result.split(sep='_')
         if elements[0] == 'refined' and elements[4] == 'dendronet':
-            print(result)
             group = elements[2]
             antibiotic = elements[3]
-            leaf_level = elements[5]
+            leaf_level = elements[5].split(sep='.')[0]
             with open(os.path.join('data_files', 'Results', result)) as file:
                 dendro_dict = json.load(file)
             log_file = os.path.join('data_files', 'Results', 'refined_results_' + group + '_' + antibiotic + '_logistic.json')
