@@ -79,7 +79,7 @@ def quad_entropy(antibiotic, group, leaf_level):
                     curr = n
             paths.append(path)
         else:
-            path.append([])
+            paths.append([])
 
     quad_entropy_value = 0
     for i in range(len(topo_order)):
