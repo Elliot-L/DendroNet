@@ -18,13 +18,14 @@ def entropy(antibiotic, group, leaf_level):
 
     for l in node_examples:
         proportions.append((len(l) / total_examples))
+    print(proportions)
 
     entropy = 0
     for p in proportions:
         if p > 0:
             entropy += p*(math.log2(p))
 
-    return entropy
+    return (-1)*entropy
 
 
 def phylo_entropy(antibiotic, group, leaf_level):
@@ -68,6 +69,20 @@ def quad_entropy(antibiotic, group, leaf_level):
         if len(node_examples[node]) > 0:
             leafs.append(topo_order[node])
 
+    paths = []
+    for i in range(topo_order):
+        if topo_order[i] in leafs:
+            stop = False
+            path = []
+            path.append(topo_order[i])
+            curr = i
+            while not stop:
+                for n in range(topo_order):
+                    if parent_child_matrix[n][curr] == 1.0:
+                        path.append(topo_order[n])
+                        if n == 0:
+                            break
+
     for i in range(topo_order):
         for j in range(topo_order):
             if topo_order[i] in leafs and topo_order[j] in leafs and j > i:
@@ -75,20 +90,7 @@ def quad_entropy(antibiotic, group, leaf_level):
                 path_j = [topo_order[j]]
                 stop_i = False
                 stop_j = False
-                while(not stop):
-                    for n in range(topo_order):
-                        if parent_child_matrix[n][i] == 1.0:
-                            path_i.append(topo_order[n])
-                            if n == 0:
-                                stop_i = True
-                                break
-                while (not stop):
-                    for n in range(topo_order):
-                        if parent_child_matrix[n][j] == 1.0:
-                            path_j.append(topo_order[n])
-                            if n == 0:
-                                stop_j = True
-                                break
+
 
 
 if __name__ == "__main__":
