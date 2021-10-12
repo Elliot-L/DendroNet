@@ -21,7 +21,8 @@ def entropy(antibiotic, group, leaf_level):
 
     entropy = 0
     for p in proportions:
-        entropy += p*(math.log2(p))
+        if p > 0:
+            entropy += p*(math.log2(p))
 
     return entropy
 
