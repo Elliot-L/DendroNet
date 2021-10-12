@@ -80,7 +80,7 @@ def quad_entropy(antibiotic, group, leaf_level):
             paths.append(path)
         else:
             paths.append([])
-
+    print(paths)
     quad_entropy_value = 0
     for i in range(len(topo_order)):
         for j in range(len(topo_order)):
@@ -88,7 +88,7 @@ def quad_entropy(antibiotic, group, leaf_level):
                 closest_common_ancestor = ''
                 for ancestor in paths[i]:
                     if ancestor in paths[j]:
-                        closest_common_ancestor = path[i]
+                        closest_common_ancestor = ancestor
                         break
                 distance = paths[i].index(closest_common_ancestor) + paths[j].index(closest_common_ancestor)
                 quad_entropy_value += distance*proportions[i]*proportions[j]
