@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
-    parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv', )
+    parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv')
                         , help='file containing taxonomic classification for species from PATRIC')
     parser.add_argument('--label-file', type=str,
                         default=os.path.join('data_files', 'subproblems', 'firmicutes_betalactam',
