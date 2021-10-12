@@ -18,7 +18,6 @@ def entropy(antibiotic, group, leaf_level):
 
     for l in node_examples:
         proportions.append((len(l) / total_examples))
-    print(proportions)
 
     entropy = 0
     for p in proportions:
@@ -70,26 +69,32 @@ def quad_entropy(antibiotic, group, leaf_level):
             leafs.append(topo_order[node])
 
     paths = []
-    for i in range(topo_order):
+    for i in range(len(topo_order)):
         if topo_order[i] in leafs:
-            stop = False
-            path = []
-            path.append(topo_order[i])
+            path = [topo_order[i]]
             curr = i
-            while not stop:
-                for n in range(topo_order):
-                    if parent_child_matrix[n][curr] == 1.0:
-                        path.append(topo_order[n])
-                        if n == 0:
-                            break
+            for n in range(len(topo_order) - 1, -1, -1):
+                if parent_child_matrix[n][curr] == 1.0:
+                    path.append(topo_order[n])
+                    curr = n
+            paths.append(path)
+        else:
+            path.append([])
 
-    for i in range(topo_order):
-        for j in range(topo_order):
+    quad_entropy_value = 0
+    for i in range(len(topo_order)):
+        for j in range(len(topo_order)):
             if topo_order[i] in leafs and topo_order[j] in leafs and j > i:
-                path_i = [topo_order[i]]
-                path_j = [topo_order[j]]
-                stop_i = False
-                stop_j = False
+                closest_common_ancestor = ''
+                for ancestor in paths[i]:
+                    if ancestor in paths[j]:
+                        closest_common_ancestor = path[i]
+                        break
+                distance = paths[i].index(closest_common_ancestor) + paths[j].index(closest_common_ancestor)
+                quad_entropy_value += distance*proportions[i]*proportions[j]
+
+    return quad_entropy_value
+
 
 
 
@@ -132,7 +137,7 @@ if __name__ == "__main__":
                 data['AUC on val (log)'].append('-')
                 data['AUC on test (log)'].append('-')
             data["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
-            data['Quadratic entropy'].append('-')
+            data['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
             data['Phylogenetic entropy'].append('-')
 
     df = pd.DataFrame(data=data)
