@@ -52,7 +52,7 @@ def phylo_entropy(antibiotic, group, leaf_level):
             if prop > 0:
                 phylo_entropy_value += prop*(math.log2(prop))
 
-    return phylo_entropy_value
+    return (-1)*phylo_entropy_value
 
 def subtree(mat, p, prop):
     if prop[p] > 0:
