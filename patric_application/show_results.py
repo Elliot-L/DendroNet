@@ -153,7 +153,7 @@ if __name__ == "__main__":
                 data['AUC on test (log)'].append('-')
             data["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
             data['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
-            data['Phylogenetic entropy'].append('-')
+            data['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, leaf_level))
 
     df = pd.DataFrame(data=data)
 
