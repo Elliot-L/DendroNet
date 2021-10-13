@@ -171,10 +171,10 @@ if __name__ == "__main__":
                 data1['AUC on test (log)'].append('-')
             if len(info_dict) > 0:
                 data1['# of Examples'].append('number of examples:')
-                data1['# of  Features'].append(info_dict['number of features:'])
+                data1['# of Features'].append(info_dict['number of features:'])
             else:
                 data1['# of Examples'].append('-')
-                data1['# of  Features'].append('-')
+                data1['# of Features'].append('-')
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
             data2['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, leaf_level))
