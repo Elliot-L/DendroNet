@@ -4,6 +4,7 @@ import json
 import math
 from build_parent_child_mat import build_pc_mat
 
+
 def entropy(antibiotic, group, leaf_level):
     label_file = os.path.join('data_file', 'subproblems', group + '_' + antibiotic,
                               group + '_' + antibiotic + '_samples.csv')
@@ -42,10 +43,26 @@ def phylo_entropy(antibiotic, group, leaf_level):
     for l in node_examples:
         proportions.append((len(l)/total_examples))
 
-    leafs = []
-    for node in range(len(topo_order)):
-        if len(node_examples[node]) > 0:
-            leafs.append(topo_order[node])
+    phylo_entropy_value = 0
+    for p in range(len(topo_order)):
+        for c in range(len(topo_order)):
+            prop = 0
+            if parent_child_matrix[p][c] == 1.0:
+                prop = subtree(parent_child_matrix, c, proportions)
+            if prop > 0:
+                phylo_entropy_value += prop*(math.log2(prop))
+
+    return phylo_entropy_value
+
+def subtree(mat, p, prop):
+    if prop[p] > 0:
+        return prop[p]
+    else:
+        total_prop = 0
+        for c in range(p + 1, mat.shape[0]):
+            if mat[p][c] == 1.0:
+                total_prop += subtree(mat, c, prop)
+        return total_prop
 
 
 def quad_entropy(antibiotic, group, leaf_level):
@@ -63,14 +80,14 @@ def quad_entropy(antibiotic, group, leaf_level):
     for l in node_examples:
         proportions.append((len(l) / total_examples))
 
-    leafs = []
+    leaves = []
     for node in range(len(topo_order)):
         if len(node_examples[node]) > 0:
-            leafs.append(topo_order[node])
+            leaves.append(topo_order[node])
 
     paths = []
     for i in range(len(topo_order)):
-        if topo_order[i] in leafs:
+        if topo_order[i] in leaves:
             path = [topo_order[i]]
             curr = i
             for n in range(len(topo_order) - 1, -1, -1):
@@ -80,11 +97,11 @@ def quad_entropy(antibiotic, group, leaf_level):
             paths.append(path)
         else:
             paths.append([])
-    print(paths)
+
     quad_entropy_value = 0
     for i in range(len(topo_order)):
         for j in range(len(topo_order)):
-            if topo_order[i] in leafs and topo_order[j] in leafs and j > i:
+            if topo_order[i] in leaves and topo_order[j] in leaves and j > i:
                 closest_common_ancestor = ''
                 for ancestor in paths[i]:
                     if ancestor in paths[j]:
@@ -94,8 +111,6 @@ def quad_entropy(antibiotic, group, leaf_level):
                 quad_entropy_value += distance*proportions[i]*proportions[j]
 
     return quad_entropy_value
-
-
 
 
 if __name__ == "__main__":
