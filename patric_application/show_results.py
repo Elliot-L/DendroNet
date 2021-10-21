@@ -175,6 +175,7 @@ if __name__ == "__main__":
             else:
                 data1['# of Examples'].append('-')
                 data1['# of Features'].append('-')
+            print(antibiotic + group + leaf_level)
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
             data2['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, leaf_level))
