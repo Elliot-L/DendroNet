@@ -138,7 +138,10 @@ if __name__ == "__main__":
         if elements[0] == 'refined' and elements[4] == 'dendronet':
             group = elements[2]
             antibiotic = elements[3]
-            leaf_level = elements[5].split(sep='.')[0]
+            if len(elements) == 5:
+                leaf_level = elements[5].split(sep='.')[0]
+            elif len(elements) == 6:
+                leaf_level = elements[5] + '_' + elements[6].split(sep='.')[0]
             with open(os.path.join('data_files', 'Results', result)) as file:
                 dendro_dict = json.load(file)
             log_file = os.path.join('data_files', 'Results', 'refined_results_' + group + '_' + antibiotic + '_logistic.json')
