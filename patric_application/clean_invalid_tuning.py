@@ -5,6 +5,7 @@ if __name__ == '__main__':
     for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
         print(directory)
         file = os.path.join('data_files', 'patric_tuning', directory, 'output.json')
+        print(file)
         if os.path.isfile(file):
             with open(file) as f:
                 dic = json.load(f)
