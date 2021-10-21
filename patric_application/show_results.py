@@ -173,7 +173,7 @@ if __name__ == "__main__":
                 data1['AUC on val (log)'].append('-')
                 data1['AUC on test (log)'].append('-')
             if len(info_dict) > 0:
-                data1['# of Examples'].append('number of examples:')
+                data1['# of Examples'].append(info_dict['number of examples:'])
                 data1['# of Features'].append(info_dict['number of features:'])
             else:
                 data1['# of Examples'].append('-')
