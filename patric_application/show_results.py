@@ -178,14 +178,15 @@ if __name__ == "__main__":
             else:
                 data1['# of Examples'].append('-')
                 data1['# of Features'].append('-')
-            print(antibiotic + group + leaf_level)
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
             data2['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, leaf_level))
 
-    df = pd.DataFrame(data=data)
+    df1 = pd.DataFrame(data=data1)
+    df2 = pd.DataFrame(data=data1)
+    print(df1.sort_values(by=['Antibiotic']))
+    print(df2.sort_values(by=['Antibiotic']))
 
-    print(df.sort_values(by=['Antibiotic']))
 
 
 
