@@ -33,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_erythromycin', 'erythromycin_firmicutes_samples.csv')
+    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_erythromycin', 'firmicutes_erythromycin_samples.csv')
                         , metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
