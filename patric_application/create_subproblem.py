@@ -131,7 +131,7 @@ if __name__ == '__main__':
         json.dump(subproblem_infos, info_file)
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
-    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_' + args.antibiotic + '_' + 'samples.csv'), index=False)
+    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold, args.group + '_' + args.antibiotic + '_' + 'samples_' + args.threshold + '.csv'), index=False)
 
 
 
