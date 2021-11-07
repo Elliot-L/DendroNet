@@ -127,6 +127,7 @@ if __name__ == '__main__':
     subproblem_infos = {}
     subproblem_infos['number of examples:'] = len(ids)
     subproblem_infos['number of features:'] = len(useful_features)
+    subproblem_infos['threshold:'] = args.threshold
     with open(os.path.join('data_files','subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos.json'), 'w') as info_file:
         json.dump(subproblem_infos, info_file)
 

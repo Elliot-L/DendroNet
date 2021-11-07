@@ -126,6 +126,7 @@ if __name__ == "__main__":
     data1['AUC on test (log)'] = []
     data1['# of Examples'] = []
     data1['# of Features'] = []
+    data1['Threshold'] = []
     data2 = {}
     data2['Group'] = []
     data2['Antibiotic'] = []
@@ -179,6 +180,10 @@ if __name__ == "__main__":
             else:
                 data1['# of Examples'].append('-')
                 data1['# of Features'].append('-')
+            if 'threshold:' in info_dict.keys:
+                data1['Threshold'].append(info_dict['threshold'])
+            else:
+                data1['Threshold'].append('-')
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
             data2['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, leaf_level))
