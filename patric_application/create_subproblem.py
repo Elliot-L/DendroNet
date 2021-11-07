@@ -128,11 +128,11 @@ if __name__ == '__main__':
     subproblem_infos['number of examples:'] = len(ids)
     subproblem_infos['number of features:'] = len(useful_features)
     subproblem_infos['threshold:'] = args.threshold
-    with open(os.path.join('data_files','subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos.json'), 'w') as info_file:
+    with open(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos.json'), 'w') as info_file:
         json.dump(subproblem_infos, info_file)
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
-    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold, args.group + '_' + args.antibiotic + '_' + 'samples_' + args.threshold + '.csv'), index=False)
+    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + str(args.threshold), args.group + '_' + args.antibiotic + '_' + 'samples_' + str(args.threshold) + '.csv'), index=False)
 
 
 
