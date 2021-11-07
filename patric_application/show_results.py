@@ -180,7 +180,7 @@ if __name__ == "__main__":
             else:
                 data1['# of Examples'].append('-')
                 data1['# of Features'].append('-')
-            if 'threshold:' in info_dict.keys:
+            if 'threshold:' in info_dict.keys():
                 data1['Threshold'].append(info_dict['threshold'])
             else:
                 data1['Threshold'].append('-')
