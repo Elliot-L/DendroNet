@@ -29,13 +29,12 @@ if __name__ == '__main__':
     genome_df.set_index(pd.Index(range(genome_df.shape[0])))
     levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
     group_level = ''
+    print(genome_df)
     end = False
     for level in levels:
         if end:
             break
         for i in range(genome_df.shape[0]):
-            print(level, i)
-            print(genome_df[level][i])
             if genome_df[level][i] == args.group:
                 group_level = level
                 end = True
