@@ -34,6 +34,7 @@ if __name__ == '__main__':
         if end:
             break
         for i in range(genome_df.shape[0]):
+            print(level, i)
             if genome_df[level][i] == args.group:
                 group_level = level
                 end = True
