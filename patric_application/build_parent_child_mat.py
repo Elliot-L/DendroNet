@@ -33,7 +33,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='firmicutes_erythr
     genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
     genome_df = genome_df[(genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safe_class'].notnull())
                           & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
-                          & (genome_df['species'].notnull())& (genome_df['genome_id'].notnull())] # removing rows with missing data
+                          & (genome_df['species'].notnull()) & (genome_df['genome_id'].notnull())] # removing rows with missing data
     label_df = pd.read_csv(label_file, dtype=str)
     ids = list(set(label_df['ID'])) # These are the IDs of the species of interest (for which we have data for a specific antibiotic)
     genome_df = genome_df[genome_df['genome_id'].isin(ids)] # collecting taxonomic information only for species of interest

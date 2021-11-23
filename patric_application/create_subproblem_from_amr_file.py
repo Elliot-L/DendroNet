@@ -4,28 +4,65 @@ import pandas as pd
 import subprocess
 import json
 
-
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--group', type=str, default='Proteobacteria', metavar='G')
     parser.add_argument('--antibiotic', type=str, default='ciprofloxacin', metavar='A')
     parser.add_argument('--threshold', type=float, default=0.05, help='fraction of genomes that need to have a ' +
                         'certain feature for that feature to be selected')
-    parser.add_argument('--force-download', type=str, default='n', help='y/n')
     args = parser.parse_args()
 
-    base_url = 'ftp://ftp.patricbrc.org/genomes/'
-    extension = '.PATRIC.spgene.tab'
-    base_out = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'spgenes')
-    os.makedirs(base_out, exist_ok=True)
-    error = []
-    basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
-    basic_df = pd.read_csv(basic_file, sep='\t')
-    basic_df = basic_df[(basic_df['genome_drug.resistant_phenotype'].notnull()) &
-                        (basic_df['genome_drug.resistant_phenotype'] != 'IS') &
-                        (basic_df['genome_drug.resistant_phenotype'] != 'Not defined')]
-    basic_df.set_index(pd.Index(range(basic_df.shape[0])), inplace=True)
+    amr_file = os.path.join('data_files', 'amr_phenotypes.csv')
+    amr_df = pd.read_csv(amr_file, delimiter='\t', dtype=str)
+    amr_df = amr_df[(amr_df['resistant_phenotype'].notnull()) & (amr_df['genome_id'].notnull())
+                    & (amr_df['antibiotic'].notnull())]
+    amr_df.drop_duplicates(subset='genome_id', inplace=True)
+    amr_file.set_index(pd.Index(range(amr_file.shape[0])))
+    genome_file = os.path.join('data_file', 'genome_lineage.csv')
+    genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
+    genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
+    genome_df = genome_df[
+        (genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safe_class'].notnull())
+        & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
+        & (genome_df['species'].notnull()) & (genome_df['genome_id'].notnull())]
+    genome_df.drop_duplicates(subset='genome_id', inplace=True)
+    genome_df.set_index(pd.Index(range(genome_df.shape[0])))
+    levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
+    group_level = ''
+    end = False
+    for level in levels:
+        if end:
+            break
+        for i in range(genome_df.shape[0]):
+            if genome_df[level][i] == args.group:
+                group_level = level
+                end = True
+                break
 
+    ids = []
+    for i in range(genome_df.shape[0]):
+        if genome_df[group_level][i] == args.group:
+            ids.append(genome_df['genome_id'][i])
+
+    data = {}
+    data['drug.antibiotic_name'] = []
+    data['genome_drug.genome_id'] = []
+    data['genome_drug.genome_name'] = []
+    data['genome_drug.resistant_phenotype'] = []
+
+    for i in range(amr_df.shape[0]):
+        if amr_df['genome_id'][i] in ids and amr_df['antibiotic'][i] == args.antibiotic:
+            data['drug.antibiotic_name'].append(args.antibiotic)
+            data['genome_drug.genome_id'].append(amr_df['genome_id'][i])
+            data['genome_drug.genome_name'].append(amr_df['genome_name'][i])
+            data['genome_drug.resistant_phenotype'].append(amr_df['resistant_phenotype'][i])
+
+    samples_df = pd.DataFrame(data=data)
+    samples_df.to_csv(os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv'), index=False)
+
+    """
+    
     # lists that will be used to build the dataframe at the end
     ids = []
     antibiotics = []
@@ -36,16 +73,6 @@ if __name__ == '__main__':
     functions = set()
     # null_functions = set()
     ids_dict = {}
-
-    """
-    
-    c = 0
-    for row in range(amr_df.shape[0]):
-        if basic_df['antibiotic'][row] == args.antibiotic and amr_df['genome_id'][row] in genomes_of_interest:
-            c += 1
-    print(c)
-
-    """
 
     used_genomes = []
     for row in range(basic_df.shape[0]):
@@ -82,7 +109,9 @@ if __name__ == '__main__':
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
-                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or basic_df['genome_drug.resistant_phenotype'][row] == 'r':
+                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or \
+                        basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or \
+                        basic_df['genome_drug.resistant_phenotype'][row] == 'r':
                     phenotypes.append([1])
                 # elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
                 else:
@@ -94,9 +123,9 @@ if __name__ == '__main__':
         functions = functions.union(ids_dict[id].keys())
 
     functions = list(functions)
-    min_number = int(len(used_genomes)*args.threshold)
+    min_number = int(len(used_genomes) * args.threshold)
 
-    #print("threshold: ", threshold)
+    # print("threshold: ", threshold)
 
     for idx in ids:
         genome_features = []
@@ -123,33 +152,20 @@ if __name__ == '__main__':
     print(len(functions))
     print(len(useful_features))
 
-
-
     subproblem_infos = {}
     subproblem_infos['number of examples:'] = len(ids)
     subproblem_infos['number of features:'] = len(useful_features)
     subproblem_infos['threshold:'] = args.threshold
-    with open(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos_' + str(args.threshold) + '.json'), 'w') as info_file:
+    with open(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic,
+                           'subproblem_infos_' + str(args.threshold) + '.json'), 'w') as info_file:
         json.dump(subproblem_infos, info_file)
 
-    final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
-    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_' + args.antibiotic + '_' + 'samples_' + str(args.threshold) + '.csv'), index=False)
+    final_df = pd.DataFrame(
+        data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations,
+              'Features': features})
+    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic,
+                                 args.group + '_' + args.antibiotic + '_' + 'samples_' + str(args.threshold) + '.csv'),
+                    index=False)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    """
