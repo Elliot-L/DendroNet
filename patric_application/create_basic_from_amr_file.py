@@ -17,7 +17,7 @@ if __name__ == '__main__':
                     & (amr_df['antibiotic'].notnull())]
     amr_df.drop_duplicates(subset='genome_id', inplace=True)
     amr_df.set_index(pd.Index(range(amr_df.shape[0])))
-    genome_file = os.path.join('data_file', 'genome_lineage.csv')
+    genome_file = os.path.join('data_files', 'genome_lineage.csv')
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
     genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
     genome_df = genome_df[
