@@ -29,7 +29,6 @@ if __name__ == '__main__':
     genome_df.set_index(pd.Index(range(genome_df.shape[0])), inplace=True)
     levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
     group_level = ''
-    print(genome_df)
     end = False
     for level in levels:
         if end:
@@ -50,7 +49,7 @@ if __name__ == '__main__':
     data['genome_drug.genome_id'] = []
     data['genome_drug.genome_name'] = []
     data['genome_drug.resistant_phenotype'] = []
-
+    print(amr_df)
     for i in range(amr_df.shape[0]):
         if amr_df['genome_id'][i] in ids and amr_df['antibiotic'][i] == args.antibiotic:
             data['drug.antibiotic_name'].append(args.antibiotic)
