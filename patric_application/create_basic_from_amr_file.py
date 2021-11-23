@@ -26,7 +26,7 @@ if __name__ == '__main__':
         & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
         & (genome_df['species'].notnull()) & (genome_df['genome_id'].notnull())]
     genome_df.drop_duplicates(subset='genome_id', inplace=True)
-    genome_df.set_index(pd.Index(range(genome_df.shape[0])))
+    genome_df.set_index(pd.Index(range(genome_df.shape[0])), inplace=True)
     levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
     group_level = ''
     print(genome_df)
