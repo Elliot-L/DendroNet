@@ -20,6 +20,7 @@ if __name__ == '__main__':
     genome_file = os.path.join('data_files', 'genome_lineage.csv')
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
     genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
+    genome_df = genome_df.rename(columns={'class': 'safe_class'}) #class is a keyword in python
     genome_df = genome_df[
         (genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safe_class'].notnull())
         & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
