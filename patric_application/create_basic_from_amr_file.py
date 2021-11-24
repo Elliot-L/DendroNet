@@ -47,7 +47,6 @@ if __name__ == '__main__':
     data = {}
     data['drug.antibiotic_name'] = []
     data['genome_drug.genome_id'] = []
-    data['genome_drug.genome_name'] = []
     data['genome_drug.resistant_phenotype'] = []
     for i in range(amr_df.shape[0]):
         print(i)
