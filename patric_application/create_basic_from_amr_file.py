@@ -16,7 +16,8 @@ if __name__ == '__main__':
     amr_df = amr_df[(amr_df['resistant_phenotype'].notnull()) & (amr_df['genome_id'].notnull())
                     & (amr_df['antibiotic'].notnull())]
     #amr_df.drop_duplicates(subset='genome_id', inplace=True)
-    amr_df.set_index(pd.Index(range(amr_df.shape[0])))
+    amr_df.set_index(pd.Index(range(amr_df.shape[0])), inplace=True)
+
     genome_file = os.path.join('data_files', 'genome_lineage.csv')
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
     genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
