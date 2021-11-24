@@ -56,7 +56,7 @@ if __name__ == "__main__":
                                             + ' --batch-size ' + str(args.batch_size) \
                                             + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                               args.group + '_' + args.antibiotic,
-                                                                              args.group + '_' + args.antibiotic + '_' + str(args(threshold)) + '_samples.csv')
+                                                                              args.group + '_' + args.antibiotic + '_' + str(args.threshold) + '_samples.csv')
                                           # + ' --seed ' + str(args.seed)
                                 os.system(command)
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                                   + ' --batch-size ' + str(args.batch_size) \
                                   + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                     args.group + '_' + args.antibiotic,
-                                                                    args.group + '_' + args.antibiotic + '_' + str(args(threshold)) + '_samples.csv')
+                                                                    args.group + '_' + args.antibiotic + '_' + str(args.threshold) + '_samples.csv')
                         # + ' --seed ' + str(args.seed)
                         os.system(command)
 
