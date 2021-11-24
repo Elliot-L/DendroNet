@@ -56,4 +56,4 @@ if __name__ == '__main__':
             data['genome_drug.resistant_phenotype'].append(amr_df['resistant_phenotype'][i])
 
     samples_df = pd.DataFrame(data=data)
-    samples_df.to_csv(os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv'), index=False)
+    samples_df.to_csv(os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv'), index=False, sep='\t')

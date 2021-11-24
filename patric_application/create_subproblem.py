@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
                 ids_dict[genome] = feat_dict
                 ids.append(genome)
-                if basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or basic_df['genome_drug.resistant_phenotype'][row] == 'r':
+                if basic_df['genome_drug.resistant_phenotype'][row] == 'non_susceptible' or basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or basic_df['genome_drug.resistant_phenotype'][row] == 'r':
                     phenotypes.append([1])
                 # elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
                 else:
