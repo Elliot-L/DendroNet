@@ -15,7 +15,7 @@ if __name__ == '__main__':
     amr_df = pd.read_csv(amr_file, delimiter='\t', dtype=str)
     amr_df = amr_df[(amr_df['resistant_phenotype'].notnull()) & (amr_df['genome_id'].notnull())
                     & (amr_df['antibiotic'].notnull())]
-    amr_df.drop_duplicates(subset='genome_id', inplace=True)
+    #amr_df.drop_duplicates(subset='genome_id', inplace=True)
     amr_df.set_index(pd.Index(range(amr_df.shape[0])))
     genome_file = os.path.join('data_files', 'genome_lineage.csv')
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
@@ -54,7 +54,6 @@ if __name__ == '__main__':
         if amr_df['genome_id'][i] in ids and amr_df['antibiotic'][i] == args.antibiotic:
             data['drug.antibiotic_name'].append(args.antibiotic)
             data['genome_drug.genome_id'].append(amr_df['genome_id'][i])
-            data['genome_drug.genome_name'].append(amr_df['genome_name'][i])
             data['genome_drug.resistant_phenotype'].append(amr_df['resistant_phenotype'][i])
 
     samples_df = pd.DataFrame(data=data)
