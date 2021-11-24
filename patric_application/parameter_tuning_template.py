@@ -18,6 +18,9 @@ parser.add_argument('--model-to-run', type=str, default='both', help='both, dend
 parser.add_argument('--batch-size', type=int, default=8)
 parser.add_argument('--force-train', type=str, default='y', help='Decide if you want the model to recompute for combination that were trained already')
 parser.add_argument('--gpu-mode', type=str, default='single', help='Using a single or multiple GPUs')
+parser.add_argument('--threshold', type=float, default=0.00, help='Threshold for feature selection')
+
+
 args = parser.parse_args()
 if __name__ == "__main__":
 
@@ -53,7 +56,7 @@ if __name__ == "__main__":
                                             + ' --batch-size ' + str(args.batch_size) \
                                             + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                               args.group + '_' + args.antibiotic,
-                                                                              args.group + '_' + args.antibiotic + '_samples.csv')
+                                                                              args.group + '_' + args.antibiotic + '_' + str(args(threshold)) + '_samples.csv')
                                           # + ' --seed ' + str(args.seed)
                                 os.system(command)
 
@@ -81,7 +84,7 @@ if __name__ == "__main__":
                                   + ' --batch-size ' + str(args.batch_size) \
                                   + ' --label-file ' + os.path.join('data_files', 'subproblems',
                                                                     args.group + '_' + args.antibiotic,
-                                                                    args.group + '_' + args.antibiotic + '_samples.csv')
+                                                                    args.group + '_' + args.antibiotic + '_' + str(args(threshold)) + '_samples.csv')
                         # + ' --seed ' + str(args.seed)
                         os.system(command)
 
