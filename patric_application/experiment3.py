@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser.set_defaults(runtest=False)
     parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv',)
                         , help='file containing taxonomic classification for species from PATRIC')
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'firmicutes_betalactam', 'firmicutes_betalactam_samples.csv'),
+    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'Firmicutes_betalactam', 'Firmicutes_betalactam_samples_0.0.csv'),
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
@@ -247,7 +247,9 @@ if __name__ == '__main__':
 
                     val_loss += float(train_loss + (delta_loss * DPF) + (root_loss * L1))
 
+                print(all_targets, all_pred)
                 fpr, tpr, _ = roc_curve(all_targets, all_pred)
+                print(fpr, tpr)
                 roc_auc = auc(fpr, tpr)
                 print('Average loss on the validation set per batch on this epoch: ', str(val_loss / step))
                 print("ROC AUC for epoch: ", roc_auc)

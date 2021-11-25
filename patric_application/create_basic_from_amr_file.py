@@ -49,7 +49,6 @@ if __name__ == '__main__':
     data['genome_drug.genome_id'] = []
     data['genome_drug.resistant_phenotype'] = []
     for i in range(amr_df.shape[0]):
-        print(i)
         if amr_df['genome_id'][i] in ids and amr_df['antibiotic'][i] == args.antibiotic:
             data['drug.antibiotic_name'].append(args.antibiotic)
             data['genome_drug.genome_id'].append(amr_df['genome_id'][i])
