@@ -5,7 +5,7 @@ import json
 import argparse
 
 
-def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
+def build_tab(antibiotic, group, model, threshold, leaf_level, seeds=[0, 1, 2, 3, 4]):
     if model == 'dendronet':
         data = {}
         data['LR'] = []
@@ -17,7 +17,7 @@ def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
         data['Test AUC'] = []
 
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
-            if antibiotic in directory and group in directory and model in directory and leaf_level in directory:
+            if antibiotic in directory and group in directory and model in directory and leaf_level in directory and str(threshold) in directory:
                 print(directory)
                 with open(os.path.join('data_files', 'patric_tuning', directory, 'output.json')) as file:
                     JSdict = json.load(file)
@@ -94,12 +94,12 @@ def build_tab(antibiotic, group, model, leaf_level, seeds=[0, 1, 2, 3, 4]):
 
     if leaf_level == 'none':
         df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
-                               + '_' + antibiotic + '_' + model + '.csv')
-        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + model + '.json'
+                               + '_' + antibiotic + '_' + model + '_' + threshold + '.csv')
+        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + model + '_' + threshold + '.json'
     else:
         df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
-                               + '_' + antibiotic + '_' + model + '_' + leaf_level + '.csv')
-        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + model + '_' + leaf_level + '.json'
+                               + '_' + antibiotic + '_' + model + '_' + leaf_level + '_' + threshold + '.csv')
+        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + model + '_' + leaf_level + '_' + threshold + '.json'
 
     os.makedirs(os.path.join('data_files', 'Results'), exist_ok=True)
     df.to_csv(df_file, index=False)

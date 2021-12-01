@@ -44,7 +44,7 @@ if __name__ == "__main__":
                         for e_stop in e_stop_list:
 
                             dir_name = args.group + '_' + args.antibiotic + '_dendronet_' + str(dpf) + '_' + str(lr) + '_' \
-                                       + str(l1) + '_' + str(e_stop) + '_' + args.leaf_level
+                                       + str(l1) + '_' + str(e_stop) + '_' + args.leaf_level + '_' + str(args.threshold)
 
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
@@ -60,7 +60,8 @@ if __name__ == "__main__":
                                           # + ' --seed ' + str(args.seed)
                                 os.system(command)
 
-        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet', leaf_level=args.leaf_level)
+        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
+                                leaf_level=args.leaf_level, threshold=args.threshold)
         """
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'dendronet' in directory and args.leaf_level in directory:
@@ -73,7 +74,7 @@ if __name__ == "__main__":
             for epoch in epoch_list:
                 for e_stop in e_stop_list:
                     dir_name = args.group + '_' + args.antibiotic + '_logistic_' \
-                               + str(lr) + '_' + str(e_stop)
+                               + str(lr) + '_' + str(e_stop) + '_' + str(args.threshold)
 
                     output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                     print(dir_name)
@@ -88,7 +89,8 @@ if __name__ == "__main__":
                         # + ' --seed ' + str(args.seed)
                         os.system(command)
 
-        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic', leaf_level='none')
+        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
+                                leaf_level='none', threshold=args.threshold)
         """
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'logistic' in directory and args.leaf_level in directory:

@@ -51,6 +51,7 @@ if __name__ == '__main__':
     # We get the parent_child matrix using the prexisting file or by creating it
     antibiotic = os.path.split(args.label_file)[1].split('_')[1]
     group = os.path.split(args.label_file)[1].split('_')[0]
+    threshold = os.path.split(args.label_file)[1].split('_')[3].split('.')[0] + '.' + os.path.split(args.label_file)[1].split('_')[3].split('.')[1]
     matrix_file = group + '_' + antibiotic + '_' + args.leaf_level + '.json'
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                            label_file=args.label_file,
@@ -340,7 +341,7 @@ if __name__ == '__main__':
 
     os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
     time_file = os.path.join('data_files', 'time_performances', 'experiment_multi_gpu_' + group + '_' + antibiotic
-                             + '_' + args.leaf_level)
+                             + '_' + args.leaf_level + '_' + threshold)
     with open(time_file, 'w') as file:
         json.dump({'average_per_seed': average_time_seed}, file)
 
