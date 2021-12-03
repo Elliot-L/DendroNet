@@ -44,7 +44,7 @@ if __name__ ==  '__main__':
         for d in os.listdir(args.directory):
             name_list = d.split('_')
             new_name_list = name_list.copy()
-            if len(name_list) == 8 or :
+            if len(name_list) == 8:
                 new_name_list.append()
     elif args.change == 'group_antibiotic_order':
         pass
