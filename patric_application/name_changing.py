@@ -42,9 +42,11 @@ if __name__ ==  '__main__':
             for i in range(1, len(name_list)):
                 old_name += '_' + name_list[i]
                 new_name += '_' + new_name_list[i]
+            old_name = os.path.join(args.directory, old_name)
+            new_name = os.path.join(args.directory, new_name)
             print(old_name)
             print(new_name)
-            #os.system('mv ')
+            os.system('mv ' + 'old_name' + ' ' + 'new_name')
     elif args.change == 'threshold':
         for d in os.listdir(args.directory):
             name_list = d.split('_')
