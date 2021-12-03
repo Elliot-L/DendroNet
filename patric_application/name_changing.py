@@ -34,7 +34,7 @@ if __name__ ==  '__main__':
             name_list = d.split('_')
             new_name_list = name_list.copy()
             if name_list[0] == 'All':
-                new_name_list[0] == 'Bacteria'
+                new_name_list[0] = 'Bacteria'
             elif name_list[1] == 'All':
                 new_name_list[1] = 'Bacteria'
             old_name = name_list[0]
