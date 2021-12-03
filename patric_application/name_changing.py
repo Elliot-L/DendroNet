@@ -73,5 +73,5 @@ if __name__ ==  '__main__':
             new_name = os.path.join(args.directory, new_name)
             print(old_name)
             print(new_name)
-            #os.system('mv ' + old_name + ' ' + new_name)
+            os.system('mv ' + old_name + ' ' + new_name)
 
