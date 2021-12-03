@@ -28,7 +28,7 @@ if __name__ ==  '__main__':
                 print(old_name)
                 print(new_name)
                 os.system('mv ' + old_name + ' ' + new_name'
-    """
+    
     if args.change == 'Bacteria':
         for d in os.listdir(args.directory):
             name_list = d.split('_')
@@ -47,7 +47,8 @@ if __name__ ==  '__main__':
             print(old_name)
             print(new_name)
             os.system('mv ' + old_name + ' ' + new_name)
-    elif args.change == 'threshold':
+    """
+    if args.change == 'threshold':
         for d in os.listdir(args.directory):
             name_list = d.split('_')
             new_name_list = name_list.copy()
@@ -61,12 +62,16 @@ if __name__ ==  '__main__':
             new_name_list = name_list.copy()
             if name_list[1] == 'firmicutes':
                 new_name_list[1] = 'Firmicutes'
+            elif name_list[0] == 'firmicutes':
+                new_name_list[0] = 'Firmicutes'
             old_name = name_list[0]
             new_name = new_name_list[0]
             for i in range(1, len(name_list)):
                 old_name += '_' + name_list[i]
                 new_name += '_' + new_name_list[i]
+            old_name = os.path.join(args.directory, old_name)
+            new_name = os.path.join(args.directory, new_name)
             print(old_name)
             print(new_name)
-            #os.system('mv ')
+            #os.system('mv ' + old_name + ' ' + new_name)
 
