@@ -12,7 +12,7 @@ parser.add_argument('--lrs', type=float, default=[0.01, 0.001, 0.0001], help='De
 parser.add_argument('--l1s', type=float, default=[0.0, 0.01, 0.1, 1.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
 parser.add_argument('--early_stopping', default=[3, 5, 10], help='Default is [3, 5, 10]')
 parser.add_argument('--epochs', type=int, default=[200], help='Default is 200')
-parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
+parser.add_argument('--seed', type=int, nargs='+', default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
@@ -31,32 +31,37 @@ if __name__ == "__main__":
     e_stop_list = args.early_stopping
     epoch_list = args.epochs
     if args.gpu_mode == 'single':
-        exp_file = 'experiment3.py'
+        exp_file = 'experiment.py'
     elif args.gpu_mode == 'multiple':
         exp_file = 'experiment_multi_gpu.py'
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
-        print("DendroNet")
+
         for dpf in dpf_list:
             for lr in lr_list:
-                for epoch in epoch_list:
-                    for l1 in l1_list:
-                        for e_stop in e_stop_list:
+                for l1 in l1_list:
+                    for e_stop in e_stop_list:
+                        for epoch in epoch_list:
 
-                            dir_name = args.group + '_' + args.antibiotic + '_dendronet_' + str(dpf) + '_' + str(lr) + '_' \
-                                       + str(l1) + '_' + str(e_stop) + '_' + args.leaf_level + '_' + str(args.threshold)
+                            dir_name = args.group + '_' + args.antibiotic + '_dendronet_' + str(dpf) + '_' + str(lr) \
+                                       + '_' + str(l1) + '_' + str(e_stop) \
+                                       + '_' + args.leaf_level + '_' + str(args.threshold)
+
+                            label_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic,
+                                                      args.group + '_' + args.antibiotic + '_samples_'
+                                                      + str(args.threshold) + '.csv')
 
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train == 'y':
                                 command = 'python ' + exp_file + ' --epochs ' + str(epoch) + ' --dpf ' + str(dpf) \
-                                            + ' --early-stopping ' + str(e_stop) + ' --lr ' + str(lr) + ' --output-path ' + output_path \
-                                            + ' --l1 ' + str(l1) + ' --lineage-path ' + str(args.genome_lineage) \
-                                            + ' --leaf-level ' + str(args.leaf_level) \
-                                            + ' --batch-size ' + str(args.batch_size) \
-                                            + ' --label-file ' + os.path.join('data_files', 'subproblems',
-                                                                              args.group + '_' + args.antibiotic,
-                                                                              args.group + '_' + args.antibiotic + '_samples_' + str(args.threshold) + '.csv')
+                                          + ' --l1 ' + str(l1) + ' --lr ' + str(lr) \
+                                          + ' --early-stopping ' + str(e_stop) \
+                                          + ' --output-path ' + output_path \
+                                          + ' --lineage-path ' + str(args.genome_lineage) \
+                                          + ' --leaf-level ' + str(args.leaf_level) \
+                                          + ' --batch-size ' + str(args.batch_size) \
+                                          + ' --label-file ' + label_file
                                           # + ' --seed ' + str(args.seed)
                                 os.system(command)
 

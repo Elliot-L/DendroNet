@@ -18,7 +18,7 @@ if __name__ == '__main__':
     extension = '.PATRIC.spgene.tab'
     base_out = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'spgenes')
     os.makedirs(base_out, exist_ok=True)
-    error = []
+    error = set()
     basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
     basic_df = pd.read_csv(basic_file, sep='\t')
     basic_df = basic_df[(basic_df['genome_drug.resistant_phenotype'].notnull()) &
@@ -34,30 +34,18 @@ if __name__ == '__main__':
     features = []
 
     functions = set()
-    # null_functions = set()
-    ids_dict = {}
-
-    """
-    
-    c = 0
-    for row in range(amr_df.shape[0]):
-        if basic_df['antibiotic'][row] == args.antibiotic and amr_df['genome_id'][row] in genomes_of_interest:
-            c += 1
-    print(c)
-
-    """
+    ids_dict = {}  # keys will be genomes ids and values are dictionaries for which the keys are specialy gene
+                   # function (a string) and the value is the number of time this gene is present in given genome
 
     used_genomes = []
     for row in range(basic_df.shape[0]):
-        genome = basic_df['genome_drug.genome_id'][row]
+        genome = basic_df.loc['genome_drug.genome_id', row]
         if genome not in used_genomes and genome not in error:
             fp = base_url + str(genome) + '/' + str(genome) + extension
             sp_file = os.path.join(base_out, str(genome) + '_spgenes.tab')
             if not os.path.isfile(sp_file) or args.force_download == 'y':
                 print("trying download for : " + str(genome))
                 try:
-                    # command = 'wget -P ' + outfile + ' ' + fp
-                    # os.system(command)
                     subprocess.call(['wget', '-O', sp_file, fp])
                 except:
                     error.append(genome)
@@ -74,7 +62,7 @@ if __name__ == '__main__':
                 sp_df = sp_df[(sp_df['function'].notnull())]
                 feat_dict = {}
 
-                for function in sp_df['function']:
+                for function in sp_df.loc[:, 'function']:
                     if function not in feat_dict.keys():
                         feat_dict[function] = 1.0
                     else:
@@ -84,7 +72,6 @@ if __name__ == '__main__':
                 ids.append(genome)
                 if basic_df['genome_drug.resistant_phenotype'][row] == 'non_susceptible' or basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or basic_df['genome_drug.resistant_phenotype'][row] == 'r' or basic_df['genome_drug.resistant_phenotype'][row] == 'resistant' or basic_df['genome_drug.resistant_phenotype'][row] == 'intermediate':
                     phenotypes.append([1])
-                # elif basic_df['genome_drug.resistant_phenotype'][row] == 'Susceptible':
                 else:
                     phenotypes.append([0])
                 antibiotics.append([basic_df['drug.antibiotic_name'][row]])
@@ -95,8 +82,6 @@ if __name__ == '__main__':
 
     functions = list(functions)
     min_number = int(len(used_genomes)*args.threshold)
-
-    #print("threshold: ", threshold)
 
     for idx in ids:
         genome_features = []
@@ -111,29 +96,29 @@ if __name__ == '__main__':
     col = 0
     while col < len(useful_features):
         c = 0
-        for feat_list in features:
-            if feat_list[col] > 0.0:
+        for features_list in features:
+            if features_list[col] > 0.0:
                 c += 1
         if c < min_number:
             del useful_features[col]
-            for feat_list in features:
-                del feat_list[col]
+            for features_list in features:
+                del features_list[col]
             col -= 1
         col += 1
-    print(len(functions))
-    print(len(useful_features))
 
-
-
+    """"
     subproblem_infos = {}
     subproblem_infos['number of examples:'] = len(ids)
     subproblem_infos['number of features:'] = len(useful_features)
     subproblem_infos['threshold:'] = args.threshold
-    with open(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos_' + str(args.threshold) + '.json'), 'w') as info_file:
+    with open(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos_' 
+              + str(args.threshold) + '.json'), 'w') as info_file:
         json.dump(subproblem_infos, info_file)
-
-    final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes, 'Annotation': annotations, 'Features': features})
-    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_' + args.antibiotic + '_' + 'samples_' + str(args.threshold) + '.csv'), index=False)
+    """
+    final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes,
+                                  'Annotation': annotations, 'Features': features})
+    final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_'
+                                 + args.antibiotic + '_' + str(args.threshold) + 'samples_' + '.csv'), index=False)
 
 
 
