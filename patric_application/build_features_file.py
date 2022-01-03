@@ -33,8 +33,6 @@ def build_feature_matrix(antibiotic='ciprofloxacin', group='Proteobacteria', thr
     for id in ids_dict.keys():
         functions = functions.intersection(set(ids_dict[id].keys()))
 
-    #pheno_file = os.path.join('data_files','subproblems', antibiotic + '_' + group + '.csv')
-
     if antibiotic == 'ciprofloxacin':
         pheno_file = os.path.join('data_files', 'proteobacteria_ciprofloxacin.csv')
     elif antibiotic == 'betalactam':

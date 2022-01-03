@@ -18,8 +18,9 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
         leaf_level: taxonomical deep of the tree (the matrix) that will be built
         force_build: Should the function build the matrix even if we already have it in memory
         save_matrix: Should the matrix be saved after being created for future use
-        new_method: not in use right now
+        new_method: is not (should not) be used right now
     """
+
     file_name = os.path.split(label_file)[1]
     group = file_name.split('_')[0]
     antibiotic = file_name.split('_')[1]
@@ -75,32 +76,32 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
     if not new_method:
         for i, level in enumerate(levels):
             for j in range(genome_df.shape[0]):  # iterating through each row and each column
-                if genome_df.loc[level, j] not in nodes:
-                    nodes.append(genome_df[level][j])
+                if genome_df.loc[j, level] not in nodes:
+                    nodes.append(genome_df.loc[j, level])
                     descendents.append([])
                     node_examples.append([])
-                pos = nodes.index(genome_df[level][j])
+                pos = nodes.index(genome_df.loc[j, level])
                 if level == leaf_level:
-                    node_examples[pos].append(genome_df.loc['genome_id', j])  # adding the id, to appropriate node
+                    node_examples[pos].append(genome_df.loc[j, 'genome_id'])  # adding the id, to appropriate node
                 if level != leaf_level:
-                    if genome_df[levels[i+1]][j] not in descendents[pos]:
-                        descendents[pos].append(genome_df.loc[levels[i+1], j]) # adding in the corresponding list in "descendents"
+                    if genome_df.loc[j, levels[i+1]] not in descendents[pos]:
+                        descendents[pos].append(genome_df.loc[j, levels[i+1]]) # adding in the corresponding list in "descendents"
                                                                            # the name of a child (found at the same row, in the right column)
     else:
         for i, level in enumerate(levels):
             for j in range(genome_df.shape[0]):  # iterating through each row and each column
                 # print(genome_df[level][j])
                 # print(level)
-                if genome_df[level][j] not in nodes:
-                    nodes.append(genome_df[level][j])
+                if genome_df.loc[j, level] not in nodes:
+                    nodes.append(genome_df.loc[j, level])
                     descendents.append([])
                     node_examples.append([])
-                pos = nodes.index(genome_df[level][j])
+                pos = nodes.index(genome_df.loc[j, level])
                 #Here, we can see that all nodes, even inner ones, will have training examples associated to them. The root for examples, will have all of them.
-                node_examples[pos].append(genome_df['genome_id'][j])  # adding the id, to appropriate node
+                node_examples[pos].append(genome_df.loc[j, 'genome_id'])  # adding the id, to appropriate node
                 if level != leaf_level:
-                    if genome_df[levels[i + 1]][j] not in descendents[pos]:
-                        descendents[pos].append(genome_df[levels[i + 1]][j]) # adding in the corresponding list in "descendents"
+                    if genome_df.loc[j, levels[i+1]] not in descendents[pos]:
+                        descendents[pos].append(genome_df.loc[j, levels[i+1]]) # adding in the corresponding list in "descendents"
                                                                              # the name of a child (found at the same row, in the right column)
 
     parent_child = np.zeros(shape=(len(nodes), len(nodes)), dtype=np.int)
