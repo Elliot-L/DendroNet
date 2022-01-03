@@ -27,6 +27,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
     matrix_file = os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_'
                                + leaf_level + '.json')
     if os.path.isfile(matrix_file) and not force_build:
+        print('The parent-child matrix is taken from memory')
         with open(matrix_file) as file:
             js_string = json.load(file)
         jdict = jsonpickle.decode(js_string)
@@ -110,6 +111,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
             parent_child[i][nodes.index(child)] += 1  # a 1 is written as entry where edges are present in the tree
 
     if save_matrix:
+        print('Saving the matrix to memory')
         jdict = {}
         jdict['parent_child'] = parent_child
         jdict['nodes'] = nodes
@@ -120,6 +122,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
             frozen = jsonpickle.encode(jdict)
             json.dump(frozen, outfile)
 
+    print('Done with the construction of the matrix')
     return parent_child, nodes, node_examples
 
 if __name__ == "__main__":
