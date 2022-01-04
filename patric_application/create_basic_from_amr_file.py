@@ -6,6 +6,11 @@ import json
 
 if __name__ == '__main__':
 
+    """
+    As you can see, this code does not require the user to enter the taxonomical level of the group of interest.
+    The appropriate level is found inside the available data.
+    """
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--group', type=str, default='Proteobacteria', metavar='G')
     parser.add_argument('--antibiotic', type=str, default='ciprofloxacin', metavar='A')
@@ -15,7 +20,6 @@ if __name__ == '__main__':
     amr_df = pd.read_csv(amr_file, delimiter='\t', dtype=str)
     amr_df = amr_df[(amr_df['resistant_phenotype'].notnull()) & (amr_df['genome_id'].notnull())
                     & (amr_df['antibiotic'].notnull())]
-    #amr_df.drop_duplicates(subset='genome_id', inplace=True)
     amr_df.set_index(pd.Index(range(amr_df.shape[0])), inplace=True)
     genome_file = os.path.join('data_files', 'genome_lineage.csv')
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
@@ -27,32 +31,46 @@ if __name__ == '__main__':
         & (genome_df['species'].notnull()) & (genome_df['genome_id'].notnull())]
     genome_df.drop_duplicates(subset='genome_id', inplace=True)
     genome_df.set_index(pd.Index(range(genome_df.shape[0])), inplace=True)
+
+    group = args.group
     levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
     group_level = ''
-    end = False
-    for level in levels:
-        if end:
-            break
-        for i in range(genome_df.shape[0]):
-            if genome_df[level][i] == args.group:
-                group_level = level
-                end = True
+
+    while group_level == '':
+        end = False
+        for level in levels:
+            if end:
                 break
+            for i in range(genome_df.shape[0]):
+                if genome_df.loc[i, level] == group:
+                    group_level = level
+                    end = True
+                    break
+        if group_level == '':
+            print('The taxonomical group ' + group + ' was not found inside the data.')
+            print('Important: group name in the data starts with a capital letter (ex: Proteobacteria or Firmicutes)')
+            print('Please input another group name in the console:')
+            group = input()
 
     ids = []
     for i in range(genome_df.shape[0]):
-        if genome_df[group_level][i] == args.group:
-            ids.append(genome_df['genome_id'][i])
+        if genome_df.loc[i, group_level] == args.group:
+            ids.append(genome_df.loc[i, 'genome_id'])
+    print(str(len(ids)) + ' genomes of interest are available in the genome_lineage file.')
 
     data = {}
-    data['drug.antibiotic_name'] = []
     data['genome_drug.genome_id'] = []
     data['genome_drug.resistant_phenotype'] = []
+
+    genomes_in_amr = 0
     for i in range(amr_df.shape[0]):
-        if amr_df['genome_id'][i] in ids and amr_df['antibiotic'][i] == args.antibiotic:
-            data['drug.antibiotic_name'].append(args.antibiotic)
+        if amr_df.loc[i, 'genome_id'] in ids and amr_df.loc[i, 'antibiotic'] == args.antibiotic:
+            genomes_in_amr += 1
             data['genome_drug.genome_id'].append(amr_df['genome_id'][i])
             data['genome_drug.resistant_phenotype'].append(amr_df['resistant_phenotype'][i])
 
+    print(str(genomes_in_amr) + ' of the genome from genome_lineage are also available in the amr_phenotypes.')
+
     samples_df = pd.DataFrame(data=data)
-    samples_df.to_csv(os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv'), index=False, sep='\t')
+    samples_df.to_csv(os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv'),
+                      index=False, sep='\t')

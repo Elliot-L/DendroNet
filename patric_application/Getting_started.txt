@@ -1,2 +1,19 @@
 
 
+
+
+A little guide on how to get started with using DendroNet in the context of antibiotic resistance identification
+
+
+
+Now, some files will need to be downloaded from the following link: https://docs.patricbrc.org/user_guides/ftp.html
+The first file, called genome_lineage, will be used to create a phylogenetic tree using the taxonomical classification
+of the bacterial species of interest. Call this file genome_lineage.csv and place it in the data_files directory.
+The second, called PATRIC_genome_AMR.txt, will be used to gather the antibiotic resistance data that will be needed
+for training the model. This file must be called amr_phenotypes.csv and placed in the data_files directory
+An alternative and more flexible method to using this file will presented later.
+
+Downloading these files can be done from the command line using wget or curl.
+
+
+
