@@ -1,8 +1,6 @@
 import argparse
 import os
 import pandas as pd
-import subprocess
-import json
 
 if __name__ == '__main__':
 
@@ -18,9 +16,19 @@ if __name__ == '__main__':
 
     amr_file = os.path.join('data_files', 'amr_phenotypes.csv')
     amr_df = pd.read_csv(amr_file, delimiter='\t', dtype=str)
+    antibiotic = args.antibiotic
+
+    while antibiotic not in list(amr_df.loc[:, 'antibiotic']):
+        print('The antibiotic ' + antibiotic + ' was not found inside the data.')
+        print('Please input another antibiotic name in the console:')
+        antibiotic = input()
+
     amr_df = amr_df[(amr_df['resistant_phenotype'].notnull()) & (amr_df['genome_id'].notnull())
-                    & (amr_df['antibiotic'].notnull())]
+                    & (amr_df['antibiotic'].notnull()) & (amr_df['antibiotic'] == antibiotic)
+                    & (amr_df['resistant_phenotype'] != 'Not defined')]
+    amr_df.drop_duplicates(subset='genome_id', inplace=True)
     amr_df.set_index(pd.Index(range(amr_df.shape[0])), inplace=True)
+
     genome_file = os.path.join('data_files', 'genome_lineage.csv')
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
     genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
@@ -49,12 +57,14 @@ if __name__ == '__main__':
         if group_level == '':
             print('The taxonomical group ' + group + ' was not found inside the data.')
             print('Important: group name in the data starts with a capital letter (ex: Proteobacteria or Firmicutes)')
-            print('Please input another group name in the console:')
-            group = input()
+            group = ''
+            while group == '':
+                print('Please input another group name in the console:')
+                group = input()
 
     ids = []
     for i in range(genome_df.shape[0]):
-        if genome_df.loc[i, group_level] == args.group:
+        if genome_df.loc[i, group_level] == group:
             ids.append(genome_df.loc[i, 'genome_id'])
     print(str(len(ids)) + ' genomes of interest are available in the genome_lineage file.')
 
@@ -64,13 +74,15 @@ if __name__ == '__main__':
 
     genomes_in_amr = 0
     for i in range(amr_df.shape[0]):
-        if amr_df.loc[i, 'genome_id'] in ids and amr_df.loc[i, 'antibiotic'] == args.antibiotic:
+        if amr_df.loc[i, 'antibiotic'] == antibiotic and amr_df.loc[i, 'genome_id'] in ids:
             genomes_in_amr += 1
-            data['genome_drug.genome_id'].append(amr_df['genome_id'][i])
-            data['genome_drug.resistant_phenotype'].append(amr_df['resistant_phenotype'][i])
+            data['genome_drug.genome_id'].append(amr_df.loc[i, 'genome_id'])
+            data['genome_drug.resistant_phenotype'].append(amr_df.loc[i, 'resistant_phenotype'])
 
     print(str(genomes_in_amr) + ' of the genome from genome_lineage are also available in the amr_phenotypes.')
 
+    os.makedirs(os.path.join('data_files', 'basic_files'), exist_ok=True)
     samples_df = pd.DataFrame(data=data)
-    samples_df.to_csv(os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv'),
+    samples_df.to_csv(os.path.join('data_files', 'basic_files', group + '_' + args.antibiotic + '_basic.csv'),
                       index=False, sep='\t')
+

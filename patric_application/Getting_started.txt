@@ -2,18 +2,71 @@
 
 
 
-A little guide on how to get started with using DendroNet in the context of antibiotic resistance identification
+A little guide on how to get started with using DendroNet in the context of AMR identification
 
+Basic setup:
 
+First, in order to get all the necessary code to run DendroNet, start by cloning the project GitHub repository
+inside a local directory. The repository can be found at https://github.com/Elliot-L/DendroNet.
 
-Now, some files will need to be downloaded from the following link: https://docs.patricbrc.org/user_guides/ftp.html
+The repository has a certain organization that you need to conserve. The code that is of interest in the context
+of the AMR is found inside the patric_application directory. Inside of it, you can find multiple python files whose
+functions will be explained later. You can also find the directory data_files that will contain all the data that will
+be needed to run DendroNet. This directory should be empty for now.
+
+Some files will need to be downloaded from the following link: https://docs.patricbrc.org/user_guides/ftp.html .
 The first file, called genome_lineage, will be used to create a phylogenetic tree using the taxonomical classification
 of the bacterial species of interest. Call this file genome_lineage.csv and place it in the data_files directory.
-The second, called PATRIC_genome_AMR.txt, will be used to gather the antibiotic resistance data that will be needed
+The second, called PATRIC_genome_AMR.txt, will be used to gather the AMR data that will be needed
 for training the model. This file must be called amr_phenotypes.csv and placed in the data_files directory
-An alternative and more flexible method to using this file will presented later.
+An alternative and more flexible method to gather the AMR data will be presented later. Downloading these files can
+be done from the command line using wget or curl.
 
-Downloading these files can be done from the command line using wget or curl.
+Selecting a subproblem:
+
+DendroNet for the AMR application was designed to work on what we call a AMR "subproblem". These subproblems consist
+in the choice of specific antibiotic (ex: ciprofloxacin, erythromycin, etc) and taxonomical group inside the Bacterial
+kingdom. This taxonomical group can be from any level. Groups like the phylums Proteobacteria and Firmicutes and even
+the whole kingdom Bacteria were used so far. However, any subgroup, like a class, an order, a family or a genus can be
+used. Be careful though. Selecting a smaller group could lead to having limited available data.
+
+After choosing a group and an antibiotic, a.k.a a subproblem, it is now possible to create a  to run the file
+create_basic_from_amr_file.py using two commande line parameters: antibiotic and group. For example, in the case of
+the subproblem of group Proteobacteria (a phylum) with the antibiotic ciprofloxacin, you can use:
+
+python create_basic_from_amr_file.py --antibiotic ciprofloxacin --group Proteobacteria
+
+This command will create a new directory inside data_files called basic_files containing now a new csv file.
+All subsequent basic files created using create_basic_from_amr_file.py will be placed there.
+
+These basic files consists of two columns:
+The first contains all genome ids of genomes corresponding to the subproblem and available inside the amr_phenotype and
+genome_lineage file.
+The second corresponds to their respective phenotype (resistant or susceptible).
+
+NOTE: inside the amr file, other phenotypes are available (ex: intermediate resistance). The code was written to
+enforce only two classes, but could be modified to change the classification.
+
+For certain subproblems, using the amr_phenotypes and genome_lineage file could be limiting. Instead, it
+is possible to directly download the equivalent of a basic file from the PATRIC database. For this, it is first
+necessary to download the PATRIC CLI from https://docs.patricbrc.org/cli_tutorial/.
+
+Next, open the PATRIC terminal and run the following command to download a file for the Proteobacteria-ciprofloxacin
+subproblem:
+
+p3-all-genomes --eq phylum,Proteobacteria | p3-get-genome-drugs --eq antibiotic,ciprofloxacin --attr genome_name --attr resistant_phenotype > Proteobacteria_ciprofloxacin_basic.csv
+
+In case that data about all bacterial genomes available in the database is required, the following command can be run
+instead, again for the antibiotic ciprofloxacin (this comes down to the subproblem Bacteria-ciprofloxacin):
+
+p3-all-genomes | p3-get-genome-drugs --eq antibiotic,ciprofloxacin --attr genome_name --attr resistant_phenotype > Bacteria_ciprofloxacin_basic.csv
+
+NOTE: It is possible that for the same subproblem, the two methods give access to different amounts of data.
 
 
+Feature collection:
+
+Now that we know which genome are available for our subproblem and what their phenotypes are (in the language of
+machine learning, we could say that we have our training examples and their target values), we also need the feature
+vectors associated to each genome/training example. The features that will be used will be
 
