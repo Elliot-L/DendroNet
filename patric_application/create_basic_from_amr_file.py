@@ -10,8 +10,8 @@ if __name__ == '__main__':
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', type=str, default='Proteobacteria', metavar='G')
-    parser.add_argument('--antibiotic', type=str, default='ciprofloxacin', metavar='A')
+    parser.add_argument('--group', type=str, metavar='G')
+    parser.add_argument('--antibiotic', type=str, metavar='A')
     args = parser.parse_args()
 
     amr_file = os.path.join('data_files', 'amr_phenotypes.csv')

@@ -7,9 +7,9 @@ import json
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', type=str, default='Proteobacteria', metavar='G')
-    parser.add_argument('--antibiotic', type=str, default='ciprofloxacin', metavar='A')
-    parser.add_argument('--threshold', type=float, default=0.05, help='fraction of genomes that need to have a ' +
+    parser.add_argument('--group', type=str, metavar='G', default='Proteobacteria')
+    parser.add_argument('--antibiotic', type=str, metavar='A', default='ciprofloxacin')
+    parser.add_argument('--threshold', type=float, help='fraction of genomes that need to have a ' +
                         'certain feature for that feature to be selected')
     parser.add_argument('--force-download', type=str, default='n', help='y/n')
     args = parser.parse_args()
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
 
     if not os.path.isfile(basic_file):
-        print('The basic file associated to this problem is not available. Create it using the ' +
+        print('The basic file associated to this problem does not exist. Create it using the ' +
               'create_basic_from_amr_file.py file, or download it from the PATRIC terminal.')
         exit()
 
@@ -117,17 +117,19 @@ if __name__ == '__main__':
             col -= 1
         col += 1
 
+    """"
     subproblem_infos = {}
     subproblem_infos['number of examples:'] = len(ids)
     subproblem_infos['number of features:'] = len(useful_functions)
     with open(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos_'
               + str(args.threshold) + '.json'), 'w') as info_file:
         json.dump(subproblem_infos, info_file)
+    """
 
     final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes,
                                   'Annotation': annotations, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_'
-                                 + args.antibiotic + '_' + str(args.threshold) + 'samples_' + '.csv'), index=False)
+                                 + args.antibiotic + '_' + str(args.threshold) + '_samples' + '.csv'), index=False)
 
 
 

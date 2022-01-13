@@ -40,7 +40,7 @@ if __name__ == '__main__':
                         , help='file containing taxonomic classification for species from PATRIC')
     parser.add_argument('--label-file', type=str,
                         default=os.path.join('data_files', 'subproblems', 'Firmicutes_betalactam',
-                                             'Firmicutes_betalactam_samples_0.0.csv'),
+                                             'Firmicutes_betalactam_0.0_samples.csv'),
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')

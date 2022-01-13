@@ -16,6 +16,7 @@ from build_parent_child_mat import build_pc_mat
 from models.dendronet_models import DendroMatrixLinReg
 from utils.model_utils import build_parent_path_mat, split_indices, IndicesDataset
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=200, metavar='N')
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     parser.set_defaults(runtest=False)
     parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv',)
                         , help='file containing taxonomic classification for species from PATRIC')
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'Firmicutes_betalactam', 'Firmicutes_betalactam_samples_0.0.csv'),
+    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'Firmicutes_betalactam', 'Firmicutes_betalactam_0.0_samples.csv'),
                         metavar='LF', help='file to look in for labels')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
@@ -111,18 +112,6 @@ if __name__ == '__main__':
                 mapping.append((example_number, i))
         if added_in_X_and_y:
             example_number += 1
-
-    """
-    for row in labels_df.itertuples():
-        for leaf in leaves:
-            if leaf == getattr(row, 'ID'):  # we have matched a leaf to it's row in labels_df
-                phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
-                y.append(phenotype)
-                features = eval(getattr(row, 'Features'))  # the x value
-                X.append(features)
-                mapping.append((example_number, topo_order.index(leaf)))
-                example_number += 1
-    """
 
     parent_path_tensor = build_parent_path_mat(parent_child)
     num_features = len(X[0])
