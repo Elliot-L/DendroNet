@@ -5,10 +5,10 @@ import math
 from build_parent_child_mat import build_pc_mat
 
 
-def entropy(antibiotic, group, leaf_level):
+def entropy(antibiotic, group, threshold, leaf_level):
 
     label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
-                              group + '_' + antibiotic + '_samples.csv')
+                              group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
                                                                   label_file=label_file,
@@ -29,9 +29,9 @@ def entropy(antibiotic, group, leaf_level):
     return (-1)*entropy
 
 
-def phylo_entropy(antibiotic, group, leaf_level):
+def phylo_entropy(antibiotic, group, threshold, leaf_level):
     label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
-                              group + '_' + antibiotic + '_samples.csv')
+                              group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
                                                                   label_file=label_file,
@@ -66,9 +66,9 @@ def subtree(mat, p, proportions):
         return total_prop
 
 
-def quad_entropy(antibiotic, group, leaf_level):
+def quad_entropy(antibiotic, group, threshold, leaf_level):
     label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
-                              group + '_' + antibiotic + '_samples.csv')
+                              group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
                                                                   label_file=label_file,
@@ -115,6 +115,7 @@ def quad_entropy(antibiotic, group, leaf_level):
 
 
 if __name__ == "__main__":
+    """
     print('Firmicutes, erythromycin, 0.0 :')
     print("Shannon's index (entropy) :" + str(entropy('erythromycin', 'Firmicutes', 'genome_id')))
     print('Quadratic entropy :' + str(quad_entropy('erythromycin', 'Firmicutes', 'genome_id')))
@@ -124,9 +125,8 @@ if __name__ == "__main__":
     print("Shannon's index (entropy) :" + str(entropy('betalactam', 'Firmicutes', 'genome_id')))
     print('Quadratic entropy :' + str(quad_entropy('betalactam', 'Firmicutes', 'genome_id')))
     print('Phylogenetic entropy :' + str(phylo_entropy('betalactam', 'Firmicutes', 'genome_id')))
+    """
 
-
-"""
     data1 = {}
     data1['Group'] = []
     data1['Antibiotic'] = []
@@ -204,7 +204,6 @@ if __name__ == "__main__":
     print(df1.sort_values(by=['Group']))
     print(df2.sort_values(by=['Group']))
 
-"""
 
 
 
