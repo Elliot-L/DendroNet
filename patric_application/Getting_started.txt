@@ -66,7 +66,6 @@ NOTE: It is possible that for the same subproblem, the two methods give access t
 NOTE: The basic files downloaded directly from PATRIC need to be placed inside data_file/basic_files to be visible
 to the other programs.
 
-
 Feature collection:
 
 Now that we know which genome are available for our subproblem and what their phenotypes are (in the language of
@@ -126,6 +125,27 @@ python subproblem_summary.py --group Proteobacteria --antibiotic ciprofloxacin -
 In summary, after successfully running create_samples_file.py, a file named group_antibiotic_threshold_samples.csv
 will be available inside the directory patric_application/data_files/subproblems/group_antibiotic/. This file can
 be now used to start training a model!
+
+
+Simple Training:
+
+Note: This documentation will not contain many details on the principles behind Dendronet.
+Additional information can be found in the following paper: https://pubmed.ncbi.nlm.nih.gov/33381838/.
+
+Now that a samples file was created, all the necessary elements needed to train an instance of Dendronet are present.
+For that purpose, the program experiment.py will be used. This program allows us to heavily configure the training of
+Dendronet, but for now, let's see how a simple training for the subproblem Proteobacteria-ciprofloxacin-0.05 could
+be launched. For this, we will need two of the many command line arguments:
+
+1) --samples-file: Allows to specify the location of the samples of the subproblem.
+2) --output-path: Allows to specify the location of the output file.
+
+To start the training on this subproblem, use
+
+python experiment.py --samples-file data_file/subproblems/Proteobacteria_ciprofloxacin/Proteobacteria_ciprofloxacin_0.05_samples.csv --output-path data_files/output.json
+
+This program will produce a output file in the
+
 
 
 

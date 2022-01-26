@@ -55,14 +55,14 @@ def phylo_entropy(antibiotic, group, leaf_level):
 
     return (-1)*phylo_entropy_value
 
-def subtree(mat, p, prop):
-    if prop[p] > 0:
-        return prop[p]
+def subtree(mat, p, proportions):
+    if proportions[p] > 0:
+        return proportions[p]
     else:
         total_prop = 0
         for c in range(p + 1, mat.shape[0]):
             if mat[p][c] == 1.0:
-                total_prop += subtree(mat, c, prop)
+                total_prop += subtree(mat, c, proportions)
         return total_prop
 
 
@@ -115,7 +115,18 @@ def quad_entropy(antibiotic, group, leaf_level):
 
 
 if __name__ == "__main__":
+    print('Firmicutes, erythromycin, 0.0 :')
+    print("Shannon's index (entropy) :" + str(entropy('erythromycin', 'Firmicutes', 'genome_id')))
+    print('Quadratic entropy :' + str(quad_entropy('erythromycin', 'Firmicutes', 'genome_id')))
+    print('Phylogenetic entropy :' + str(phylo_entropy('erythromycin', 'Firmicutes', 'genome_id')))
+    print('')
+    print('Firmicutes, betalactam, 0.0 :')
+    print("Shannon's index (entropy) :" + str(entropy('betalactam', 'Firmicutes', 'genome_id')))
+    print('Quadratic entropy :' + str(quad_entropy('betalactam', 'Firmicutes', 'genome_id')))
+    print('Phylogenetic entropy :' + str(phylo_entropy('betalactam', 'Firmicutes', 'genome_id')))
 
+
+"""
     data1 = {}
     data1['Group'] = []
     data1['Antibiotic'] = []
@@ -193,7 +204,7 @@ if __name__ == "__main__":
     print(df1.sort_values(by=['Group']))
     print(df2.sort_values(by=['Group']))
 
-
+"""
 
 
 

@@ -103,6 +103,9 @@ if __name__ == '__main__':
                 genome_features.append(0.0)
         features.append(genome_features)
 
+    for feature_list in features:
+        feature_list.append(1.0)
+
     useful_functions = functions.copy()
     col = 0
     while col < len(useful_functions):

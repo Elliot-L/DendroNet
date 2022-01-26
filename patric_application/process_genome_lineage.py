@@ -138,5 +138,5 @@ if __name__ == "__main__":
     # new_tree, new_leaves = load_tree_and_leaves('patric_tree_storage/erythromycin')
     print('done')
     """
-    create_labelled_tree(data_file='data_files/genome_lineage.csv', labels_file='data_files/subproblems/firmicutes_erythromycin/erythromycin_firmicutes_samples.csv')
+    create_labelled_tree(data_file='data_files/genome_lineage.csv', labels_file='data_files/subproblems/Firmicutes_erythromycin/erythromycin_firmicutes_samples.csv')
     print("done")

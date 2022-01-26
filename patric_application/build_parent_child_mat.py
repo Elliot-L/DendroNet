@@ -126,7 +126,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
     return parent_child, nodes, node_examples
 
 if __name__ == "__main__":
-    pc, n, node_examples = build_pc_mat(leaf_level='order', force_build=True, save_matrix=True, genome_file='data_files/genome_lineage.csv', label_file='data_files/subproblems/firmicutes_erythromycin/firmicutes_erythromycin_samples.csv')
+    pc, n, node_examples = build_pc_mat(leaf_level='order', force_build=True, save_matrix=True, genome_file='data_files/genome_lineage.csv', label_file='data_files/subproblems/Firmicutes_erythromycin/Firmicutes_erythromycin_0.0_samples.csv')
     print(pc)
     print(pc.shape)
     print(n)

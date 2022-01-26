@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class DendroMatrixLinReg(nn.Module):
-    def __init__(self, device, root_weights, path_mat, delta_mat, p=1, init_deltas=False):
+    def __init__(self, device, root_weights, path_mat, delta_mat, p=1, init_deltas=False, init_root=True):
         """
         param p: type of norm to take for dendronet loss
         """
@@ -13,7 +13,8 @@ class DendroMatrixLinReg(nn.Module):
 
         self.p = p
         self.root_weights = nn.Parameter(torch.tensor(root_weights, device=device, dtype=torch.double, requires_grad=True))
-        torch.nn.init.normal_(self.root_weights, mean=0.0, std=0.01)
+        if init_root:
+            torch.nn.init.normal_(self.root_weights, mean=0.0, std=0.01)
         self.delta_mat = nn.Parameter(torch.tensor(delta_mat, device=device, dtype=torch.double, requires_grad=True))
         if init_deltas:
             torch.nn.init.normal_(self.delta_mat, mean=0.0, std=0.01)
