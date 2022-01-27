@@ -76,6 +76,7 @@ if __name__ == '__main__':
                     basic_df['genome_drug.resistant_phenotype'][row] == 'Resistant' or \
                     basic_df['genome_drug.resistant_phenotype'][row] == 'Intermediate' or \
                     basic_df['genome_drug.resistant_phenotype'][row] == 'r' or \
+                    basic_df['genome_drug.resistant_phenotype'][row] == 'R' or \
                     basic_df['genome_drug.resistant_phenotype'][row] == 'resistant' or \
                     basic_df['genome_drug.resistant_phenotype'][row] == 'intermediate' or \
                     basic_df['genome_drug.resistant_phenotype'][row] == 'reduced_susceptibility' or \
@@ -84,7 +85,7 @@ if __name__ == '__main__':
             else:  # In the amr_file, the two other phenotypes used to described non-resistance are susceptible and
                 phenotypes.append([0])  # and susceptible-dose dependent.
 
-    for feature_dict in ids_dict.items():
+    for feature_dict in ids_dict.values():
         functions = functions.union(feature_dict.keys())
 
     functions = list(functions)
