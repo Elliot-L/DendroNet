@@ -83,6 +83,6 @@ if __name__ == '__main__':
 
     os.makedirs(os.path.join('data_files', 'basic_files'), exist_ok=True)
     samples_df = pd.DataFrame(data=data)
-    samples_df.to_csv(os.path.join('data_files', 'basic_files', group + '_' + args.antibiotic + '_basic.csv'),
+    samples_df.to_csv(os.path.join('data_files', 'basic_files', group + '_' + antibiotic + '_basic.csv'),
                       index=False, sep='\t')
 

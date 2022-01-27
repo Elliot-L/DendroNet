@@ -15,8 +15,6 @@ if __name__ == '__main__':
         print('Basic file related to this subproblem:')
         basic_df = pd.read_csv(basic_file, dtype=str, sep='\t')
 
-        print(basic_df)
-
         possible_phenotypes_and_count = {}
         ids_count = 0
         ids = []
