@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--save-seed', type=int, nargs='+', default=[], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
-    parser.add_argument('--dpf', type=float, default=1, metavar='D',
+    parser.add_argument('--dpf', type=float, default=0.01, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
     parser.add_argument('--l1', type=float, default=0.1)
     parser.add_argument('--p', type=int, default=1)
