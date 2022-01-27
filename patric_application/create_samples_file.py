@@ -25,6 +25,9 @@ if __name__ == '__main__':
               'create_basic_from_amr_file.py file, or download it from the PATRIC terminal.')
         exit()
 
+    os.makedirs(os.path.join('data_files', 'subproblems'), exist_ok=True)
+    os.makedirs(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic), exist_ok=True)
+
     basic_df = pd.read_csv(basic_file, sep='\t', dtype=str)
     basic_df = basic_df[(basic_df['genome_drug.resistant_phenotype'].notnull()) &
                         (basic_df['genome_drug.resistant_phenotype'] != 'Not defined')]
@@ -128,7 +131,7 @@ if __name__ == '__main__':
 
     final_df = pd.DataFrame(data={'ID': ids, 'Phenotype': phenotypes, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_'
-                                 + args.antibiotic + '_' + str(args.threshold) + '_samples' + '.csv'), index=False)
+                                 + args.antibiotic + '_' + str(args.threshold) + '_samples.csv'), index=False)
 
 
 

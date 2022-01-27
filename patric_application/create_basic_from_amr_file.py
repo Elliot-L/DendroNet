@@ -84,7 +84,7 @@ if __name__ == '__main__':
     print(str(genomes_in_amr) + ' of the genome from genome_lineage are also available in the amr_phenotypes.')
 
     os.makedirs(os.path.join('data_files', 'basic_files'), exist_ok=True)
-    samples_df = pd.DataFrame(data=data)
-    samples_df.to_csv(os.path.join('data_files', 'basic_files', group + '_' + antibiotic + '_basic.csv'),
-                      index=False, sep='\t')
+    basic_df = pd.DataFrame(data=data)
+    basic_df.to_csv(os.path.join('data_files', 'basic_files', group + '_' + antibiotic + '_basic.csv'),
+                    index=False, sep='\t')
 
