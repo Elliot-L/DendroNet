@@ -38,7 +38,7 @@ if __name__ == '__main__':
     phenotypes = []
     features = []
 
-    error = set()
+    error = []
     functions = set()
     ids_dict = {}  # keys will be genomes ids and values are dictionaries for which the keys are specialy genes
                    # functions (a string) and the value is the number of time this gene is present in given genome
