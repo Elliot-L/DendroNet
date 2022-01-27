@@ -40,12 +40,12 @@ if __name__ == '__main__':
         print('The basic file associated to this problem does not exist. Create it using the ' +
               'create_basic_from_amr_file.py file, or download it from the PATRIC terminal.')
 
-    label_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic,
+    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic,
                               args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv')
-    if os.path.isfile(label_file):
+    if os.path.isfile(samples_file):
         print('Sample file related to this subproblem:')
 
-        label_df = pd.read_csv(label_file, dtype=str)
+        samples_df = pd.read_csv(samples_file, dtype=str)
 
         ids = []
         ids_count = 0
@@ -54,11 +54,11 @@ if __name__ == '__main__':
         neg_count = 0
         others = 0
 
-        for row in range(label_df.shape[0]):
+        for row in range(samples_df.shape[0]):
             ids_count += 1
-            ids.append(label_df.iloc[row, 0])
-            features_count.append(len((label_df.iloc[row, 4]).split(',')))
-            phenotype = label_df.iloc[row, 2]
+            ids.append(samples_df.iloc[row, 0])
+            features_count.append(len((samples_df.iloc[row, 2]).split(',')))
+            phenotype = samples_df.iloc[row, 1]
             if phenotype == '[1]':
                 pos_count += 1
             elif phenotype == '[0]':
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 no_problem = False
                 break
         if no_problem:
-            print('Training examples have feature vectors of size ' + str(first_count))
+            print('All training examples have feature vectors of size ' + str(first_count))
 
         total = pos_count + neg_count + others
         print(str((pos_count/total)*100) + ' % of the examples are positive')
