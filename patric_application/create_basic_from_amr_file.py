@@ -20,8 +20,10 @@ if __name__ == '__main__':
 
     while antibiotic not in list(amr_df.loc[:, 'antibiotic']):
         print('The antibiotic ' + antibiotic + ' was not found inside the data.')
-        print('Please input another antibiotic name in the console:')
+        print('Please input another antibiotic name in the console (or type exit):')
         antibiotic = input()
+        if antibiotic == 'exit':
+            exit()
 
     amr_df = amr_df[(amr_df['resistant_phenotype'].notnull()) & (amr_df['genome_id'].notnull())
                     & (amr_df['antibiotic'].notnull()) & (amr_df['antibiotic'] == antibiotic)

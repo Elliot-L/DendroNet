@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     base_url = 'ftp://ftp.patricbrc.org/genomes/'
     extension = '.PATRIC.spgene.tab'
-    base_out = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'spgenes')
+    base_out = os.path.join('data_files', 'spgenes')
     os.makedirs(base_out, exist_ok=True)
     basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
 
@@ -32,9 +32,7 @@ if __name__ == '__main__':
 
     # lists that will be used to build the dataframe at the end
     ids = []
-    antibiotics = []
     phenotypes = []
-    annotations = []
     features = []
 
     error = set()
@@ -85,8 +83,6 @@ if __name__ == '__main__':
                 phenotypes.append([1])
             else:  # In the amr_file, the two other phenotypes used to described non-resistance are susceptible and
                 phenotypes.append([0])  # and susceptible-dose dependent.
-            antibiotics.append([basic_df['drug.antibiotic_name'][row]])
-            annotations.append([True])
 
     for feature_dict in ids_dict.items():
         functions = functions.union(feature_dict.keys())
@@ -129,8 +125,7 @@ if __name__ == '__main__':
         json.dump(subproblem_infos, info_file)
     """
 
-    final_df = pd.DataFrame(data={'ID': ids, 'Antibiotics': antibiotics, 'Phenotype': phenotypes,
-                                  'Annotation': annotations, 'Features': features})
+    final_df = pd.DataFrame(data={'ID': ids, 'Phenotype': phenotypes, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_'
                                  + args.antibiotic + '_' + str(args.threshold) + '_samples' + '.csv'), index=False)
 
