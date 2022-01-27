@@ -89,7 +89,7 @@ if __name__ == '__main__':
         functions = functions.union(feature_dict.keys())
 
     functions = list(functions)
-    min_number = int((basic_df.shape[0] - len(error))*args.threshold)
+    min_number = int(len(ids)*args.threshold)
 
     for idx in ids:
         genome_features = []
