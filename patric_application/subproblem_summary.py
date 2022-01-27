@@ -9,7 +9,7 @@ if __name__ == '__main__':
     parser.add_argument('--threshold', type=str, default='0.0')
     args = parser.parse_args()
 
-    basic_file = os.path.join('data_files', 'old_basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
+    basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
 
     if os.path.isfile(basic_file):
         print('Basic file related to this subproblem:')
