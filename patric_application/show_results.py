@@ -120,9 +120,9 @@ if __name__ == "__main__":
         antibiotic = file_name[1]
 
         print('Firmicutes, ' +  antibiotic + ', 0.0 :')
-        print("Shannon's index (entropy) :" + str(entropy(antibiotic, 'Firmicutes', 'genome_id')))
-        print('Quadratic entropy :' + str(quad_entropy(antibiotic, 'Firmicutes', 'genome_id')))
-        print('Phylogenetic entropy :' + str(phylo_entropy(antibiotic, 'Firmicutes', 'genome_id')))
+        print("Shannon's index (entropy) :" + str(entropy(antibiotic, 'Firmicutes', '0.0', 'genome_id')))
+        print('Quadratic entropy :' + str(quad_entropy(antibiotic, 'Firmicutes', '0.0', 'genome_id')))
+        print('Phylogenetic entropy :' + str(phylo_entropy(antibiotic, 'Firmicutes', '0.0', 'genome_id')))
         print('')
     """
     print('Firmicutes, antibiotic, 0.0 :')
