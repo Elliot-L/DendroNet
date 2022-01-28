@@ -49,22 +49,21 @@ def phylo_entropy(antibiotic, group, threshold, leaf_level):
         for c in range(len(topo_order)):
             prop = 0
             if parent_child_matrix[p][c] == 1.0:
-                prop = subtree(parent_child_matrix, c, proportions)
+                prop = subtree_proportion(parent_child_matrix, c, proportions)
             if prop > 0:
                 phylo_entropy_value += prop*(math.log2(prop))
 
     return (-1)*phylo_entropy_value
 
-def subtree(mat, p, proportions):
+def subtree_proportion(mat, p, proportions):
     if proportions[p] > 0:
         return proportions[p]
     else:
         total_prop = 0
         for c in range(p + 1, mat.shape[0]):
             if mat[p][c] == 1.0:
-                total_prop += subtree(mat, c, proportions)
+                total_prop += subtree_proportion(mat, c, proportions)
         return total_prop
-
 
 def quad_entropy(antibiotic, group, threshold, leaf_level):
     label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
@@ -86,7 +85,7 @@ def quad_entropy(antibiotic, group, threshold, leaf_level):
         if len(node_examples[node]) > 0:
             leaves.append(topo_order[node])
 
-    paths = []
+    paths = []  # series of nodes, for each leaf, up to the root
     for i in range(len(topo_order)):
         if topo_order[i] in leaves:
             path = [topo_order[i]]
@@ -115,16 +114,22 @@ def quad_entropy(antibiotic, group, threshold, leaf_level):
 
 
 if __name__ == "__main__":
+
+    for file_name in os.listdir():
+        file_name = file_name.split('_')
+        antibiotic = file_name[1]
+
+        print('Firmicutes, ' +  antibiotic + ', 0.0 :')
+        print("Shannon's index (entropy) :" + str(entropy(antibiotic, 'Firmicutes', 'genome_id')))
+        print('Quadratic entropy :' + str(quad_entropy(antibiotic, 'Firmicutes', 'genome_id')))
+        print('Phylogenetic entropy :' + str(phylo_entropy(antibiotic, 'Firmicutes', 'genome_id')))
+        print('')
     """
-    print('Firmicutes, erythromycin, 0.0 :')
-    print("Shannon's index (entropy) :" + str(entropy('erythromycin', 'Firmicutes', 'genome_id')))
-    print('Quadratic entropy :' + str(quad_entropy('erythromycin', 'Firmicutes', 'genome_id')))
-    print('Phylogenetic entropy :' + str(phylo_entropy('erythromycin', 'Firmicutes', 'genome_id')))
-    print('')
-    print('Firmicutes, betalactam, 0.0 :')
-    print("Shannon's index (entropy) :" + str(entropy('betalactam', 'Firmicutes', 'genome_id')))
-    print('Quadratic entropy :' + str(quad_entropy('betalactam', 'Firmicutes', 'genome_id')))
-    print('Phylogenetic entropy :' + str(phylo_entropy('betalactam', 'Firmicutes', 'genome_id')))
+    print('Firmicutes, antibiotic, 0.0 :')
+    print("Shannon's index (entropy) :" + str(entropy(antibiotic, 'Firmicutes', 'genome_id')))
+    print('Quadratic entropy :' + str(quad_entropy(antibiotic, 'Firmicutes', 'genome_id')))
+    print('Phylogenetic entropy :' + str(phylo_entropy(antibiotic, 'Firmicutes', 'genome_id')))
+    """
     """
 
     data1 = {}
@@ -204,7 +209,7 @@ if __name__ == "__main__":
     print(df1.sort_values(by=['Group']))
     print(df2.sort_values(by=['Group']))
 
-
+    """
 
 
 
