@@ -115,7 +115,7 @@ def quad_entropy(antibiotic, group, threshold, leaf_level):
 
 if __name__ == "__main__":
 
-    for file_name in os.listdir():
+    for file_name in os.listdir('data_files', 'subproblems'):
         file_name = file_name.split('_')
         antibiotic = file_name[1]
 
