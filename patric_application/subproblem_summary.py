@@ -91,7 +91,7 @@ if __name__ == '__main__':
             print(str((pos_count / total) * 100) + ' % of the examples are positive')
             print(str((neg_count / total) * 100) + ' % of the examples are negative')
             print(str((others / total) * 100) + ' % of the examples are mislabelled')
-
+    print('')
 
 
 
