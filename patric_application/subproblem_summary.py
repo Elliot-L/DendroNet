@@ -39,7 +39,9 @@ if __name__ == '__main__':
         print('The basic file associated to this problem does not exist. Create it using the ' +
               'create_basic_from_amr_file.py file, or download it from the PATRIC terminal.')
 
-    if len(os.listdir(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic))) == 0:
+    directory = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic)
+
+    if os.path.isdir(directory) and len(os.listdir(directory)) == 0:
         print('No samples file was found. Create one using create_samples_file.py.')
 
     else:
