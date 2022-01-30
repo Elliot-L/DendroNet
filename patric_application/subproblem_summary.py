@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     directory = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic)
 
-    if os.path.isdir(directory) and len(os.listdir(directory)) == 0:
+    if not os.path.isdir(directory) or len(os.listdir(directory)) == 0:
         print('No samples file was found. Create one using create_samples_file.py.')
 
     else:
