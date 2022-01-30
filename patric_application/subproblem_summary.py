@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     else:
         print('Sample files related to this subproblem:')
-        for file_name in os.listdir(os.path.join('data_files', 'subproblems', group + '_' + antibiotic)):
+        for file_name in os.listdir(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic)):
             file_name_list = file_name.split('_')
             threshold = file_name_list[2]
             print('Threshold: ' + threshold)

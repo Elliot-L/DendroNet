@@ -61,8 +61,10 @@ if __name__ == '__main__':
             print('Important: group name in the data starts with a capital letter (ex: Proteobacteria or Firmicutes)')
             group = ''
             while group == '':
-                print('Please input another group name in the console:')
+                print('Please input another group name in the console (or type exit):')
                 group = input()
+                if group == 'exit':
+                    exit()
 
     ids = []
     for i in range(genome_df.shape[0]):
