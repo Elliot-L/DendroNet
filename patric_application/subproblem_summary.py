@@ -43,7 +43,7 @@ if __name__ == '__main__':
         print('No samples file was found. Create one using create_samples_file.py.')
 
     else:
-        print('Sample files related to this subproblem:')
+        print('Samples files related to this subproblem:')
         for file_name in os.listdir(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic)):
             file_name_list = file_name.split('_')
             threshold = file_name_list[2]
@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
             all_binarized = True
             for feature_list in samples_df.loc[:, 'Features']:
-                feature_list = feature_list.replace(['[', ']', '"'], '').split(',')
+                feature_list = feature_list.replace('[', '').replace(']', '').replace('"', '').split(',')
                 for feature in feature_list:
                     feature = float(feature)
                     if feature != 1.0 or feature != 0.0:
