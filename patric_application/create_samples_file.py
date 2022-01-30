@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     final_df = pd.DataFrame(data={'ID': ids, 'Phenotype': phenotypes, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_'
-                                 + args.antibiotic + '_' + args.threshold + '_samples.csv'), index=False)
+                                 + args.antibiotic + '_' + str(args.threshold) + '_samples.csv'), index=False)
 
 
 
