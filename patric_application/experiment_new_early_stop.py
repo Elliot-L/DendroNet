@@ -87,9 +87,9 @@ if __name__ == '__main__':
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
 
-    PLOT = True
+    PLOT = False
     PLOT_Batch = False
-    SAVE_PLOT = True
+    SAVE_PLOT = False
 
     # some other hyper-parameters for training
     LR = args.lr
@@ -447,8 +447,7 @@ if __name__ == '__main__':
         """
     plt.show()
 
-
-    if SAVE_PLOT:
+    if SAVE_PLOT and PLOT:
         os.makedirs(os.path.join('data_files', 'AUC_plots'), exist_ok=True)
         file_name = group + '_' + antibiotic + '_' + threshold + '_' + str(args.lr) + '_' + str(args.dpf) + '_' \
                     + str(args.l1) + '_' + str(args.early_stopping) + '_seed_' + str(s) + '.png'

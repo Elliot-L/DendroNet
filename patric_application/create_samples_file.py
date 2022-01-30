@@ -69,8 +69,6 @@ if __name__ == '__main__':
             for function in list(sp_df.loc[:, 'function']):
                 if function not in feat_dict.keys():
                     feat_dict[function] = 1.0
-                else:
-                    feat_dict[function] += 1.0
 
             ids_dict[genome] = feat_dict
             ids.append(genome)
@@ -120,18 +118,9 @@ if __name__ == '__main__':
             col -= 1
         col += 1
 
-    """"
-    subproblem_infos = {}
-    subproblem_infos['number of examples:'] = len(ids)
-    subproblem_infos['number of features:'] = len(useful_functions)
-    with open(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, 'subproblem_infos_'
-              + str(args.threshold) + '.json'), 'w') as info_file:
-        json.dump(subproblem_infos, info_file)
-    """
-
     final_df = pd.DataFrame(data={'ID': ids, 'Phenotype': phenotypes, 'Features': features})
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, args.group + '_'
-                                 + args.antibiotic + '_' + str(args.threshold) + '_samples.csv'), index=False)
+                                 + args.antibiotic + '_' + args.threshold + '_samples.csv'), index=False)
 
 
 
