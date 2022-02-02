@@ -7,12 +7,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--antibiotic', type=str, default='erythromycin', metavar='ANT')
 parser.add_argument('--group', type=str, default='firmicutes', metavar='GR')
 parser.add_argument('--genome-lineage', type=str, default=os.path.join('data_files', 'genome_lineage.csv'))
-parser.add_argument('--dpfs', type=float, default=[0.001, 0.01, 0.1, 1.0], help='Default is [0.001, 0.01, 0.1, 1.0]')
-parser.add_argument('--lrs', type=float, default=[0.01, 0.001, 0.0001], help='Default is [0.01, 0.001, 0.0001]')
-parser.add_argument('--l1s', type=float, default=[0.0, 0.01, 0.1, 1.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
-parser.add_argument('--early_stopping', default=[3, 5, 10], help='Default is [3, 5, 10]')
-parser.add_argument('--epochs', type=int, default=[1000], help='Default is 200')
-parser.add_argument('--seed', type=int, nargs='+', default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
+#parser.add_argument('--dpfs', type=float, nargs='+', default=[0.001, 0.01, 0.1, 1.0], help='Default is [0.001, 0.01, 0.1, 1.0]')
+#parser.add_argument('--lrs', type=float, nargs='+', default=[0.01, 0.001, 0.0001], help='Default is [0.01, 0.001, 0.0001]')
+#parser.add_argument('--l1s', type=float, nargs='+', default=[0.0, 0.01, 0.1, 1.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
+#parser.add_argument('--early_stopping', nargs='+', default=[3, 5], help='Default is [3, 5, 10]')
+parser.add_argument('--dpfs', type=float, nargs='+', default=[0.001], help='Default is [0.001, 0.01, 0.1, 1.0]')
+parser.add_argument('--lrs', type=float, nargs='+', default=[0.01], help='Default is [0.01, 0.001, 0.0001]')
+parser.add_argument('--l1s', type=float, nargs='+', default=[0.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
+parser.add_argument('--early_stopping', nargs='+', default=[3], help='Default is [3, 5, 10]')
+parser.add_argument('--epochs', type=int, nargs='+', default=[1000], help='Default is 200')
+parser.add_argument('--seed', type=int, nargs='+', default=[0], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
@@ -71,7 +75,7 @@ if __name__ == "__main__":
                                           + ' --group ' + args.group \
                                           + ' --antibiotic ' + args.antibiotic \
                                           + ' --threshold ' + args.threshold \
-                                          # + ' --seed ' + str(args.seed)
+                                          + ' --seed ' + str(args.seed)
                                 os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
@@ -88,24 +92,25 @@ if __name__ == "__main__":
         for lr in lr_list:
             for epoch in epoch_list:
                 for e_stop in e_stop_list:
-                    dir_name = args.group + '_' + args.antibiotic + str(args.threshold) + '_logistic_' \
-                               + str(lr) + '_' + str(e_stop)
+                    for l1 in l1_list:
+                        dir_name = args.group + '_' + args.antibiotic + str(args.threshold) + '_logistic_' \
+                                   + str(lr) + '_' + str(e_stop)
 
-                    output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
-                    print(dir_name)
-                    if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_log == 'y':
-                        command = 'python log_experiment.py --epochs ' \
-                                  + str(epoch)  \
-                                  + ' --early-stopping ' + str(e_stop) \
-                                  + ' --lr ' + str(lr)  \
-                                  + ' --l1 ' + str(l1) \
-                                  + ' --output-path ' + output_path \
-                                  + ' --batch-size ' + str(args.batch_size) \
-                                  + ' --group ' + args.group \
-                                  + ' --antibiotic ' + args.antibiotic \
-                                  + ' --threshold ' + args.threshold
-                        # + ' --seed ' + str(args.seed)
-                        os.system(command)
+                        output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
+                        print(dir_name)
+                        if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_log == 'y':
+                            command = 'python log_experiment.py --epochs ' \
+                                      + str(epoch)  \
+                                      + ' --early-stopping ' + str(e_stop) \
+                                      + ' --lr ' + str(lr)  \
+                                      + ' --l1 ' + str(l1) \
+                                      + ' --output-path ' + output_path \
+                                      + ' --batch-size ' + str(args.batch_size) \
+                                      + ' --group ' + args.group \
+                                      + ' --antibiotic ' + args.antibiotic \
+                                      + ' --threshold ' + args.threshold \
+                                      + ' --seed ' + str(args.seed)
+                            os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
                                 leaf_level='none', threshold=args.threshold)
