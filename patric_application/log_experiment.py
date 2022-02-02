@@ -54,7 +54,7 @@ if __name__ == '__main__':
     samples_df = pd.read_csv(samples_file, dtype=str)
 
     # flag to use CUDA gpu if available
-    USE_CUDA = True
+    USE_CUDA = False
     print('Using CUDA: ' + (str(torch.cuda.is_available() and USE_CUDA)))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
 

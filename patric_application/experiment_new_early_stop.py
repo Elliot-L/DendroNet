@@ -79,7 +79,7 @@ if __name__ == '__main__':
     """
 
     # flag to use cuda gpu if available
-    USE_CUDA = True
+    USE_CUDA = False
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
 
