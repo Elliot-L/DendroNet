@@ -93,6 +93,7 @@ if __name__ == '__main__':
                 for feature in feature_list:
                     feature = float(feature)
                     if feature != 1.0 or feature != 0.0:
+                        print(feature)
                         print(type(feature))
                         all_binarized = False
                         break
