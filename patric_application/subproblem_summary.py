@@ -89,12 +89,9 @@ if __name__ == '__main__':
             all_binarized = True
             for feature_list in samples_df.loc[:, 'Features']:
                 feature_list = feature_list.replace('[', '').replace(']', '').replace('"', '').split(',')
-                print(type(feature_list))
                 for feature in feature_list:
                     feature = float(feature)
-                    if feature != 1.0 or feature != 0.0:
-                        print(feature)
-                        print(type(feature))
+                    if feature != 1.0 and feature != 0.0:
                         all_binarized = False
                         break
                 if not all_binarized:
