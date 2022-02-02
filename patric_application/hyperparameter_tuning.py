@@ -6,6 +6,7 @@ import json
 parser = argparse.ArgumentParser()
 parser.add_argument('--antibiotic', type=str, default='erythromycin', metavar='ANT')
 parser.add_argument('--group', type=str, default='firmicutes', metavar='GR')
+parser.add_argument('--threshold', type=str, default=0.00, help='Threshold for feature selection')
 parser.add_argument('--genome-lineage', type=str, default=os.path.join('data_files', 'genome_lineage.csv'))
 #parser.add_argument('--dpfs', type=float, nargs='+', default=[0.001, 0.01, 0.1, 1.0], help='Default is [0.001, 0.01, 0.1, 1.0]')
 #parser.add_argument('--lrs', type=float, nargs='+', default=[0.01, 0.001, 0.0001], help='Default is [0.01, 0.001, 0.0001]')
@@ -27,7 +28,6 @@ parser.add_argument('--force-train_dendronet', type=str, default='y', help='Deci
                                                                            'for combination that were trained already'
                                                                            'on dendronet')
 #parser.add_argument('--gpu-mode', type=str, default='single', help='Using a single or multiple GPUs')
-parser.add_argument('--threshold', type=float, default=0.00, help='Threshold for feature selection')
 args = parser.parse_args()
 
 if __name__ == "__main__":
