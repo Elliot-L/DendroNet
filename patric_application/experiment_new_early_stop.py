@@ -37,10 +37,9 @@ if __name__ == '__main__':
     parser.set_defaults(runtest=False)
     parser.add_argument('--lineage-path', type=str, default=os.path.join('data_files', 'genome_lineage.csv', )
                         , help='file containing taxonomic classification for species from PATRIC')
-    parser.add_argument('--samples-file', type=str,
-                        default=os.path.join('data_files', 'subproblems', 'Firmicutes_erythromycin',
-                                             'Firmicutes_erythromycin_0.0_samples.csv'),
-                        metavar='LF', help='file to look in for samples')
+    parser.add_argument('--group', type=str, default='Firmicutes')
+    parser.add_argument('--antibiotic', type=str, default='erythromycin')
+    parser.add_argument('--threshold', type=str, default='0.0')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
     parser.add_argument('--leaf-level', type=str, default='genome_id',
@@ -48,19 +47,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # We get the parent_child matrix using the prexisting file or by creating it
-    file_info = os.path.split(args.samples_file)[1]
-    antibiotic = file_info.split('_')[1]
-    group = file_info.split('_')[0]
-    threshold = file_info.split('_')[2]
 
-    matrix_file = group + '_' + antibiotic + '_' + args.leaf_level + '.json'
+    samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
+    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, samples_file)
+    matrix_file = args.group + '_' + args.antibiotic + '_' + args.leaf_level + '.json'
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
-                                                           label_file=args.samples_file,
+                                                           label_file=samples_file,
                                                            leaf_level=args.leaf_level)
-    print(topo_order)
     # annotating leaves with labels and features
-    if os.path.isfile(args.samples_file):
-        samples_df = pd.read_csv(args.samples_file, dtype=str)
+    if os.path.isfile(samples_file):
+        samples_df = pd.read_csv(samples_file, dtype=str)
     else:
         print('The samples file does not exist.')
         exit()
@@ -308,7 +304,6 @@ if __name__ == '__main__':
                     best_epoch = epoch
                     best_root_weights = dendronet.root_weights.detach().clone()
                     best_edge_tensor_matrix = dendronet.delta_mat.detach().clone()
-
                 else:
                     early_stopping_count += 1
                     print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
@@ -376,8 +371,8 @@ if __name__ == '__main__':
     print('Average time to train a model: ' + str(average_time_seed) + ' seconds')
 
     os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
-    time_file = os.path.join('data_files', 'time_performances', 'experiment3_' + group + '_' + antibiotic + '_'
-                             + args.leaf_level + '_' + threshold)
+    time_file = os.path.join('data_files', 'time_performances', 'experiment3_' + args.group + '_' + args.antibiotic + '_'
+                             + args.leaf_level + '_' + args.threshold)
     with open(time_file, 'w') as file:
         json.dump({'average_per_seed': average_time_seed}, file)
 
@@ -389,7 +384,7 @@ if __name__ == '__main__':
             plt.plot(new_error_per_batch, c='g', label='N')  # error loss after optimizer step
             #plt.plot(losses_per_batch, c='b', label='T')  # total loss
             plt.legend(loc='upper left', bbox_to_anchor=(1, 1), ncol=1)
-            plt.suptitle('First batch ' + group + '_' + antibiotic + '_' + threshold + ' early-stop: '
+            plt.suptitle('First batch ' + args.group + '_' + args.antibiotic + '_' + args.threshold + ' early-stop: '
                          + str(args.early_stopping) + ' dpf: ' + str(DPF))
             print(delta_per_batch)
             print(l1_per_batch)
@@ -404,8 +399,8 @@ if __name__ == '__main__':
                 final_test_auc_for_plot.append(final_roc_auc)
 
             figure, axis = plt.subplots(2, 1)
-            figure.suptitle('Whole training' + group + '_' + antibiotic + '_' + threshold + ' early-stop: '
-                            + str(args.early_stopping) + ' dpf: ' + str(DPF))
+            figure.suptitle('Whole training' + args.group + '_' + args.antibiotic + '_' + args.threshold
+                            + ' early-stop: ' + str(args.early_stopping) + ' dpf: ' + str(DPF))
 
             # Plot for AUC values
             axis[0].plot(train_aucs_for_plot, c='r', label='T AUC')  # train AUC
@@ -449,8 +444,8 @@ if __name__ == '__main__':
 
     if SAVE_PLOT and PLOT:
         os.makedirs(os.path.join('data_files', 'AUC_plots'), exist_ok=True)
-        file_name = group + '_' + antibiotic + '_' + threshold + '_' + str(args.lr) + '_' + str(args.dpf) + '_' \
-                    + str(args.l1) + '_' + str(args.early_stopping) + '_seed_' + str(s) + '.png'
+        file_name = args.group + '_' + args.antibiotic + '_' + args.threshold + '_' + str(args.lr) + '_' \
+                    + str(args.dpf) + '_' + str(args.l1) + '_' + str(args.early_stopping) + '_seed_' + str(s) + '.png'
         if s in args.save_seed:
             plt.savefig(os.path.join('data_files', 'AUC_plots', file_name))
 

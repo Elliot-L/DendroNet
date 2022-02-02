@@ -87,7 +87,12 @@ if __name__ == '__main__':
                 print('All training examples have feature vectors of size ' + str(first_count))
 
             all_binarized = True
+            first = True
             for feature_list in samples_df.loc[:, 'Features']:
+                if first:
+                    first = False
+                    print(type(feature_list))
+                    print(feature_list)
                 feature_list = feature_list.replace('[', '').replace(']', '').replace('"', '').split(',')
                 for feature in feature_list:
                     feature = float(feature)
@@ -96,10 +101,10 @@ if __name__ == '__main__':
                         break
                 if not all_binarized:
                     break
-            if not all_binarized:
-                print('Not all features in this file are binarized.')
-            else:
+            if all_binarized:
                 print('All feature in this file are binarized.')
+            else:
+                print('Not all features in this file are binarized.')
 
             total = pos_count + neg_count + others
             print(str((pos_count / total) * 100) + ' % of the examples are positive')

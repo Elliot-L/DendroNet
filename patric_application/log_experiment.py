@@ -19,7 +19,7 @@ from utils.model_utils import build_parent_path_mat, split_indices, IndicesDatas
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=200, metavar='N')
+    parser.add_argument('--epochs', type=int, default=1000, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seed', type=int, default=[0, 1, 2, 3, 4], metavar='S',
@@ -29,32 +29,45 @@ if __name__ == '__main__':
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--p', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR')
+    parser.add_argument('--l1', type=float, default=0.001)
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
-    parser.add_argument('--label-file', type=str, default=os.path.join('data_files', 'subproblems', 'Firmicutes_erythromycin', 'Firmicutes_erythromycin_0.0_samples.csv')
-                        , metavar='LF', help='file to look in for labels')
+    parser.add_argument('--group', type=str, default='Firmicutes')
+    parser.add_argument('--antibiotic', type=str, default='erythromycin')
+    parser.add_argument('--threshold', type=str, default='0.0')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC score of the model will be outputted')
     args = parser.parse_args()
 
     # annotating leaves with labels and features
-    labels_df = pd.read_csv(args.label_file, dtype=str)
+    samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
+    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, samples_file)
 
-    # flag to use cuda gpu if available
+    if os.path.isfile(samples_file):
+        samples_df = pd.read_csv(samples_file, dtype=str)
+    else:
+        print('The samples file does not exist.')
+        exit()
+
+    samples_df = pd.read_csv(samples_file, dtype=str)
+
+    # flag to use CUDA gpu if available
     USE_CUDA = True
-    print('Using CUDA: ' + str(USE_CUDA))
+    print('Using CUDA: ' + (str(torch.cuda.is_available() and USE_CUDA)))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
+
     # some other hyper-parameters for training
     LR = args.lr
+    L1 = args.l1
     BATCH_SIZE = args.batch_size
     EPOCHS = args.epochs
 
     X = []
     y = []
 
-    for row in labels_df.itertuples():
+    for row in samples_df.itertuples():
         phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
         y.append(phenotype)
         features = eval(getattr(row, 'Features'))  # the x value
@@ -71,8 +84,10 @@ if __name__ == '__main__':
         # Used for comparison with DendroNet performance
         # We use a linear regression in order to be able to use BCEWithLogitsLoss as loss function,
         # a more stable version of BCEloss
+
         logistic = LinRegModel(len(X[0]))
         logistic.to(device)
+        best_weights = logistic.lin_1
 
         train_idx, test_idx = split_indices(range(len(X)), seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -112,7 +127,8 @@ if __name__ == '__main__':
         all_y_train_idx = []
         for idx in train_idx:
             all_y_train_idx.append(idx)
-        y_train_true = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
+        y_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
+
         logistic = logistic.double()
 
         # running the training loop
@@ -124,16 +140,27 @@ if __name__ == '__main__':
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
                 y_hat = logistic.forward(X[idx_batch])
-                loss = loss_function(y_hat, y[idx_batch].squeeze())  # idx_batch is also used to fetch the appropriate entries from y
+                error_loss = loss_function(y_hat, y[idx_batch].squeeze())  # idx_batch is also used to fetch the appropriate entries from y
+                #computing L1 loss
+                l1_loss = 0.0
+                for w in logistic.lin_1.weight[0]:
+                    l1_loss += abs(float(w))
+                loss = error_loss + (L1*l1_loss)
                 running_loss += float(loss)
                 loss.backward(retain_graph=True)
                 optimizer.step()
+            step += 1
             print('Average training loss for epoch: ', str(running_loss / step))
 
-            # train set after weights are update
-            y_pred = (torch.sigmoid(logistic.forward(X[all_y_train_idx]))).detach().cpu().numpy()  # predicted values (after sigmoid) for whole train set
+            #Compute L1 after all batches of training of the epoch
+            l1_loss = 0.0
+            for w in logistic.lin_1.weight[0]:
+                l1_loss += abs(float(w))
 
-            fpr, tpr, _ = roc_curve(y_train_true, y_pred)
+            # train set after weights are update
+            y_train_pred = (torch.sigmoid(logistic.forward(X[all_y_train_idx]))).detach().cpu().numpy()  # predicted values (after sigmoid) for whole train set
+
+            fpr, tpr, _ = roc_curve(y_train_targets, y_train_pred)
             roc_auc = auc(fpr, tpr)
             print("Training ROC AUC for epoch: ", roc_auc)
 
@@ -146,14 +173,15 @@ if __name__ == '__main__':
                     y_hat = logistic.forward(X[idx_batch])
                     if y_hat.size() == torch.Size([]):
                         y_hat = torch.unsqueeze(y_hat, 0)
-                    val_loss += loss_function(y_hat, y[idx_batch])
+                    val_error_loss = loss_function(y_hat, y[idx_batch])
+                    val_loss += val_error_loss + (L1*l1_loss)
                     y_t = list(y[idx_batch].detach().cpu().numpy())  # true values for this batch
                     y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions for this batch
                     y_true.extend(y_t)
                     y_pred.extend(y_p)
-
                 fpr, tpr, _ = roc_curve(y_true, y_pred)
                 roc_auc = auc(fpr, tpr)
+                step += 1
                 print('Average loss on the validation set on this epoch: ', float(val_loss) / step)
                 print("ROC AUC for epoch: ", roc_auc)
 
@@ -162,6 +190,7 @@ if __name__ == '__main__':
                 if roc_auc > best_auc:  # Check if performance has increased on validation set (loss is decreasing)
                     best_auc = roc_auc
                     early_stopping_count = 0
+                    best_weights = logistic.lin_1.weight.detach().clone()
                     print("Improvement!!!")
                 else:
                     early_stopping_count += 1
@@ -170,51 +199,51 @@ if __name__ == '__main__':
                 if early_stopping_count > args.early_stopping:  # If performance has not increased for long enough, we stop training
                     print("EARLY STOPPING!")  # to avoid overfitting
                     break
+
         val_auc.append(roc_auc)
 
         # With training complete, we'll run the test set
         with torch.no_grad():
+
+            best_logistic = LinRegModel(len(X[0]), use_given_weights=True, input_weights=best_weights)
+
             y_true = []
             y_pred = []
             test_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
-                y_hat = logistic.forward(X[idx_batch])
+                y_hat = best_logistic.forward(X[idx_batch])
                 if y_hat.size() == torch.Size([]):
                     y_hat = torch.unsqueeze(y_hat, 0)
-                test_loss += loss_function(y_hat, y[idx_batch])
+                test_error_loss = loss_function(y_hat, y[idx_batch])
+                test_loss += test_error_loss + (L1*l1_loss)
                 y_t = list(y[idx_batch].detach().cpu().numpy())
                 y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())
-                # y_pred = torch.cat((y_pred, y_p), 0)
-                # y_true = torch.cat((y_true, y_t), 0)
                 y_true.extend(y_t)
                 y_pred.extend(y_p)
 
             fpr, tpr, _ = roc_curve(y_true, y_pred)
             roc_auc = auc(fpr, tpr)
-
+            step += 1
             print("ROC AUC for test:", roc_auc)
             print('Average BCE loss on test set:', float(test_loss) / step)
 
             test_auc.append(roc_auc)
 
-        output_dict = {'val_auc': val_auc, 'test_auc': test_auc}
+    output_dict = {'val_auc': val_auc, 'test_auc': test_auc}
 
-        fileName = args.output_path
-        os.makedirs(os.path.dirname(fileName), exist_ok=True)
-        with open(fileName, 'w') as outfile:
-            json.dump(output_dict, outfile)
+    fileName = args.output_path
+    os.makedirs(os.path.dirname(fileName), exist_ok=True)
+    with open(fileName, 'w') as outfile:
+        json.dump(output_dict, outfile)
 
-        final_time = time.time() - init_time
-        average_time_seed += final_time
+    final_time = time.time() - init_time
+    average_time_seed += final_time
 
     average_time_seed = average_time_seed / len(args.seed)
     print('Average time to train a model: ' + str(average_time_seed) + 'seconds')
 
-    antibiotic = os.path.split(args.label_file)[1].split(sep='_')[1]
-    group = os.path.split(args.label_file)[1].split(sep='_')[0]
-
     os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
-    time_file = os.path.join('data_files', 'time_performances', 'logistic_' + group + '_' + antibiotic)
+    time_file = os.path.join('data_files', 'time_performances', 'logistic_' + args.group + '_' + args.antibiotic)
     with open(time_file, 'w') as file:
         json.dump({'average_per_seed': average_time_seed}, file)
 

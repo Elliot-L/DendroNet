@@ -1,11 +1,8 @@
-
 import pandas as pd
 import numpy as np
 import os
 import json
 import jsonpickle
-
-
 
 
 def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythromycin_samples.csv', leaf_level='genome_id', force_build=False, save_matrix=True, new_method=False):
@@ -24,14 +21,13 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
     file_name = os.path.split(label_file)[1]
     group = file_name.split('_')[0]
     antibiotic = file_name.split('_')[1]
-    matrix_file = os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_'
-                               + leaf_level + '.json')
+    matrix_file = os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_('
+                               + leaf_level + ').json')
     if os.path.isfile(matrix_file) and not force_build:
         print('The parent-child matrix is taken from memory')
         with open(matrix_file) as file:
             js_string = json.load(file)
         jdict = jsonpickle.decode(js_string)
-        print("We didn't need to build the matrix")
         return jdict['parent_child'], jdict['nodes'], jdict['node_data']
 
     print('Building the parent-child matrix')
@@ -118,7 +114,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
         jdict['node_data'] = node_examples
         os.makedirs(os.path.join('data_files', 'parent_child_matrices'), exist_ok=True)
         with open(os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic
-                               + '_' + leaf_level + '.json'), 'w') as outfile:
+                               + '_(' + leaf_level + ').json'), 'w') as outfile:
             frozen = jsonpickle.encode(jdict)
             json.dump(frozen, outfile)
 
