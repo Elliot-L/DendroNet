@@ -87,17 +87,13 @@ if __name__ == '__main__':
                 print('All training examples have feature vectors of size ' + str(first_count))
 
             all_binarized = True
-            first = True
             for feature_list in samples_df.loc[:, 'Features']:
-                if first:
-                    first = False
-                    print(type(feature_list))
-                    print(feature_list)
                 feature_list = feature_list.replace('[', '').replace(']', '').replace('"', '').split(',')
+                print(type(feature_list))
                 for feature in feature_list:
                     feature = float(feature)
                     if feature != 1.0 or feature != 0.0:
-                        print(feature)
+                        print(type(feature))
                         all_binarized = False
                         break
                 if not all_binarized:
