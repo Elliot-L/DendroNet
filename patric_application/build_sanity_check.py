@@ -8,9 +8,10 @@ import numpy as np
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', type=str)
-    parser.add_argument('--antibiotic', type=str)
-    parser.add_argument('--threshold', type=str)
+    parser.add_argument('--group', type=str, default='Bacteria')
+    parser.add_argument('--antibiotic', type=str, default='erythromycin')
+    parser.add_argument('--threshold', type=str, default='0.0')
+    parser.add_argument('--leaf-level', type=str, default='order')
     args = parser.parse_args()
 
     samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
@@ -19,7 +20,6 @@ if __name__ == '__main__':
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                            label_file=samples_file,
                                                            leaf_level=args.leaf_level)
-
     if os.path.isfile(samples_file):
         new_samples_df = pd.read_csv(samples_file, dtype=str)
     else:
@@ -32,12 +32,15 @@ if __name__ == '__main__':
     for i, ls in enumerate(node_examples):
         if len(ls) > 0:
             if np.random.uniform(0.0, 1.0) > 0.5:
-                pos_leaves.append(topo_order[i])
+                pos_leaves.append
             else:
-                neg_leaves.append(topo_order[i])
+                neg_leaves.append(i)
 
     for row in range(new_samples_df.shape[0]):
         if new_samples_df.loc[row, 'ID'] in pos_leaves:
+            new_samples_df.at[row, 'Phenotype'] = [1]
+
+
 
 
 

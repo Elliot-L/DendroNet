@@ -304,6 +304,8 @@ if __name__ == '__main__':
                     best_epoch = epoch
                     best_root_weights = dendronet.root_weights.detach().clone()
                     best_edge_tensor_matrix = dendronet.delta_mat.detach().clone()
+                    print(best_edge_tensor_matrix)
+                    print(best_root_weights)
                 else:
                     early_stopping_count += 1
                     print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
@@ -320,12 +322,17 @@ if __name__ == '__main__':
             # We evaluate two models using the test set:
             # The best model obtained so far, based on AUC score on validation set
             # and the final model (in theory, the one performing best on training set)
+            if USE_CUDA and torch.cuda.is_available():
+                del dendronet.delta_mat
+                del dendronet.root_weights
+                torch.cuda.empty_cache()
 
             best_dendronet = DendroMatrixLinReg(device, best_root_weights, parent_path_tensor, best_edge_tensor_matrix,
                                                 init_root=False)
+
             all_targets = []
             all_best_model_predictions = []
-            all_final_model_predictions = []
+            #all_final_model_predictions = []
             total_test_loss = 0.0
             total_test_error_loss = 0.0
 
@@ -338,21 +345,21 @@ if __name__ == '__main__':
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 best_model_y_hat = best_dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                final_model_y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                #final_model_y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 targets = list(y[idx_in_X].detach().cpu().numpy())
                 best_pred = list(torch.sigmoid(best_model_y_hat).detach().cpu().numpy())
-                final_pred = list(torch.sigmoid(final_model_y_hat).detach().cpu().numpy())
+                #final_pred = list(torch.sigmoid(final_model_y_hat).detach().cpu().numpy())
                 error_loss = loss_function(best_model_y_hat, y[idx_in_X])
                 total_test_error_loss += float(error_loss)
                 total_test_loss += float(error_loss + (best_delta_loss*DPF) + (best_l1_loss*L1))
                 all_targets.extend(targets)
                 all_best_model_predictions.extend(best_pred)
-                all_final_model_predictions.extend(final_pred)
+                #all_final_model_predictions.extend(final_pred)
 
             best_fpr, best_tpr, _ = roc_curve(all_targets, all_best_model_predictions)
             best_roc_auc = auc(best_fpr, best_tpr)
-            final_fpr, final_tpr, _ = roc_curve(all_targets, all_final_model_predictions)
-            final_roc_auc = auc(final_fpr, final_tpr)
+            #final_fpr, final_tpr, _ = roc_curve(all_targets, all_final_model_predictions)
+            #final_roc_auc = auc(final_fpr, final_tpr)
 
             step += 1
             print("Best non-over-fitted model:")
@@ -396,7 +403,7 @@ if __name__ == '__main__':
             final_test_auc_for_plot = []
             for i in range(len(train_aucs_for_plot)):
                 best_test_auc_for_plot.append(best_roc_auc)
-                final_test_auc_for_plot.append(final_roc_auc)
+                #final_test_auc_for_plot.append(final_roc_auc)
 
             figure, axis = plt.subplots(2, 1)
             figure.suptitle('Whole training' + args.group + '_' + args.antibiotic + '_' + args.threshold
