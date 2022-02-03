@@ -54,7 +54,7 @@ if __name__ == "__main__":
                     for e_stop in e_stop_list:
                         for epoch in epoch_list:
 
-                            dir_name = args.group + '_' + args.antibiotic + '_' + str(args.threshold) \
+                            dir_name = args.group + '_' + args.antibiotic + '_' + args.threshold \
                                        + '_dendronet_' + str(dpf) + '_' + str(lr) \
                                        + '_' + str(l1) + '_' + str(e_stop) \
                                        + '_(' + args.leaf_level + ')'
@@ -62,6 +62,7 @@ if __name__ == "__main__":
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_dendronet == 'y':
+                                print('we in')
                                 command = 'python ' + exp_file \
                                           + ' --epochs ' + str(epoch) \
                                           + ' --dpf ' + str(dpf) \
@@ -76,6 +77,7 @@ if __name__ == "__main__":
                                           + ' --antibiotic ' + args.antibiotic \
                                           + ' --threshold ' + args.threshold \
                                           + ' --seed ' + str(args.seed)
+                                print(command)
                                 os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
