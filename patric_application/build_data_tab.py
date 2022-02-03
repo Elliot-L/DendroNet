@@ -5,7 +5,7 @@ import json
 import argparse
 
 
-def build_tab(antibiotic, group, threshold, leaf_level, model, seeds=[0, 1, 2, 3, 4]):
+def build_tab(antibiotic, group, threshold, leaf_level, model, seeds):
     """"
     Build a csv file containing all the results for a given subproblem (brute results), in addition to a file
     containing the selected best results for the subproblem (refined results). These output files are places

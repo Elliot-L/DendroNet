@@ -17,7 +17,7 @@ parser.add_argument('--lrs', type=float, nargs='+', default=[0.01], help='Defaul
 parser.add_argument('--l1s', type=float, nargs='+', default=[0.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
 parser.add_argument('--early_stopping', nargs='+', default=[3], help='Default is [3, 5, 10]')
 parser.add_argument('--epochs', type=int, nargs='+', default=[1000], help='Default is 200')
-parser.add_argument('--seed', type=int, nargs='+', default=[0], help='Default is [0 ,1 ,2 ,3 ,4 ]')
+parser.add_argument('--seeds', type=int, nargs='+', default=[0], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
@@ -46,10 +46,11 @@ if __name__ == "__main__":
     """
     exp_file = 'experiment_new_early_stop.py'
 
-    seed_str = ''
-    for s in args.seed:
-        seed_str += ' '
-        seed_str += str(s)
+    seeds_str = ''
+    for s in args.seeds:
+        seeds_str += ' '
+        seeds_str += str(s)
+
     leaf_level = args.leaf_level
     if leaf_level == 'genome_id':
        leaf_level = 'genomeID'
@@ -83,11 +84,11 @@ if __name__ == "__main__":
                                           + ' --group ' + args.group \
                                           + ' --antibiotic ' + args.antibiotic \
                                           + ' --threshold ' + args.threshold \
-                                          + ' --seed' + seed_str
+                                          + ' --seeds' + seeds_str
                                 os.system(command)
 
         #df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
-        #                        leaf_level=args.leaf_level, threshold=args.threshold)
+        #                        leaf_level=args.leaf_level, threshold=args.threshold, seeds=args.seeds)
         """ 
         This code was planned to be used as a way to avoid accumulation of data that has been used
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
@@ -101,7 +102,7 @@ if __name__ == "__main__":
             for epoch in epoch_list:
                 for e_stop in e_stop_list:
                     for l1 in l1_list:
-                        dir_name = args.group + '_' + args.antibiotic + str(args.threshold) + '_logistic_' \
+                        dir_name = args.group + '_' + args.antibiotic + '_' + str(args.threshold) + '_logistic_' \
                                    + str(lr) + '_' + str(l1) + '_' + str(e_stop)
 
                         output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
@@ -117,11 +118,11 @@ if __name__ == "__main__":
                                       + ' --group ' + args.group \
                                       + ' --antibiotic ' + args.antibiotic \
                                       + ' --threshold ' + args.threshold \
-                                      + ' --seed' + seed_str
+                                      + ' --seeds' + seeds_str
                             os.system(command)
 
         #df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
-        #                        leaf_level='none', threshold=args.threshold)
+        #                        leaf_level='none', threshold=args.threshold, seeds=args.seeds)
         """
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'logistic' in directory and args.leaf_level in directory:

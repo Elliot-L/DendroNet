@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=1000, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=10, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seed', type=int, nargs='+', default=[0, 1, 2, 3, 4], metavar='S',
+    parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
     parser.add_argument('--save-seed', type=int, nargs='+', default=[0], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     val_auc_output = []
     average_time_seed = 0
 
-    for s in args.seed:
+    for s in args.seeds:
         init_time = time.time()
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
