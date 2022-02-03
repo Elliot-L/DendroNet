@@ -17,7 +17,7 @@ parser.add_argument('--lrs', type=float, nargs='+', default=[0.01], help='Defaul
 parser.add_argument('--l1s', type=float, nargs='+', default=[0.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
 parser.add_argument('--early_stopping', nargs='+', default=[3], help='Default is [3, 5, 10]')
 parser.add_argument('--epochs', type=int, nargs='+', default=[1000], help='Default is 200')
-parser.add_argument('--seed', type=str, nargs='+', default=[0, 1, 2], help='Default is [0 ,1 ,2 ,3 ,4 ]')
+parser.add_argument('--seed', type=int, nargs='+', default=[0, 1, 2], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
@@ -48,7 +48,8 @@ if __name__ == "__main__":
 
     seed_str = ''
     for s in args.seed:
-        seed_str += (s + '')
+        seed_str += str(s)
+        seed_str += ''
     seed_str = seed_str[0:-2]
     print(seed_str)
 
