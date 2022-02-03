@@ -48,6 +48,10 @@ if __name__ == '__main__':
 
     print(new_samples_df)
 
+    output_name = 'Sanity' + args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
+    output_file = os.path.join('data_files', 'subproblmes', output_name)
+
+    new_samples_df.to_csv(output_file, index=False)
 
 
 
