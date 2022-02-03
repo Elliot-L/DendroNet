@@ -452,6 +452,7 @@ if __name__ == '__main__':
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
     fileName = args.output_path
+    print(fileName)
     os.makedirs(os.path.dirname(fileName), exist_ok=True)
     with open(fileName, 'w') as outfile:
         json.dump(output_dict, outfile)
