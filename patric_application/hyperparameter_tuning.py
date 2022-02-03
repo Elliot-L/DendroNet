@@ -50,6 +50,9 @@ if __name__ == "__main__":
     for s in args.seed:
         seed_str += ' '
         seed_str += str(s)
+    leaf_level = args.leaf_level
+    if leaf_level == 'genome_id':
+       leaf_level = 'genomeID'
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
 
@@ -62,10 +65,8 @@ if __name__ == "__main__":
                             dir_name = args.group + '_' + args.antibiotic + '_' + args.threshold \
                                        + '_dendronet_' + str(dpf) + '_' + str(lr) \
                                        + '_' + str(l1) + '_' + str(e_stop) \
-                                       + '_$' + args.leaf_level + '$'
-                            print(dir_name)
-                            dir_name = dir_name.replace('\'', '')
-                            print(dir_name)
+                                       + '_' + leaf_level
+
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_dendronet == 'y':
