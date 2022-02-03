@@ -47,10 +47,11 @@ if __name__ == "__main__":
     exp_file = 'experiment_new_early_stop.py'
 
     seed_str = ''
+    print(args.seed)
+    print(type(args.seed))
     for s in args.seed:
+        seed_str += ' '
         seed_str += str(s)
-        seed_str += ''
-    seed_str = seed_str[0:-2]
     print(seed_str)
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
@@ -83,7 +84,7 @@ if __name__ == "__main__":
                                           + ' --group ' + args.group \
                                           + ' --antibiotic ' + args.antibiotic \
                                           + ' --threshold ' + args.threshold \
-                                          + ' --seed ' + str(args.seed)
+                                          + ' --seed' +
                                 print(command)
                                 os.system(command)
 
