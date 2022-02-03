@@ -239,7 +239,7 @@ if __name__ == '__main__':
     final_time = time.time() - init_time
     average_time_seed += final_time
 
-    average_time_seed = average_time_seed / len(args.seed)
+    average_time_seed = average_time_seed / len(args.seeds)
     print('Average time to train a model: ' + str(average_time_seed) + 'seconds')
 
     os.makedirs(os.path.join('data_files', 'time_performances'), exist_ok=True)
