@@ -84,7 +84,7 @@ if __name__ == "__main__":
                                           + ' --group ' + args.group \
                                           + ' --antibiotic ' + args.antibiotic \
                                           + ' --threshold ' + args.threshold \
-                                          + ' --seed' +
+                                          + ' --seed' + seed_str
                                 print(command)
                                 os.system(command)
 
