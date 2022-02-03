@@ -39,19 +39,17 @@ if __name__ == '__main__':
             else:
                 neg_examples.extend(ls)
                 neg_leaves.append(topo_order[i])
-    print(new_samples_df)
     for row in range(new_samples_df.shape[0]):
         if new_samples_df.loc[row, 'ID'] in pos_examples:
             new_samples_df.at[row, 'Phenotype'] = [1]
         elif new_samples_df.loc[row, 'ID'] in neg_examples:
             new_samples_df.at[row, 'Phenotype'] = [0]
 
-    print(new_samples_df)
-
-    output_name = 'Sanity' + args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
-    output_file = os.path.join('data_files', 'subproblmes', output_name)
-
-    new_samples_df.to_csv(output_file, index=False)
+    dir_name = 'Sanity' + args.group + '_' + args.antibiotic
+    os.makedirs(os.path.join('data_files', 'subproblems', dir_name), exist_ok=True)
+    file_name = 'Sanity' + args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
+    output = os.path.join('data_files', 'subproblems', dir_name, file_name)
+    new_samples_df.to_csv(output, index=False)
 
 
 
