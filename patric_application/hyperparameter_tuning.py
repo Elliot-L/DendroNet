@@ -47,12 +47,9 @@ if __name__ == "__main__":
     exp_file = 'experiment_new_early_stop.py'
 
     seed_str = ''
-    print(args.seed)
-    print(type(args.seed))
     for s in args.seed:
         seed_str += ' '
         seed_str += str(s)
-    print(seed_str)
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
 
@@ -66,11 +63,12 @@ if __name__ == "__main__":
                                        + '_dendronet_' + str(dpf) + '_' + str(lr) \
                                        + '_' + str(l1) + '_' + str(e_stop) \
                                        + '_[' + args.leaf_level + ']'
-
+                            print(dir_name)
+                            dir_name = dir_name.replace('\'', '')
+                            print(dir_name)
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_dendronet == 'y':
-                                print('we in')
                                 command = 'python ' + exp_file \
                                           + ' --epochs ' + str(epoch) \
                                           + ' --dpf ' + str(dpf) \
@@ -85,11 +83,10 @@ if __name__ == "__main__":
                                           + ' --antibiotic ' + args.antibiotic \
                                           + ' --threshold ' + args.threshold \
                                           + ' --seed' + seed_str
-                                print(command)
                                 os.system(command)
 
-        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
-                                leaf_level=args.leaf_level, threshold=args.threshold)
+        #df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
+        #                        leaf_level=args.leaf_level, threshold=args.threshold)
         """ 
         This code was planned to be used as a way to avoid accumulation of data that has been used
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
@@ -122,8 +119,8 @@ if __name__ == "__main__":
                                       + ' --seed ' + str(args.seed)
                             os.system(command)
 
-        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
-                                leaf_level='none', threshold=args.threshold)
+        #df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
+        #                        leaf_level='none', threshold=args.threshold)
         """
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'logistic' in directory and args.leaf_level in directory:
