@@ -57,7 +57,7 @@ if __name__ == "__main__":
                             dir_name = args.group + '_' + args.antibiotic + '_' + args.threshold \
                                        + '_dendronet_' + str(dpf) + '_' + str(lr) \
                                        + '_' + str(l1) + '_' + str(e_stop) \
-                                       + '_(' + args.leaf_level + ')'
+                                       + '_[' + args.leaf_level + ']'
 
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
@@ -96,7 +96,7 @@ if __name__ == "__main__":
                 for e_stop in e_stop_list:
                     for l1 in l1_list:
                         dir_name = args.group + '_' + args.antibiotic + str(args.threshold) + '_logistic_' \
-                                   + str(lr) + '_' + str(e_stop)
+                                   + str(lr) + '_' + str(l1) + '_' + str(e_stop)
 
                         output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                         print(dir_name)
