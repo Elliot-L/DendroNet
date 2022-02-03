@@ -62,7 +62,7 @@ if __name__ == "__main__":
                             dir_name = args.group + '_' + args.antibiotic + '_' + args.threshold \
                                        + '_dendronet_' + str(dpf) + '_' + str(lr) \
                                        + '_' + str(l1) + '_' + str(e_stop) \
-                                       + '_[' + args.leaf_level + ']'
+                                       + '_$' + args.leaf_level + '$'
                             print(dir_name)
                             dir_name = dir_name.replace('\'', '')
                             print(dir_name)
@@ -116,7 +116,7 @@ if __name__ == "__main__":
                                       + ' --group ' + args.group \
                                       + ' --antibiotic ' + args.antibiotic \
                                       + ' --threshold ' + args.threshold \
-                                      + ' --seed ' + str(args.seed)
+                                      + ' --seed' + seed_str
                             os.system(command)
 
         #df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
