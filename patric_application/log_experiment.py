@@ -191,7 +191,6 @@ if __name__ == '__main__':
                     best_auc = roc_auc
                     early_stopping_count = 0
                     best_weights = logistic.lin_1.weight.detach().clone()
-                    print(best_weights)
                     print("Improvement!!!")
                 else:
                     early_stopping_count += 1
@@ -205,12 +204,10 @@ if __name__ == '__main__':
 
         # With training complete, we'll run the test set
         with torch.no_grad():
-            print(logistic.lin_1.weight)
             if USE_CUDA and torch.cuda.is_available():
                 del logistic.lin_1.weight
                 torch.cuda.empty_cache()
             best_logistic = LinRegModel(len(X[0]), use_given_weights=True, input_weights=best_weights)
-            best_logistic.lin_1.weight
 
             y_true = []
             y_pred = []

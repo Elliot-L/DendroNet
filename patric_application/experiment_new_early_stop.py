@@ -304,8 +304,6 @@ if __name__ == '__main__':
                     best_epoch = epoch
                     best_root_weights = dendronet.root_weights.detach().clone()
                     best_edge_tensor_matrix = dendronet.delta_mat.detach().clone()
-                    print(best_edge_tensor_matrix)
-                    print(best_root_weights)
                 else:
                     early_stopping_count += 1
                     print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
@@ -459,7 +457,6 @@ if __name__ == '__main__':
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
     fileName = args.output_path
-    print(fileName)
     os.makedirs(os.path.dirname(fileName), exist_ok=True)
     with open(fileName, 'w') as outfile:
         json.dump(output_dict, outfile)
