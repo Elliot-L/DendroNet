@@ -20,7 +20,7 @@ from utils.model_utils import build_parent_path_mat, split_indices, IndicesDatas
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=1000, metavar='N')
-    parser.add_argument('--early-stopping', type=int, default=3, metavar='E',
+    parser.add_argument('--early-stopping', type=int, default=5, metavar='E',
                         help='Number of epochs without improvement before early stopping')
     parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     samples_df = pd.read_csv(samples_file, dtype=str)
 
     # flag to use CUDA gpu if available
-    USE_CUDA = False
+    USE_CUDA = True
     print('Using CUDA: ' + (str(torch.cuda.is_available() and USE_CUDA)))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
 
