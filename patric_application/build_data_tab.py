@@ -5,8 +5,8 @@ import json
 import argparse
 
 
-def build_tab(antibiotic, group, threshold, leaf_level, model, seeds=[0, 1, 2, 3, 4]):
-    """"
+def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 1, 2, 3, 4]):
+    """
     Build a csv file containing all the results for a given subproblem (brute results), in addition to a file
     containing the selected best results for the subproblem (refined results). These output files are places
     in the Results directory. The functions uses all the json files (found in the patric_tuning directory) produced
