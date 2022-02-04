@@ -89,7 +89,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
         df = pd.DataFrame(data=data)
         print(df)
 
-        results = {'validation_average': -1}
+        best_results = {'validation_average': -1}
 
         for row in range(0, df.shape[0], len(seeds)):
             val_average_auc = 0.0
@@ -101,10 +101,10 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
             test_average_auc = test_average_auc / len(seeds)
 
             if val_average_auc > results['validation_average']:
-                results['best_combinations'] = {"LR:": df['LR'][row], "L1:": df['L1'][row],
+                best_results['best_combinations'] = {"LR:": df['LR'][row], "L1:": df['L1'][row],
                                                 'Early Stop:': df['Early Stopping'][row]}
-                results['validation_average'] = val_average_auc
-                results['test_average'] = test_average_auc
+                best_results['validation_average'] = val_average_auc
+                best_results['test_average'] = test_average_auc
 
     if leaf_level == 'none':
         df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
