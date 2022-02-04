@@ -68,7 +68,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
     elif model == 'logistic':
         data = {}
         data['LR'] = []
-        data['L1']
+        data['L1'] = []
         data['Early Stopping'] = []
         data['Seed'] = []
         data['Val AUC'] = []
