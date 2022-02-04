@@ -150,6 +150,7 @@ if __name__ == "__main__":
     data2['Phylogenetic entropy'] = []
 
     for result in os.listdir(os.path.join('data_files', 'Results')):
+        print(result)
         elements = result.split(sep='_')
         if elements[0] == 'refined' and elements[4] == 'dendronet':
             group = elements[2]
@@ -185,10 +186,11 @@ if __name__ == "__main__":
                 data1['AUC on val (log)'].append('-')
                 data1['AUC on test (log)'].append('-')
 
-
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
             data2['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, leaf_level))
+    print(data1)
+    print(data2)
 
     df1 = pd.DataFrame(data=data1)
     df2 = pd.DataFrame(data=data2)
