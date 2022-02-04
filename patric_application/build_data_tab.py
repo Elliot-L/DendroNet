@@ -100,7 +100,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
             val_average_auc = val_average_auc / len(seeds)
             test_average_auc = test_average_auc / len(seeds)
 
-            if val_average_auc > results['validation_average']:
+            if val_average_auc > best_results['validation_average']:
                 best_results['best_combinations'] = {"LR:": df['LR'][row], "L1:": df['L1'][row],
                                                 'Early Stop:': df['Early Stopping'][row]}
                 best_results['validation_average'] = val_average_auc
@@ -109,7 +109,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
     if leaf_level == 'none':
         df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
                                + '_' + antibiotic + '_' + threshold + '_' + model + '.csv')
-        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + threshold + '_' + model + '_'  + '.json'
+        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + threshold + '_' + model + '_' + '.json'
     else:
         df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
                                + '_' + antibiotic + '_' + threshold + '_' + model + '_' + leaf_level + '.csv')
