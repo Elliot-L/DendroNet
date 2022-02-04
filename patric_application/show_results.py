@@ -114,7 +114,7 @@ def quad_entropy(antibiotic, group, threshold, leaf_level):
 
 
 if __name__ == "__main__":
-
+    """
     for file_name in os.listdir(os.path.join('data_files', 'subproblems')):
         file_name = file_name.split('_')
         antibiotic = file_name[1]
@@ -124,25 +124,23 @@ if __name__ == "__main__":
         print('Quadratic entropy :' + str(quad_entropy(antibiotic, 'Firmicutes', '0.0', 'genome_id')))
         print('Phylogenetic entropy :' + str(phylo_entropy(antibiotic, 'Firmicutes', '0.0', 'genome_id')))
         print('')
-    """
+    
     print('Firmicutes, antibiotic, 0.0 :')
     print("Shannon's index (entropy) :" + str(entropy(antibiotic, 'Firmicutes', 'genome_id')))
     print('Quadratic entropy :' + str(quad_entropy(antibiotic, 'Firmicutes', 'genome_id')))
     print('Phylogenetic entropy :' + str(phylo_entropy(antibiotic, 'Firmicutes', 'genome_id')))
     """
-    """
+
 
     data1 = {}
     data1['Group'] = []
     data1['Antibiotic'] = []
+    data1['Threshold'] = []
     data1['Leaf level'] = []
     data1['AUC on val'] = []
     data1['AUC on val (log)'] = []
     data1['AUC on test'] = []
     data1['AUC on test (log)'] = []
-    data1['# of Examples'] = []
-    data1['# of Features'] = []
-    data1['Threshold'] = []
     data2 = {}
     data2['Group'] = []
     data2['Antibiotic'] = []
@@ -156,32 +154,28 @@ if __name__ == "__main__":
         if elements[0] == 'refined' and elements[4] == 'dendronet':
             group = elements[2]
             antibiotic = elements[3]
-            if len(elements) == 6:
-                leaf_level = elements[5].split(sep='.')[0]
-            elif len(elements) == 7:
-                leaf_level = elements[5] + '_' + elements[6].split(sep='.')[0]
+            threshold = elements[4]
+            leaf_level = elements[6]
             with open(os.path.join('data_files', 'Results', result)) as file:
                 dendro_dict = json.load(file)
-            log_file = os.path.join('data_files', 'Results', 'refined_results_' + group + '_' + antibiotic + '_logistic.json')
-            info_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
-                                     'subproblem_infos.json')
+            log_file = os.path.join('data_files', 'Results', 'refined_results_'
+                                    + group + '_' + antibiotic + '_' + threshold + '_'
+                                    + '_logistic.json')
+
             if os.path.isfile(log_file):
                 with open(log_file) as file:
                     log_dict = json.load(file)
             else:
                 log_dict = {}
-            if os.path.isfile(info_file):
-                with open(info_file) as info:
-                    info_dict = json.load(info)
-            else:
-                info_dict = {}
 
             data1['Group'].append(group)
             data1['Antibiotic'].append(antibiotic)
             data1['Leaf level'].append(leaf_level)
+            data1['Threshold'].append(threshold)
             data2['Group'].append(group)
             data2['Antibiotic'].append(antibiotic)
             data2['Leaf level'].append(leaf_level)
+            data2['Threshold'].append(threshold)
             data1['AUC on val'].append(dendro_dict['validation_average'])
             data1['AUC on test'].append(dendro_dict["test_average"])
             if len(log_dict) > 1:
@@ -190,16 +184,8 @@ if __name__ == "__main__":
             else:
                 data1['AUC on val (log)'].append('-')
                 data1['AUC on test (log)'].append('-')
-            if len(info_dict) > 0:
-                data1['# of Examples'].append(info_dict['number of examples:'])
-                data1['# of Features'].append(info_dict['number of features:'])
-            else:
-                data1['# of Examples'].append('-')
-                data1['# of Features'].append('-')
-            if 'threshold:' in info_dict.keys():
-                data1['Threshold'].append(info_dict['threshold'])
-            else:
-                data1['Threshold'].append('-')
+
+
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, leaf_level))
             data2['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, leaf_level))
@@ -209,7 +195,6 @@ if __name__ == "__main__":
     print(df1.sort_values(by=['Group']))
     print(df2.sort_values(by=['Group']))
 
-    """
 
 
 

@@ -109,7 +109,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
     if leaf_level == 'none':
         df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
                                + '_' + antibiotic + '_' + threshold + '_' + model + '.csv')
-        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + threshold + '_' + model + '_' + '.json'
+        refined_file = 'refined_results_' + group + '_' + antibiotic + '_' + threshold + '_' + model + '.json'
     else:
         df_file = os.path.join('data_files', 'Results', 'brute_results_' + group
                                + '_' + antibiotic + '_' + threshold + '_' + model + '_' + leaf_level + '.csv')

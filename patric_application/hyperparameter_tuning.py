@@ -87,8 +87,8 @@ if __name__ == "__main__":
                                           + ' --seeds' + seeds_str
                                 os.system(command)
 
-        #df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
-        #                        leaf_level=args.leaf_level, threshold=args.threshold, seeds=args.seeds)
+        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
+                                leaf_level=args.leaf_level, threshold=args.threshold, seeds=args.seeds)
         """ 
         This code was planned to be used as a way to avoid accumulation of data that has been used
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
@@ -121,8 +121,8 @@ if __name__ == "__main__":
                                       + ' --seeds' + seeds_str
                             os.system(command)
 
-        #df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
-        #                        leaf_level='none', threshold=args.threshold, seeds=args.seeds)
+        df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='logistic',
+                                leaf_level='none', threshold=args.threshold, seeds=args.seeds)
         """
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'logistic' in directory and args.leaf_level in directory:
