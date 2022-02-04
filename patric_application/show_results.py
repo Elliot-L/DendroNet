@@ -144,6 +144,7 @@ if __name__ == "__main__":
     data2 = {}
     data2['Group'] = []
     data2['Antibiotic'] = []
+    data2['Threshold'] = []
     data2['Leaf level'] = []
     data2["Shannon's index (entropy)"] = []
     data2['Quadratic entropy'] = []
