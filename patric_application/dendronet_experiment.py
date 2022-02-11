@@ -327,7 +327,6 @@ if __name__ == '__main__':
 
             best_dendronet = DendroMatrixLinReg(device, best_root_weights, parent_path_tensor, best_edge_tensor_matrix,
                                                 init_root=False)
-
             all_targets = []
             all_best_model_predictions = []
             #all_final_model_predictions = []

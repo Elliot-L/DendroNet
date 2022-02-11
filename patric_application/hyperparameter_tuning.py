@@ -44,7 +44,7 @@ if __name__ == "__main__":
     elif args.gpu_mode == 'multiple':
         exp_file = 'experiment_multi_gpu.py'
     """
-    exp_file = 'experiment_new_early_stop.py'
+    exp_file = 'dendronet_experiment.py'
 
     seeds_str = ''
     for s in args.seeds:
@@ -108,7 +108,7 @@ if __name__ == "__main__":
                         output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                         print(dir_name)
                         if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_log == 'y':
-                            command = 'python log_experiment.py --epochs ' \
+                            command = 'python logistic_experiment.py --epochs ' \
                                       + str(epoch)  \
                                       + ' --early-stopping ' + str(e_stop) \
                                       + ' --lr ' + str(lr)  \
