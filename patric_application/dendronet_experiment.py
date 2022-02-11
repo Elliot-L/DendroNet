@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=1000, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=5, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], metavar='S',
+    parser.add_argument('--seeds', type=int, nargs='+', default=[0], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
     parser.add_argument('--save-seed', type=int, nargs='+', default=[0], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
@@ -136,9 +136,16 @@ if __name__ == '__main__':
     for s in args.seeds:
         init_time = time.time()
 
+        print('before all')
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
+
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
         best_root_weights = dendronet.root_weights
         best_edge_tensor_matrix = dendronet.delta_mat
+
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
 
         train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -153,13 +160,17 @@ if __name__ == '__main__':
                   'shuffle': True,
                   'num_workers': 0}
 
-        train_batch_gen = torch.utils.data.DataLoader(train_set, **params)
-        val_batch_gen = torch.utils.data.DataLoader(val_set, **params)
-        test_batch_gen = torch.utils.data.DataLoader(test_set, **params)
+        train_batch_gen = torch.utils.data.DataLoader(train_set, **params, num_workers=4)
+        val_batch_gen = torch.utils.data.DataLoader(val_set, **params, num_workers=4)
+        test_batch_gen = torch.utils.data.DataLoader(test_set, **params, num_workers=4, )
 
         # converting X and y to tensors, and transferring to GPU if the cuda flag is set
         X = torch.tensor(X, dtype=torch.double, device=device)
         y = torch.tensor(y, dtype=torch.double, device=device)
+
+        print('after tensors')
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
 
         # creating the loss function and optimizer
         loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendroLogReg with BCELoss
@@ -175,7 +186,7 @@ if __name__ == '__main__':
         best_auc = 0.0
         early_stopping_count = 0
 
-        # Lists for final plots
+        # Lists and variables for final plots
         train_aucs_for_plot = []
         val_aucs_for_plot = []
         train_loss_for_plot = []
@@ -184,7 +195,14 @@ if __name__ == '__main__':
         l1_loss_for_plot = []
         train_error_loss_for_plot = []
         val_error_loss_for_plot = []
+        losses_per_batch = []
+        error_per_batch = []
+        new_error_per_batch = []
+        delta_per_batch = []
+        l1_per_batch = []
         best_epoch = 0
+        first_epoch = True
+
 
         # Generate two lists containing 1) the index in the vector y of all the training example (whole train set)
         # 2) the corresponding positions of these training examples in the parent-path matrix.
@@ -198,13 +216,6 @@ if __name__ == '__main__':
             all_pp_train_idx.append(tup[1])
 
         all_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
-
-        first_epoch = True
-        losses_per_batch = []
-        error_per_batch = []
-        new_error_per_batch = []
-        delta_per_batch = []
-        l1_per_batch = []
 
         # running the training loop
         for epoch in range(EPOCHS):
@@ -312,21 +323,34 @@ if __name__ == '__main__':
                     print("EARLY STOPPING!")                     # to avoid overfitting
                     break
 
-        val_auc_output.append(roc_auc)
+        val_auc_output.append(best_auc)
 
         # With training complete, we'll run the test set.
         with torch.no_grad():
-
             # We evaluate two models using the test set:
             # The best model obtained so far, based on AUC score on validation set
             # and the final model (in theory, the one performing best on training set)
+
+            print('before deleting')
+            print(torch.cuda.memory_allocated())
+            print(torch.cuda.memory_reserved())
+
             if USE_CUDA and torch.cuda.is_available():
                 del dendronet.delta_mat
                 del dendronet.root_weights
                 torch.cuda.empty_cache()
 
+            print('after deleting')
+            print(torch.cuda.memory_allocated())
+            print(torch.cuda.memory_reserved())
+
             best_dendronet = DendroMatrixLinReg(device, best_root_weights, parent_path_tensor, best_edge_tensor_matrix,
                                                 init_root=False)
+
+            print('after best')
+            print(torch.cuda.memory_allocated())
+            print(torch.cuda.memory_reserved())
+
             all_targets = []
             all_best_model_predictions = []
             #all_final_model_predictions = []
