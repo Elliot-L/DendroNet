@@ -314,8 +314,8 @@ if __name__ == '__main__':
                     early_stopping_count = 0
                     print("Improvement!!!")
                     best_epoch = epoch
-                    best_root_weights = dendronet.root_weights.detach().clone()
-                    best_edge_tensor_matrix = dendronet.delta_mat.detach().clone()
+                    best_root_weights = dendronet.root_weights.clone().detach().cpu()
+                    best_edge_tensor_matrix = dendronet.delta_mat.clone().detach().cpu()
                 else:
                     early_stopping_count += 1
                     print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))

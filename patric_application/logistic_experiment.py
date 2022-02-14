@@ -43,7 +43,8 @@ if __name__ == '__main__':
 
     # annotating leaves with labels and features
     samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
-    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, samples_file)
+    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold,
+                                samples_file)
 
     if os.path.isfile(samples_file):
         samples_df = pd.read_csv(samples_file, dtype=str)
