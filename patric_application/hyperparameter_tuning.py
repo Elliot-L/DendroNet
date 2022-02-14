@@ -21,6 +21,7 @@ parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], hel
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
+parser.add_argument('--gpu-to-use', type=int, nargs='+', default=[0])
 parser.add_argument('--force-train_log', type=str, default='n', help='Decide if you want the model to recompute for'
                                                                      ' combination that were trained already on the '
                                                                      'logistic regression')
@@ -71,7 +72,8 @@ if __name__ == "__main__":
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_dendronet == 'y':
-                                command = 'python ' + exp_file \
+                                command = 'CUDA_VISIBLE_DEVICE=' + str(args.gpu_to_use)
+                                          + ' python ' + exp_file \
                                           + ' --epochs ' + str(epoch) \
                                           + ' --dpf ' + str(dpf) \
                                           + ' --l1 ' + str(l1) \

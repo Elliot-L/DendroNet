@@ -49,7 +49,8 @@ if __name__ == '__main__':
     # We get the parent_child matrix using the prexisting file or by creating it
 
     samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
-    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, samples_file)
+    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold,
+                                samples_file)
     matrix_file = args.group + '_' + args.antibiotic + '_' + args.leaf_level + '.json'
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                            label_file=samples_file,
@@ -158,11 +159,11 @@ if __name__ == '__main__':
         # Setting some parameters for shuffle batch
         params = {'batch_size': BATCH_SIZE,
                   'shuffle': True,
-                  'num_workers': 0}
+                  'num_workers': 4}
 
-        train_batch_gen = torch.utils.data.DataLoader(train_set, **params, num_workers=4)
-        val_batch_gen = torch.utils.data.DataLoader(val_set, **params, num_workers=4)
-        test_batch_gen = torch.utils.data.DataLoader(test_set, **params, num_workers=4, )
+        train_batch_gen = torch.utils.data.DataLoader(train_set, **params)
+        val_batch_gen = torch.utils.data.DataLoader(val_set, **params)
+        test_batch_gen = torch.utils.data.DataLoader(test_set, **params)
 
         # converting X and y to tensors, and transferring to GPU if the cuda flag is set
         X = torch.tensor(X, dtype=torch.double, device=device)
@@ -472,15 +473,18 @@ if __name__ == '__main__':
 
     if SAVE_PLOT and PLOT:
         os.makedirs(os.path.join('data_files', 'AUC_plots'), exist_ok=True)
-        file_name = args.group + '_' + args.antibiotic + '_' + args.threshold + '_' + str(args.lr) + '_' \
-                    + str(args.dpf) + '_' + str(args.l1) + '_' + str(args.early_stopping) + '_seed_' + str(s) + '.png'
+        plot_file_name = args.group + '_' + args.antibiotic + '_' + args.threshold + '_' + str(args.dpf) + '_' \
+                    + str(args.lr) + '_' + str(args.l1) + '_' + str(args.early_stopping) \
+                    + '_seed_' + str(s) + '_' + args.leaf_level + '.png'
         if s in args.save_seed:
-            plt.savefig(os.path.join('data_files', 'AUC_plots', file_name))
+            plt.savefig(os.path.join('data_files', 'AUC_plots', plot_file_name))
+
+    best_model_output = os.path.join('data_fils', 'subproblems', args.group + '_' + args.antibiotic)
 
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
-    fileName = args.output_path
-    os.makedirs(os.path.dirname(fileName), exist_ok=True)
-    with open(fileName, 'w') as outfile:
+    dict_file_name = args.output_path
+    os.makedirs(os.path.dirname(dict_file_name), exist_ok=True)
+    with open(dict_file_name, 'w') as outfile:
         json.dump(output_dict, outfile)
 
