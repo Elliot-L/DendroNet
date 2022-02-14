@@ -351,6 +351,12 @@ if __name__ == '__main__':
             best_dendronet = DendroMatrixLinReg(torch.device('cpu'), best_root_weights, parent_path_tensor,
                                                 best_edge_tensor_matrix,
                                                 init_root=False)
+            print(X.get_device())
+            print(y.get_device())
+            print(best_dendronet.path_mat.get_device())
+            print(best_dendronet.delta_mat.get_device())
+            print(best_dendronet.root_weights.get_device())
+
             print('after best')
             print(torch.cuda.memory_allocated())
             print(torch.cuda.memory_reserved())

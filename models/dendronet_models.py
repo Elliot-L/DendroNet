@@ -29,7 +29,6 @@ class DendroMatrixLinReg(nn.Module):
         #print("Inside: " + str(x.size()))
         return torch.sum((x * effective_weights), dim=1)
 
-
 class DendroMatrixLogReg(DendroMatrixLinReg):
     def __init__(self, device, root_weights, path_mat, delta_mat, p=1, init_deltas=False):
         super(DendroMatrixLogReg, self).__init__(device, root_weights, path_mat, delta_mat, p, init_deltas)
