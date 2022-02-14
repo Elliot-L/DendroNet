@@ -9,25 +9,27 @@ if __name__ == '__main__':
     parser.add_argument('--leaf-level', type=str, default='genome_id')
     args = parser.parse_args()
 
-    matrix_file_name = args.group + '_' + args.antibiotic + '_(' + args.leaf_level + ').json'
-    os.makedirs(os.path.join('data_files', 'parent_child_matrices'), exist_ok=True)
-
     samples_file = args.group + '_' + args.antibiotic + '_0.0_samples.csv'
     parent_child, topo_order, node_examples = build_pc_mat(label_file=samples_file,
                                                            leaf_level=args.leaf_level)
-
     print(parent_child)
     print(topo_order)
 
-    """
     levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
-    next_parents = [0]
-    row = 0
+    cur_level_pos = [0]
+    next_level_pos = []
+    levels_members = {}
     for i, level in enumerate(levels):
-        for parent in next_parents:
-            for k, child in enumerate(topo_order):
-                if parent_child[parent][k] == 1:
-                    pass
-    """
+        for pos in cur_level_pos:
+            for row in range(len(topo_order)):
+                if parent_child[pos][row] == 1:
+                    next_level_pos.append(row)
+
+        cur_level_pos = next_level_pos
+        next_level_pos = []
+        levels_members[level] = topo_order[]
+
+    print(levels_members)
+
 
 

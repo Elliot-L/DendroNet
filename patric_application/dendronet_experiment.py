@@ -81,7 +81,7 @@ if __name__ == '__main__':
     # flag to use cuda gpu if available
     USE_CUDA = True
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
-    device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
+    device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
     PLOT = False
     PLOT_Batch = False
@@ -344,9 +344,9 @@ if __name__ == '__main__':
             print(torch.cuda.memory_allocated())
             print(torch.cuda.memory_reserved())
 
-            best_dendronet = DendroMatrixLinReg(device, best_root_weights, parent_path_tensor, best_edge_tensor_matrix,
+            best_dendronet = DendroMatrixLinReg(torch.device('cpu'), best_root_weights, parent_path_tensor,
+                                                best_edge_tensor_matrix,
                                                 init_root=False)
-
             print('after best')
             print(torch.cuda.memory_allocated())
             print(torch.cuda.memory_reserved())
