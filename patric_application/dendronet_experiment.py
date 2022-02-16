@@ -353,9 +353,13 @@ if __name__ == '__main__':
                                                 init_root=False)
             print(X.get_device_name())
             print(y.get_device_name())
-            print(best_dendronet.path_mat.get_device_name())
-            print(best_dendronet.delta_mat.get_device_name())
-            print(best_dendronet.root_weights.get_device_name())
+            print(best_dendronet.path_mat.get_device())
+            print(best_dendronet.delta_mat.get_device())
+            print(best_dendronet.root_weights.get_device())
+
+            torch.cuda.current_device()
+            torch.cuda.get_device_name(0)
+            torch.cuda.get_device_name(-1)
 
             print('after best')
             print(torch.cuda.memory_allocated())
