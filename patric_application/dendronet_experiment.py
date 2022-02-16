@@ -359,7 +359,7 @@ if __name__ == '__main__':
 
             torch.cuda.current_device()
             torch.cuda.get_device_name(0)
-            torch.cuda.get_device_name(-1)
+            #torch.cuda.get_device_name(-1)
 
             print('after best')
             print(torch.cuda.memory_allocated())
