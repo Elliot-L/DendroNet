@@ -47,65 +47,61 @@ if __name__ == '__main__':
 
     else:
         print('Samples files related to this subproblem:')
-        for file_name in os.listdir(directory):
-            file_name_list = file_name.split('_')
-            threshold = file_name_list[2]
-            print('Threshold: ' + threshold)
+        file_name = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
+        samples_file = os.path.join(directory, file_name)
+        samples_df = pd.read_csv(samples_file, dtype=str)
 
-            samples_file = os.path.join(directory, file_name)
-            samples_df = pd.read_csv(samples_file, dtype=str)
+        ids = []
+        ids_count = 0
+        features_count = []
+        pos_count = 0
+        neg_count = 0
+        others = 0
 
-            ids = []
-            ids_count = 0
-            features_count = []
-            pos_count = 0
-            neg_count = 0
-            others = 0
-
-            for row in range(samples_df.shape[0]):
-                ids_count += 1
-                ids.append(samples_df.loc[row, 'ID'])
-                features_count.append(len((samples_df.loc[row, 'Features']).split(',')))
-                phenotype = samples_df.loc[row, 'Phenotype']
-                if phenotype == '[1]':
-                    pos_count += 1
-                elif phenotype == '[0]':
-                    neg_count += 1
-                else:
-                    others += 1
-
-            print(str(ids_count) + ' ids are present in the dataset')
-            print(str(len(set(ids))) + ' unique ones')
-
-            first_count = features_count[0]
-            no_problem = True
-            for count in features_count:
-                if count != first_count:
-                    print('Problem: the feature vectors of some training examples are unequal in size')
-                    no_problem = False
-                    break
-            if no_problem:
-                print('All training examples have feature vectors of size ' + str(first_count))
-
-            all_binarized = True
-            for feature_list in samples_df.loc[:, 'Features']:
-                feature_list = feature_list.replace('[', '').replace(']', '').replace('"', '').split(',')
-                for feature in feature_list:
-                    feature = float(feature)
-                    if feature != 1.0 and feature != 0.0:
-                        all_binarized = False
-                        break
-                if not all_binarized:
-                    break
-            if all_binarized:
-                print('All feature in this file are binarized.')
+        for row in range(samples_df.shape[0]):
+            ids_count += 1
+            ids.append(samples_df.loc[row, 'ID'])
+            features_count.append(len((samples_df.loc[row, 'Features']).split(',')))
+            phenotype = samples_df.loc[row, 'Phenotype']
+            if phenotype == '[1]':
+                pos_count += 1
+            elif phenotype == '[0]':
+                neg_count += 1
             else:
-                print('Not all features in this file are binarized.')
+                others += 1
 
-            total = pos_count + neg_count + others
-            print(str((pos_count / total) * 100) + ' % of the examples are positive')
-            print(str((neg_count / total) * 100) + ' % of the examples are negative')
-            print(str((others / total) * 100) + ' % of the examples are mislabelled')
+        print(str(ids_count) + ' ids are present in the dataset')
+        print(str(len(set(ids))) + ' unique ones')
+
+        first_count = features_count[0]
+        no_problem = True
+        for count in features_count:
+            if count != first_count:
+                print('Problem: the feature vectors of some training examples are unequal in size')
+                no_problem = False
+                break
+        if no_problem:
+            print('All training examples have feature vectors of size ' + str(first_count))
+
+        all_binarized = True
+        for feature_list in samples_df.loc[:, 'Features']:
+            feature_list = feature_list.replace('[', '').replace(']', '').replace('"', '').split(',')
+            for feature in feature_list:
+                feature = float(feature)
+                if feature != 1.0 and feature != 0.0:
+                    all_binarized = False
+                    break
+            if not all_binarized:
+                break
+        if all_binarized:
+            print('All feature in this file are binarized.')
+        else:
+            print('Not all features in this file are binarized.')
+
+        total = pos_count + neg_count + others
+        print(str((pos_count / total) * 100) + ' % of the examples are positive')
+        print(str((neg_count / total) * 100) + ' % of the examples are negative')
+        print(str((others / total) * 100) + ' % of the examples are mislabelled')
 
 
 
