@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
         best_root_weights = dendronet.root_weights
-        best_edge_tensor_matrix = dendronet.delta_mat
+        best_delta_matrix = dendronet.delta_mat
 
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
@@ -315,7 +315,7 @@ if __name__ == '__main__':
                     print("Improvement!!!")
                     best_epoch = epoch
                     best_root_weights = dendronet.root_weights.clone().detach().cpu()
-                    best_edge_tensor_matrix = dendronet.delta_mat.clone().detach().cpu()
+                    best_delta_matrix = dendronet.delta_mat.clone().detach().cpu()
                 else:
                     early_stopping_count += 1
                     print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
@@ -349,7 +349,7 @@ if __name__ == '__main__':
             y.cpu()
 
             best_dendronet = DendroMatrixLinReg(torch.device('cpu'), best_root_weights, parent_path_tensor,
-                                                best_edge_tensor_matrix,
+                                                best_delta_matrix,
                                                 init_root=False)
             print(X.get_device())
             print(y.get_device())
@@ -404,6 +404,17 @@ if __name__ == '__main__':
 
         final_time = time.time() - init_time
         average_time_seed += final_time
+
+        if s in args.save_seed:
+            models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
+                                             + args.threshold, 'best_models')
+            os.makedirs(models_output_dir, exist_ok=True)
+            root_file = DPF + '_' + LR + '_' + L1 + '_' + args.early_stopping + '_' + args.leaf_level \
+                         + '_seed_' + s + '_root.pt'
+            delta_file = DPF + '_' + LR + '_' + L1 + '_' + args.early_stopping + '_' + args.leaf_level \
+                        + '_seed_' + s + '_delta.pt'
+            torch.save(best_root_weights, root_file)
+            torch.save(best_delta_matrix, delta_file)
 
     average_time_seed = average_time_seed / len(args.seeds)
     print('Average time to train a model: ' + str(average_time_seed) + ' seconds')
@@ -496,4 +507,6 @@ if __name__ == '__main__':
     os.makedirs(os.path.dirname(dict_file_name), exist_ok=True)
     with open(dict_file_name, 'w') as outfile:
         json.dump(output_dict, outfile)
+
+
 

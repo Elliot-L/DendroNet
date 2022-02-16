@@ -6,6 +6,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--group', type=str, metavar='G', default='Proteobacteria')
     parser.add_argument('--antibiotic', type=str, metavar='A', default='ciprofloxacin')
+    parser.add_argument('--threshold', type=str, metavar='T', default='0.0')
     args = parser.parse_args()
 
     basic_file = os.path.join('data_files', 'basic_files', args.group + '_' + args.antibiotic + '_basic.csv')
@@ -39,14 +40,14 @@ if __name__ == '__main__':
         print('The basic file associated to this problem does not exist. Create it using the ' +
               'create_basic_from_amr_file.py file, or download it from the PATRIC terminal.')
 
-    directory = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic)
+    directory = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold)
 
     if not os.path.isdir(directory) or len(os.listdir(directory)) == 0:
         print('No samples file was found. Create one using create_samples_file.py.')
 
     else:
         print('Samples files related to this subproblem:')
-        for file_name in os.listdir(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic)):
+        for file_name in os.listdir(directory):
             file_name_list = file_name.split('_')
             threshold = file_name_list[2]
             print('Threshold: ' + threshold)
