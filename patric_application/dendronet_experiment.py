@@ -336,10 +336,10 @@ if __name__ == '__main__':
             print(torch.cuda.memory_allocated())
             print(torch.cuda.memory_reserved())
 
-            if USE_CUDA and torch.cuda.is_available():
-                del dendronet.delta_mat
-                del dendronet.root_weights
-                torch.cuda.empty_cache()
+            #if USE_CUDA and torch.cuda.is_available():
+                #del dendronet.delta_mat
+                #del dendronet.root_weights
+                #torch.cuda.empty_cache()
 
             print('after deleting')
             print(torch.cuda.memory_allocated())
@@ -351,8 +351,8 @@ if __name__ == '__main__':
             print(dendronet.delta_mat.get_device())
             print(dendronet.root_weights.get_device())
 
-            X.cpu()
-            y.cpu()
+            X = X.cpu()
+            y = y.cpu()
 
             best_dendronet = DendroMatrixLinReg(torch.device('cpu'), best_root_weights, parent_path_tensor,
                                                 best_delta_matrix,
