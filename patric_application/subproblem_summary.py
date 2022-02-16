@@ -52,7 +52,7 @@ if __name__ == '__main__':
             threshold = file_name_list[2]
             print('Threshold: ' + threshold)
 
-            samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic, file_name)
+            samples_file = os.path.join(directory, file_name)
             samples_df = pd.read_csv(samples_file, dtype=str)
 
             ids = []
