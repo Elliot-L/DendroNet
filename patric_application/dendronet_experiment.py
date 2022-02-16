@@ -345,6 +345,12 @@ if __name__ == '__main__':
             print(torch.cuda.memory_allocated())
             print(torch.cuda.memory_reserved())
 
+            print(X.get_device())
+            print(y.get_device())
+            print(dendronet.path_mat.get_device())
+            print(dendronet.delta_mat.get_device())
+            print(dendronet.root_weights.get_device())
+
             X.cpu()
             y.cpu()
 
