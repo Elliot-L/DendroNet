@@ -153,7 +153,7 @@ if __name__ == '__main__':
         # Setting some parameters for shuffle batch
         params = {'batch_size': BATCH_SIZE,
                   'shuffle': True,
-                  'num_workers': 4}
+                  'num_workers': 0}
 
         train_batch_gen = torch.utils.data.DataLoader(train_set, **params)
         val_batch_gen = torch.utils.data.DataLoader(val_set, **params)
@@ -208,6 +208,7 @@ if __name__ == '__main__':
             all_pp_train_idx.append(tup[1])
         all_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
         # running the training loop
+
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
@@ -221,6 +222,8 @@ if __name__ == '__main__':
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                if y_hat.size() == torch.Size([]):
+                    y_hat = torch.unsqueeze(y_hat, 0)
                 # collecting the loss terms for this batch
                 batch_delta_loss = dendronet.delta_loss()
                 batch_root_loss = 0.0
@@ -282,6 +285,8 @@ if __name__ == '__main__':
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                    if y_hat.size() == torch.Size([]):
+                        y_hat = torch.unsqueeze(y_hat, 0)
                     # accumulate targets and prediction to compute AUC
                     val_targets = list(y[idx_in_X].detach().cpu().numpy())  # target values for this batch
                     val_predictions = list(
@@ -345,6 +350,8 @@ if __name__ == '__main__':
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 best_model_y_hat = best_dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                if best_model_y_hat.size() == torch.Size([]):
+                    best_model_y_hat = torch.unsqueeze(best_model_y_hat, 0)
                 test_targets = list(y[idx_in_X].detach().cpu().numpy())
                 best_pred = list(torch.sigmoid(best_model_y_hat).detach().cpu().numpy())
                 error_loss = loss_function(best_model_y_hat, y[idx_in_X])

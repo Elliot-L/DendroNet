@@ -76,7 +76,6 @@ if __name__ == '__main__':
 
     test_auc_output = []
     val_auc_output = []
-
     average_time_seed = 0  # to test time performance of the training of this model
 
     for s in args.seeds:
@@ -125,64 +124,66 @@ if __name__ == '__main__':
         best_auc = 0.0
         early_stopping_count = 0
 
-        y_train_idx = []
-        for idx in train_idx:
-            y_train_idx.append(idx)
-        y_train_targets = y[y_train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
+        all_train_targets = y[train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
 
         # running the training loop
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
-            running_loss = 0.0
+            total_train_loss = 0.0
+            total_train_error_loss = 0.0
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
                 y_hat = logistic.forward(X[idx_batch])
-                error_loss = loss_function(y_hat, y[idx_batch].squeeze())  # idx_batch is also used to fetch the appropriate entries from y
+                if y_hat.size() == torch.Size([]):
+                    y_hat = torch.unsqueeze(y_hat, 0)
+                batch_error_loss = loss_function(y_hat, y[idx_batch])  # idx_batch is also used to fetch the appropriate entries from y
                 #computing L1 loss
-                l1_loss = 0.0
+                batch_l1_loss = 0.0
                 for w in logistic.lin_1.weight[0]:
-                    l1_loss += abs(float(w))
-                loss = error_loss + (L1*l1_loss)
-                running_loss += float(loss)
-                loss.backward(retain_graph=True)
+                    batch_l1_loss += abs(float(w))
+                batch_loss = batch_error_loss + (L1*batch_l1_loss)
+                total_train_loss += float(batch_loss)
+                batch_loss.backward(retain_graph=True)
                 optimizer.step()
-            step += 1
-            print('Average training loss for epoch: ', str(running_loss / step))
+            print('Average training error loss for epoch: ', str(total_train_loss / (step + 1)))
+            print('Average training loss for epoch: ', str(total_train_loss / (step + 1)))
 
             #Compute L1 after all batches of training of the epoch
-            l1_loss = 0.0
+            final_l1_loss_for_epoch = 0.0
             for w in logistic.lin_1.weight[0]:
-                l1_loss += abs(float(w))
+                final_l1_loss_for_epoch += abs(float(w))
 
             # train set after weights are update
-            y_train_pred = (torch.sigmoid(logistic.forward(X[all_y_train_idx]))).detach().cpu().numpy()  # predicted values (after sigmoid) for whole train set
+            all_train_predictions = (torch.sigmoid(logistic.forward(X[train_idx]))).detach().cpu().numpy()  # predicted values (after sigmoid) for whole train set
 
-            fpr, tpr, _ = roc_curve(y_train_targets, y_train_pred)
+            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
             roc_auc = auc(fpr, tpr)
             print("Training ROC AUC for epoch: ", roc_auc)
 
-            # Test performance using validation set at each epoch
+            # Validate performance using validation set at each epoch
             with torch.no_grad():
-                val_loss = 0.0
+                total_val_loss = 0.0
+                total_val_error_loss = 0.0
                 y_true = []
                 y_pred = []
                 for step, idx_batch in enumerate(val_batch_gen):
                     y_hat = logistic.forward(X[idx_batch])
                     if y_hat.size() == torch.Size([]):
                         y_hat = torch.unsqueeze(y_hat, 0)
-                    val_error_loss = loss_function(y_hat, y[idx_batch])
-                    val_loss += val_error_loss + (L1*l1_loss)
+                    error_loss = loss_function(y_hat, y[idx_batch])
+                    total_val_error_loss += float(error_loss)
+                    total_val_loss += float(error_loss + (L1*final_l1_loss_for_epoch))
                     y_t = list(y[idx_batch].detach().cpu().numpy())  # true values for this batch
                     y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions for this batch
                     y_true.extend(y_t)
                     y_pred.extend(y_p)
                 fpr, tpr, _ = roc_curve(y_true, y_pred)
                 roc_auc = auc(fpr, tpr)
-                step += 1
-                print('Average loss on the validation set on this epoch: ', float(val_loss) / step)
-                print("ROC AUC for epoch: ", roc_auc)
+                print('Average error loss on the validation set on this epoch: ', float(total_val_error_loss) / (step + 1))
+                print('Average loss on the validation set on this epoch: ', float(total_val_loss) / (step + 1))
+                print("Validation ROC AUC for epoch: ", roc_auc)
 
                 #aucs_for_plot.append(roc_auc)
 
@@ -199,7 +200,7 @@ if __name__ == '__main__':
                     print("EARLY STOPPING!")  # to avoid overfitting
                     break
 
-        val_auc.append(roc_auc)
+        val_auc_output.append(roc_auc)
 
         # With training complete, we'll run the test set
         with torch.no_grad():
@@ -210,13 +211,15 @@ if __name__ == '__main__':
 
             y_true = []
             y_pred = []
-            test_loss = 0.0
+            total_test_loss = 0.0
+            total_test_error_loss = 0.0
             for step, idx_batch in enumerate(test_batch_gen):
                 y_hat = best_logistic.forward(X[idx_batch])
                 if y_hat.size() == torch.Size([]):
                     y_hat = torch.unsqueeze(y_hat, 0)
                 test_error_loss = loss_function(y_hat, y[idx_batch])
-                test_loss += test_error_loss + (L1*l1_loss)
+                total_test_error_loss += float(test_error_loss)
+                total_test_loss += float(test_error_loss + (L1*final_l1_loss_for_epoch))
                 y_t = list(y[idx_batch].detach().cpu().numpy())
                 y_p = list(torch.sigmoid(y_hat).detach().cpu().numpy())
                 y_true.extend(y_t)
@@ -224,13 +227,21 @@ if __name__ == '__main__':
 
             fpr, tpr, _ = roc_curve(y_true, y_pred)
             roc_auc = auc(fpr, tpr)
-            step += 1
             print("ROC AUC for test:", roc_auc)
-            print('Average BCE loss on test set:', float(test_loss) / step)
+            print('Average error loss on test set:', total_test_loss / (step + 1))
+            print('Average total loss on test set:', total_test_loss / (step + 1))
 
-            test_auc.append(roc_auc)
+            test_auc_output.append(roc_auc)
 
-    output_dict = {'val_auc': val_auc, 'test_auc': test_auc}
+            if s in args.save_seed:
+                models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
+                                                             + args.threshold, 'best_models')
+                os.makedirs(models_output_dir, exist_ok=True)
+                weights_file = str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
+                               + '_seed_' + str(s) + '_log.pt'
+
+
+    output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
     fileName = args.output_path
     os.makedirs(os.path.dirname(fileName), exist_ok=True)

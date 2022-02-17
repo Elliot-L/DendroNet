@@ -1,14 +1,14 @@
 import os
 import argparse
 from build_data_tab import build_tab
-import json
+import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--antibiotic', type=str, default='erythromycin', metavar='ANT')
-parser.add_argument('--group', type=str, default='firmicutes', metavar='GR')
-parser.add_argument('--threshold', type=str, default=0.00, help='Threshold for feature selection')
+parser.add_argument('--group', type=str, default='Firmicutes', metavar='GR')
+parser.add_argument('--threshold', type=str, default='0.0', help='Threshold for feature selection')
 parser.add_argument('--genome-lineage', type=str, default=os.path.join('data_files', 'genome_lineage.csv'))
-parser.add_argument('--dpfs', type=float, nargs='+', default=[0.001, 0.01], help='Default is [0.001, 0.01, 0.1, 1.0]')
+parser.add_argument('--dpfs', type=float, nargs='+', default=[0.001, 0.01, 0.1], help='Default is [0.001, 0.01, 0.1, 1.0]')
 parser.add_argument('--lrs', type=float, nargs='+', default=[0.01, 0.001, 0.0001], help='Default is [0.01, 0.001, 0.0001]')
 parser.add_argument('--l1s', type=float, nargs='+', default=[0.0, 0.01, 0.1, 1.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
 parser.add_argument('--early_stopping', nargs='+', default=[5], help='Default is [3, 5, 10]')
@@ -16,12 +16,12 @@ parser.add_argument('--early_stopping', nargs='+', default=[5], help='Default is
 #parser.add_argument('--lrs', type=float, nargs='+', default=[0.01], help='Default is [0.01, 0.001, 0.0001]')
 #parser.add_argument('--l1s', type=float, nargs='+', default=[0.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
 #parser.add_argument('--early_stopping', nargs='+', default=[3], help='Default is [3, 5, 10]')
-parser.add_argument('--epochs', type=int, nargs='+', default=[1000], help='Default is 200')
+parser.add_argument('--epochs', type=int, nargs='+', default=[1000], help='Default is 1000')
 parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
-parser.add_argument('--gpu-to-use', type=int, nargs='+', default=[0])
+parser.add_argument('--gpu-to-use', type=int, nargs='+', default=0)
 parser.add_argument('--force-train_log', type=str, default='n', help='Decide if you want the model to recompute for'
                                                                      ' combination that were trained already on the '
                                                                      'logistic regression')
@@ -33,7 +33,6 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
 
-    # making some adjustments based on results from previous tuning
     dpf_list = args.dpfs
     lr_list = args.lrs
     l1_list = args.l1s
@@ -47,6 +46,11 @@ if __name__ == "__main__":
     """
     exp_file = 'dendronet_experiment.py'
 
+    if torch.cuda.is_available():
+        Cuda_str = 'CUDA_VISIBLE_DEVICE=' + str(args.gpu_to_use) + ' '
+    else:
+        Cuda_str = ''
+
     seeds_str = ''
     for s in args.seeds:
         seeds_str += ' '
@@ -57,7 +61,7 @@ if __name__ == "__main__":
        leaf_level = 'genomeID'
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
-
+        print("Dendronet")
         for dpf in dpf_list:
             for lr in lr_list:
                 for l1 in l1_list:
@@ -72,16 +76,16 @@ if __name__ == "__main__":
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_dendronet == 'y':
-                                command = 'CUDA_VISIBLE_DEVICE=' + str(args.gpu_to_use)
-                                          + ' python ' + exp_file \
+                                command = Cuda_str \
+                                          + 'python ' + exp_file \
                                           + ' --epochs ' + str(epoch) \
                                           + ' --dpf ' + str(dpf) \
                                           + ' --l1 ' + str(l1) \
                                           + ' --lr ' + str(lr) \
                                           + ' --early-stopping ' + str(e_stop) \
                                           + ' --output-path ' + output_path \
-                                          + ' --lineage-path ' + str(args.genome_lineage) \
-                                          + ' --leaf-level ' + str(args.leaf_level) \
+                                          + ' --lineage-path ' + args.genome_lineage \
+                                          + ' --leaf-level ' + args.leaf_level \
                                           + ' --batch-size ' + str(args.batch_size) \
                                           + ' --group ' + args.group \
                                           + ' --antibiotic ' + args.antibiotic \
@@ -101,16 +105,17 @@ if __name__ == "__main__":
     if args.model_to_run == 'both' or args.model_to_run == 'logistic':
         print("Logistic")
         for lr in lr_list:
-            for epoch in epoch_list:
-                for e_stop in e_stop_list:
-                    for l1 in l1_list:
+            for l1 in l1_list:
+                for epoch in epoch_list:
+                    for e_stop in e_stop_list:
                         dir_name = args.group + '_' + args.antibiotic + '_' + str(args.threshold) + '_logistic_' \
                                    + str(lr) + '_' + str(l1) + '_' + str(e_stop)
 
                         output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                         print(dir_name)
                         if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_log == 'y':
-                            command = 'python logistic_experiment.py --epochs ' \
+                            command = Cuda_str \
+                                      + 'python logistic_experiment.py --epochs ' \
                                       + str(epoch)  \
                                       + ' --early-stopping ' + str(e_stop) \
                                       + ' --lr ' + str(lr)  \
@@ -129,7 +134,10 @@ if __name__ == "__main__":
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
             if args.group in directory and args.antibiotic in directory and 'logistic' in directory and args.leaf_level in directory:
                 os.system('rm -r ' + os.path.join('data_files', 'patric_tuning', directory))
+        
         """
+
+
 
 
 
