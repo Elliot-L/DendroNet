@@ -22,9 +22,9 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=1000, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=5, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], metavar='S',
+    parser.add_argument('--seeds', type=int, nargs='+', default=[0], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
-    parser.add_argument('--save-seed', type=int, default=[], metavar='SS',
+    parser.add_argument('--save-seed', type=int, default=[0], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
     parser.add_argument('--p', type=int, default=1)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     samples_df = pd.read_csv(samples_file, dtype=str)
 
     # flag to use CUDA gpu if available
-    USE_CUDA = False
+    USE_CUDA = True
     print('Using CUDA: ' + (str(torch.cuda.is_available() and USE_CUDA)))
     device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
 
@@ -74,8 +74,8 @@ if __name__ == '__main__':
         features = eval(getattr(row, 'Features'))  # the x value
         X.append(features)
 
-    test_auc = []
-    val_auc = []
+    test_auc_output = []
+    val_auc_output = []
 
     average_time_seed = 0  # to test time performance of the training of this model
 
@@ -88,6 +88,7 @@ if __name__ == '__main__':
 
         logistic = LinRegModel(len(X[0]))
         logistic.to(device)
+        logistic = logistic.double()
         best_weights = logistic.lin_1
 
         train_idx, test_idx = split_indices(range(len(X)), seed=0)
@@ -123,14 +124,11 @@ if __name__ == '__main__':
 
         best_auc = 0.0
         early_stopping_count = 0
-        #aucs_for_plot = []
 
-        all_y_train_idx = []
+        y_train_idx = []
         for idx in train_idx:
-            all_y_train_idx.append(idx)
-        y_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
-
-        logistic = logistic.double()
+            y_train_idx.append(idx)
+        y_train_targets = y[y_train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
 
         # running the training loop
         for epoch in range(EPOCHS):

@@ -110,8 +110,9 @@ if __name__ == '__main__':
 
     for row in samples_df.itertuples():
         added_in_X_and_y = False
-        for i, example_list in enumerate(node_examples):
-            if getattr(row, 'ID') in example_list:
+        genome_id = getattr(row, 'ID')
+        for i, examples_list in enumerate(node_examples):
+            if genome_id in examples_list:
                 if not added_in_X_and_y:
                     phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
                     features = eval(getattr(row, 'Features'))  # the x value
@@ -137,16 +138,9 @@ if __name__ == '__main__':
     for s in args.seeds:
         init_time = time.time()
 
-        print('before all')
-        print(torch.cuda.memory_allocated())
-        print(torch.cuda.memory_reserved())
-
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
         best_root_weights = dendronet.root_weights
         best_delta_matrix = dendronet.delta_mat
-
-        print(torch.cuda.memory_allocated())
-        print(torch.cuda.memory_reserved())
 
         train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -169,10 +163,6 @@ if __name__ == '__main__':
         X = torch.tensor(X, dtype=torch.double, device=device)
         y = torch.tensor(y, dtype=torch.double, device=device)
 
-        print('after tensors')
-        print(torch.cuda.memory_allocated())
-        print(torch.cuda.memory_reserved())
-
         # creating the loss function and optimizer
         loss_function = nn.BCEWithLogitsLoss()  # note for posterity: can either use DendroLinReg with this loss, or DendroLogReg with BCELoss
         if torch.cuda.is_available() and USE_CUDA:
@@ -186,23 +176,24 @@ if __name__ == '__main__':
 
         best_auc = 0.0
         early_stopping_count = 0
-
-        # Lists and variables for final plots
-        train_aucs_for_plot = []
-        val_aucs_for_plot = []
-        train_loss_for_plot = []
-        val_loss_for_plot = []
-        delta_loss_for_plot = []
-        l1_loss_for_plot = []
-        train_error_loss_for_plot = []
-        val_error_loss_for_plot = []
-        losses_per_batch = []
-        error_per_batch = []
-        new_error_per_batch = []
-        delta_per_batch = []
-        l1_per_batch = []
         best_epoch = 0
-        first_epoch = True
+
+        if PLOT:
+            # Lists and variables for final plots
+            train_aucs_for_plot = []
+            val_aucs_for_plot = []
+            train_loss_for_plot = []
+            val_loss_for_plot = []
+            delta_loss_for_plot = []
+            l1_loss_for_plot = []
+            train_error_loss_for_plot = []
+            val_error_loss_for_plot = []
+            losses_per_batch = []
+            error_per_batch = []
+            new_error_per_batch = []
+            delta_per_batch = []
+            l1_per_batch = []
+            first_epoch = True
 
 
         # Generate two lists containing 1) the index in the vector y of all the training example (whole train set)
@@ -215,14 +206,13 @@ if __name__ == '__main__':
         for tup in train_idx:
             all_y_train_idx.append(tup[0])
             all_pp_train_idx.append(tup[1])
-
         all_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
-
         # running the training loop
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
             total_train_loss = 0.0
+            total_train_error_loss = 0.0
             # getting a batch of indices
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
@@ -231,83 +221,90 @@ if __name__ == '__main__':
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
                 y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                # collecting the loss terms
-                delta_loss = dendronet.delta_loss()
-                root_loss = 0.0
+                # collecting the loss terms for this batch
+                batch_delta_loss = dendronet.delta_loss()
+                batch_root_loss = 0.0
                 for w in dendronet.root_weights:
-                    root_loss += abs(float(w))
+                    batch_root_loss += abs(float(w))
                 # idx_in_X is also used to fetch the appropriate entries from y.
-                error_loss = loss_function(y_hat, y[idx_in_X])
+                batch_error_loss = loss_function(y_hat, y[idx_in_X])
                 # A sigmoid is applied to the output of the model inside loss_function
                 # to make them fit between 0 and 1.
 
-                loss = error_loss + (delta_loss * DPF) + (root_loss * L1)
-                loss.backward(retain_graph=True)
+                batch_loss = batch_error_loss + (batch_delta_loss * DPF) + (batch_root_loss * L1)
+                batch_loss.backward(retain_graph=True)
                 optimizer.step()
                 new_y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 new_error_loss = loss_function(new_y_hat, y[idx_in_X])
-                total_train_loss += float(loss)
-                if first_epoch:
-                    losses_per_batch.append(float(loss))
+                total_train_error_loss += float(batch_error_loss)
+                total_train_loss += float(batch_loss)
+
+                if PLOT and first_epoch:
+                    losses_per_batch.append(float(batch_loss))
                     error_per_batch.append(float(error_loss))
                     new_error_per_batch.append(float(new_error_loss))
-                    delta_per_batch.append(float(delta_loss*DPF))
-                    l1_per_batch.append(float(root_loss*L1))
+                    delta_per_batch.append(float(batch_delta_loss*DPF))
+                    l1_per_batch.append(float(batch_root_loss*L1))
+                    first_epoch = False
+            print('Average error loss per training batch for this epoch: ', str(total_train_error_loss / (step + 1)))
+            print('Average total loss per training batch for this epoch: ', str(total_train_loss / (step + 1)))
 
-            first_epoch = False
-            step += 1
-            print('Average loss per training batch for this epoch: ', str(total_train_loss / step))
+            # Here we will compute the loss terms for the whole train set after
 
             # predicted values (after sigmoid) for whole train set (in the same order as the train_set_targets list)
-            y_train_predictions = torch.sigmoid(dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()
+            all_train_predictions = torch.sigmoid(dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()
 
-            fpr, tpr, _ = roc_curve(all_train_targets, y_train_predictions)
+            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
             roc_auc = auc(fpr, tpr)
             print("training ROC AUC for epoch: ", roc_auc)
 
-            train_aucs_for_plot.append(roc_auc)
-
             final_delta_loss_for_epoch = dendronet.delta_loss()
-            delta_loss_for_plot.append(final_delta_loss_for_epoch*DPF)
             final_root_loss_for_epoch = 0.0
             for w in dendronet.root_weights:
                 final_root_loss_for_epoch += abs(float(w))
-            l1_loss_for_plot.append(final_root_loss_for_epoch*L1)
             with torch.no_grad():
-                final_train_error_loss_for_epoch = loss_function(torch.tensor(y_train_predictions), torch.tensor(all_train_targets))
-            train_error_loss_for_plot.append(final_train_error_loss_for_epoch)
-            train_loss_for_plot.append(float(final_train_error_loss_for_epoch + final_delta_loss_for_epoch*DPF + final_root_loss_for_epoch*L1))
+                final_train_error_loss_for_epoch = loss_function(torch.tensor(all_train_predictions), torch.tensor(all_train_targets))
 
-            # Test performance using validation set at each epoch
+            if PLOT:
+                delta_loss_for_plot.append(final_delta_loss_for_epoch*DPF)
+                l1_loss_for_plot.append(final_root_loss_for_epoch*L1)
+                train_error_loss_for_plot.append(final_train_error_loss_for_epoch)
+                train_loss_for_plot.append(float(final_train_error_loss_for_epoch + final_delta_loss_for_epoch*DPF + final_root_loss_for_epoch*L1))
+                train_aucs_for_plot.append(roc_auc)
+
+            # Validate performance using validation set
             with torch.no_grad():
                 total_val_loss = 0.0
+                total_val_error_loss = 0.0
                 all_val_targets = []
                 all_val_predictions = []
-                # We compute the delta and root loss right away as it doesn't change anymore for this epoch
                 for step, idx_batch in enumerate(val_batch_gen):
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
                     y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                    # accumulate targets and prediction to compute AUC
                     val_targets = list(y[idx_in_X].detach().cpu().numpy())  # target values for this batch
                     val_predictions = list(
                         torch.sigmoid(y_hat).detach().cpu().numpy())  # predictions (after sigmoid) for this batch
                     all_val_targets.extend(val_targets)
                     all_val_predictions.extend(val_predictions)
                     error_loss = loss_function(y_hat, y[idx_in_X])
-
+                    total_val_error_loss += float(error_loss)
+                    # We use the delta/l1 loss computed earlier
                     total_val_loss += float(error_loss + (final_delta_loss_for_epoch * DPF) + (final_root_loss_for_epoch * L1))
+
+                print('Average error loss on the validation set per batch on this epoch: ', str(total_val_error_loss / (step + 1)))
+                print('Average loss on the validation set per batch on this epoch: ', str(total_val_loss / (step + 1)))
 
                 fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
                 roc_auc = auc(fpr, tpr)
-                step += 1
-                print('Average loss on the validation set per batch on this epoch: ', str(total_val_loss / step))
                 print("Validation ROC AUC for epoch: ", roc_auc)
 
-                val_aucs_for_plot.append(roc_auc)
-
-                final_val_error_loss_for_epoch = loss_function(torch.tensor(all_val_predictions), torch.tensor(all_val_targets))
-                val_error_loss_for_plot.append(final_val_error_loss_for_epoch)
-                val_loss_for_plot.append(float(final_val_error_loss_for_epoch + final_delta_loss_for_epoch*DPF + final_root_loss_for_epoch*L1))
+                if PLOT:
+                    final_val_error_loss_for_epoch = loss_function(torch.tensor(all_val_predictions), torch.tensor(all_val_targets))
+                    val_error_loss_for_plot.append(final_val_error_loss_for_epoch)
+                    val_loss_for_plot.append(float(final_val_error_loss_for_epoch + final_delta_loss_for_epoch*DPF + final_root_loss_for_epoch*L1))
+                    val_aucs_for_plot.append(roc_auc)
 
                 if roc_auc > best_auc:  # Check if performance has increased on validation set (loss is decreasing)
                     best_auc = roc_auc
@@ -328,52 +325,14 @@ if __name__ == '__main__':
 
         # With training complete, we'll run the test set.
         with torch.no_grad():
-            # We evaluate two models using the test set:
-            # The best model obtained so far, based on AUC score on validation set
-            # and the final model (in theory, the one performing best on training set)
-
-            print('before deleting')
-            print(torch.cuda.memory_allocated())
-            print(torch.cuda.memory_reserved())
-
-            #if USE_CUDA and torch.cuda.is_available():
-                #del dendronet.delta_mat
-                #del dendronet.root_weights
-                #torch.cuda.empty_cache()
-
-            print('after deleting')
-            print(torch.cuda.memory_allocated())
-            print(torch.cuda.memory_reserved())
-
-            print(X.get_device())
-            print(y.get_device())
-            print(dendronet.path_mat.get_device())
-            print(dendronet.delta_mat.get_device())
-            print(dendronet.root_weights.get_device())
-
             X = X.cpu()
             y = y.cpu()
-
+            # The best model obtained so far, based on AUC score on validation set will be used here
             best_dendronet = DendroMatrixLinReg(torch.device('cpu'), best_root_weights, parent_path_tensor,
                                                 best_delta_matrix,
                                                 init_root=False)
-            print(X.get_device())
-            print(y.get_device())
-            print(best_dendronet.path_mat.get_device())
-            print(best_dendronet.delta_mat.get_device())
-            print(best_dendronet.root_weights.get_device())
-
-            torch.cuda.current_device()
-            torch.cuda.get_device_name(0)
-            #torch.cuda.get_device_name(-1)
-
-            print('after best')
-            print(torch.cuda.memory_allocated())
-            print(torch.cuda.memory_reserved())
-
-            all_targets = []
+            all_test_targets = []
             all_best_model_predictions = []
-            #all_final_model_predictions = []
             total_test_loss = 0.0
             total_test_error_loss = 0.0
 
@@ -386,29 +345,23 @@ if __name__ == '__main__':
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 best_model_y_hat = best_dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                #final_model_y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
-                targets = list(y[idx_in_X].detach().cpu().numpy())
+                test_targets = list(y[idx_in_X].detach().cpu().numpy())
                 best_pred = list(torch.sigmoid(best_model_y_hat).detach().cpu().numpy())
-                #final_pred = list(torch.sigmoid(final_model_y_hat).detach().cpu().numpy())
                 error_loss = loss_function(best_model_y_hat, y[idx_in_X])
                 total_test_error_loss += float(error_loss)
                 total_test_loss += float(error_loss + (best_delta_loss*DPF) + (best_l1_loss*L1))
-                all_targets.extend(targets)
+                all_test_targets.extend(test_targets)
                 all_best_model_predictions.extend(best_pred)
-                #all_final_model_predictions.extend(final_pred)
 
-            best_fpr, best_tpr, _ = roc_curve(all_targets, all_best_model_predictions)
+            best_fpr, best_tpr, _ = roc_curve(all_test_targets, all_best_model_predictions)
             best_roc_auc = auc(best_fpr, best_tpr)
-            #final_fpr, final_tpr, _ = roc_curve(all_targets, all_final_model_predictions)
-            #final_roc_auc = auc(final_fpr, final_tpr)
 
-            step += 1
             print("Best non-over-fitted model:")
-            print("ROC AUC for test:", roc_auc)
+            print("ROC AUC for test:", best_roc_auc)
             print('Delta loss:', float(best_delta_loss))
             print('L1 loss:', best_l1_loss)
-            print('Average Error loss:', (total_test_error_loss/step))
-            print('Average BCE loss per batch on test set:', (total_test_loss / step))
+            print('Average Error loss:', (total_test_error_loss / (step + 1)))
+            print('Average total loss per batch on test set:', (total_test_loss / (step + 1)))
 
             test_auc_output.append(roc_auc)
 
@@ -419,10 +372,10 @@ if __name__ == '__main__':
             models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
                                              + args.threshold, 'best_models')
             os.makedirs(models_output_dir, exist_ok=True)
-            root_file = DPF + '_' + LR + '_' + L1 + '_' + args.early_stopping + '_' + args.leaf_level \
-                         + '_seed_' + s + '_root.pt'
-            delta_file = DPF + '_' + LR + '_' + L1 + '_' + args.early_stopping + '_' + args.leaf_level \
-                        + '_seed_' + s + '_delta.pt'
+            root_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
+                        + '_' + args.leaf_level + '_seed_' + str(s) + '_root.pt'
+            delta_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
+                         + '_' + args.leaf_level + '_seed_' + str(s) + '_delta.pt'
             torch.save(best_root_weights, root_file)
             torch.save(best_delta_matrix, delta_file)
 
@@ -508,8 +461,6 @@ if __name__ == '__main__':
                     + '_seed_' + str(s) + '_' + args.leaf_level + '.png'
         if s in args.save_seed:
             plt.savefig(os.path.join('data_files', 'AUC_plots', plot_file_name))
-
-    best_model_output = os.path.join('data_fils', 'subproblems', args.group + '_' + args.antibiotic)
 
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
