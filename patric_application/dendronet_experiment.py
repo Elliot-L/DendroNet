@@ -320,7 +320,7 @@ if __name__ == '__main__':
                     best_delta_matrix = dendronet.delta_mat.clone().detach().cpu()
                 else:
                     early_stopping_count += 1
-                    print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
+                    print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_val_auc))
 
                 if early_stopping_count >= args.early_stopping:  # If performance has not increased for long enough, we stop training
                     print("EARLY STOPPING!")                     # to avoid overfitting
@@ -414,8 +414,7 @@ if __name__ == '__main__':
             best_test_auc_for_plot = []
             final_test_auc_for_plot = []
             for i in range(len(train_aucs_for_plot)):
-                best_test_auc_for_plot.append(best_roc_auc)
-                #final_test_auc_for_plot.append(final_roc_auc)
+                best_test_auc_for_plot.append(roc_auc)
 
             figure, axis = plt.subplots(2, 1)
             figure.suptitle('Whole training' + args.group + '_' + args.antibiotic + '_' + args.threshold

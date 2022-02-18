@@ -194,7 +194,7 @@ if __name__ == '__main__':
                     print("Improvement!!!")
                 else:
                     early_stopping_count += 1
-                    print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_auc))
+                    print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_val_auc))
 
                 if early_stopping_count > args.early_stopping:  # If performance has not increased for long enough, we stop training
                     print("EARLY STOPPING!")  # to avoid overfitting
