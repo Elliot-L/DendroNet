@@ -92,7 +92,7 @@ if __name__ == "__main__":
                                           + ' --early-stopping ' + str(e_stop) \
                                           + ' --output-path ' + output_path \
                                           + ' --lineage-path ' + args.genome_lineage \
-                                          + ' --leaf-level ' + args.leaf_level \
+                                          + ' --leaf-level ' + leaf_level \
                                           + ' --batch-size ' + str(args.batch_size) \
                                           + ' --group ' + args.group \
                                           + ' --antibiotic ' + args.antibiotic \

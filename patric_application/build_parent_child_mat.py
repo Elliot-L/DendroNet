@@ -5,7 +5,7 @@ import json
 import jsonpickle
 
 
-def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythromycin_samples.csv', leaf_level='genome_id', force_build=False, save_matrix=True, new_method=False):
+def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythromycin_samples.csv', leaf_level='genomeID', force_build=False, save_matrix=True, new_method=False):
     """
     Build a parent-child matrix for a given subproblem (this binary matrix describes a taxonomical tree, where a one
     indicates that the node represented by a row is the parent of the node represented by the column)
@@ -30,17 +30,18 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
         return jdict['parent_child'], jdict['nodes'], jdict['node_data']
 
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
-    genome_df = genome_df.rename(columns={'class': 'safe_class'}) #class is a keyword in python
+    genome_df = genome_df.rename(columns={'class': 'safeClass'}) #class is a keyword in python
+    genome_df = genome_df.rename(columns={'genome_id': 'genomeID'}) #class is a keyword in python
     genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
-    genome_df = genome_df[(genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safe_class'].notnull())
+    genome_df = genome_df[(genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safeClass'].notnull())
                           & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
-                          & (genome_df['species'].notnull()) & (genome_df['genome_id'].notnull())]
+                          & (genome_df['species'].notnull()) & (genome_df['genomeID'].notnull())]
     label_df = pd.read_csv(label_file, dtype=str)
     ids = list(set(label_df['ID']))
-    genome_df = genome_df[genome_df['genome_id'].isin(ids)]
+    genome_df = genome_df[genome_df['genomeID'].isin(ids)]
     new_idx = range(genome_df.shape[0])
     genome_df.set_index(pd.Index(new_idx), inplace=True) # Reindexing (part of the rows were removed)
-    all_levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
+    all_levels = ['kingdom', 'phylum', 'safeClass', 'order', 'family', 'genus', 'species', 'genomeID']
 
     levels = []
     for level in all_levels:
@@ -77,7 +78,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
                     node_examples.append([])
                 pos = nodes.index(genome_df.loc[j, level])
                 if level == leaf_level:
-                    node_examples[pos].append(genome_df.loc[j, 'genome_id'])  # adding the id, to appropriate node
+                    node_examples[pos].append(genome_df.loc[j, 'genomeID'])  # adding the id, to appropriate node
                 if level != leaf_level:
                     if genome_df.loc[j, levels[i+1]] not in descendents[pos]:
                         descendents[pos].append(genome_df.loc[j, levels[i+1]]) # adding in the corresponding list in "descendents"
@@ -93,7 +94,7 @@ def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythr
                     node_examples.append([])
                 pos = nodes.index(genome_df.loc[j, level])
                 #Here, we can see that all nodes, even inner ones, will have training examples associated to them. The root for examples, will have all of them.
-                node_examples[pos].append(genome_df.loc[j, 'genome_id'])  # adding the id, to appropriate node
+                node_examples[pos].append(genome_df.loc[j, 'genomeID'])  # adding the id, to appropriate node
                 if level != leaf_level:
                     if genome_df.loc[j, levels[i+1]] not in descendents[pos]:
                         descendents[pos].append(genome_df.loc[j, levels[i+1]]) # adding in the corresponding list in "descendents"

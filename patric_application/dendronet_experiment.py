@@ -326,7 +326,7 @@ if __name__ == '__main__':
                     print("EARLY STOPPING!")                     # to avoid overfitting
                     break
 
-        val_auc_output.append(roc_auc)
+        val_auc_output.append(best_val_auc)
 
         # With training complete, we'll run the test set.
         with torch.no_grad():
