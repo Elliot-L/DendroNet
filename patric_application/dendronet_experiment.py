@@ -174,7 +174,7 @@ if __name__ == '__main__':
         #  print("val:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
         #  print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
 
-        best_auc = 0.0
+        best_val_auc = 0.0
         early_stopping_count = 0
         best_epoch = 0
 
@@ -311,8 +311,8 @@ if __name__ == '__main__':
                     val_loss_for_plot.append(float(final_val_error_loss_for_epoch + final_delta_loss_for_epoch*DPF + final_root_loss_for_epoch*L1))
                     val_aucs_for_plot.append(roc_auc)
 
-                if roc_auc > best_auc:  # Check if performance has increased on validation set (loss is decreasing)
-                    best_auc = roc_auc
+                if roc_auc > best_val_auc:  # Check if performance has increased on validation set (loss is decreasing)
+                    best_val_auc = roc_auc
                     early_stopping_count = 0
                     print("Improvement!!!")
                     best_epoch = epoch
@@ -326,7 +326,7 @@ if __name__ == '__main__':
                     print("EARLY STOPPING!")                     # to avoid overfitting
                     break
 
-        val_auc_output.append(best_auc)
+        val_auc_output.append(roc_auc)
 
         # With training complete, we'll run the test set.
         with torch.no_grad():
@@ -360,11 +360,11 @@ if __name__ == '__main__':
                 all_test_targets.extend(test_targets)
                 all_best_model_predictions.extend(best_pred)
 
-            best_fpr, best_tpr, _ = roc_curve(all_test_targets, all_best_model_predictions)
-            best_roc_auc = auc(best_fpr, best_tpr)
+            fpr, tpr, _ = roc_curve(all_test_targets, all_best_model_predictions)
+            roc_auc = auc(fpr, tpr)
 
             print("Best non-over-fitted model:")
-            print("ROC AUC for test:", best_roc_auc)
+            print("ROC AUC for test:", roc_auc)
             print('Delta loss:', float(best_delta_loss))
             print('L1 loss:', best_l1_loss)
             print('Average Error loss:', (total_test_error_loss / (step + 1)))

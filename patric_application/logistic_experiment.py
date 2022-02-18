@@ -121,7 +121,7 @@ if __name__ == '__main__':
         # print("val:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
         # print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
 
-        best_auc = 0.0
+        best_val_auc = 0.0
         early_stopping_count = 0
 
         all_train_targets = y[train_idx].detach().cpu().numpy()  # target values for whole training set (useful to compute training AUC at each epoch)
@@ -187,8 +187,8 @@ if __name__ == '__main__':
 
                 #aucs_for_plot.append(roc_auc)
 
-                if roc_auc > best_auc:  # Check if performance has increased on validation set (loss is decreasing)
-                    best_auc = roc_auc
+                if roc_auc > best_val_auc:  # Check if performance has increased on validation set (loss is decreasing)
+                    best_val_auc = roc_auc
                     early_stopping_count = 0
                     best_weights = logistic.lin_1.weight.detach().clone()
                     print("Improvement!!!")

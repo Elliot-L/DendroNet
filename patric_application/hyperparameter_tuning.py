@@ -47,7 +47,7 @@ if __name__ == "__main__":
     exp_file = 'dendronet_experiment.py'
 
     if torch.cuda.is_available():
-        Cuda_str = 'CUDA_VISIBLE_DEVICE=' + str(args.gpu_to_use) + ' '
+        Cuda_str = 'CUDA_VISIBLE_DEVICES=' + str(args.gpu_to_use) + ' '
     else:
         Cuda_str = ''
 
