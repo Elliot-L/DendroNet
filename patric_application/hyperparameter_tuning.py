@@ -21,7 +21,7 @@ parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], hel
 parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
-parser.add_argument('--gpu-to-use', type=int, nargs='+', default=0)
+parser.add_argument('--gpu-to-use', type=int, nargs='+', default=[0])
 parser.add_argument('--force-train_log', type=str, default='n', help='Decide if you want the model to recompute for'
                                                                      ' combination that were trained already on the '
                                                                      'logistic regression')
@@ -47,9 +47,17 @@ if __name__ == "__main__":
     exp_file = 'dendronet_experiment.py'
 
     if torch.cuda.is_available():
-        Cuda_str = 'CUDA_VISIBLE_DEVICES=' + str(args.gpu_to_use) + ' '
+        Cuda_str = 'CUDA_VISIBLE_DEVICES='
+        for i, gpu_id in enumerate(args.gpu_to_use):
+            Cuda_str + str(gpu_id)
+            if i == (len(args.gpu_to_use) - 1):
+                Cuda_str + ' '
+            else:
+                Cuda_str + ','
     else:
         Cuda_str = ''
+
+
 
     seeds_str = ''
     for s in args.seeds:
@@ -76,8 +84,7 @@ if __name__ == "__main__":
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
                             if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_dendronet == 'y':
-                                command = Cuda_str \
-                                          + 'python ' + exp_file \
+                                command = Cuda_str + 'python ' + exp_file \
                                           + ' --epochs ' + str(epoch) \
                                           + ' --dpf ' + str(dpf) \
                                           + ' --l1 ' + str(l1) \
@@ -114,9 +121,8 @@ if __name__ == "__main__":
                         output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                         print(dir_name)
                         if not os.path.isdir(os.path.join('data_files', 'patric_tuning', dir_name)) or args.force_train_log == 'y':
-                            command = Cuda_str \
-                                      + 'python logistic_experiment.py --epochs ' \
-                                      + str(epoch)  \
+                            command = Cuda_str + 'python logistic_experiment.py ' \
+                                      + '--epochs ' + str(epoch)  \
                                       + ' --early-stopping ' + str(e_stop) \
                                       + ' --lr ' + str(lr)  \
                                       + ' --l1 ' + str(l1) \
