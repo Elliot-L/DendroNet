@@ -383,8 +383,8 @@ if __name__ == '__main__':
                         + '_' + args.leaf_level + '_seed_' + str(s) + '_root.pt'
             delta_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
                          + '_' + args.leaf_level + '_seed_' + str(s) + '_delta.pt'
-            torch.save(best_root_weights, root_file)
-            torch.save(best_delta_matrix, delta_file)
+            torch.save(best_root_weights, os.path.join(models_output_dir, root_file))
+            torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
 
     average_time_seed = average_time_seed / len(args.seeds)
     print('Average time to train a model: ' + str(average_time_seed) + ' seconds')

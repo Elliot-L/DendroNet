@@ -239,7 +239,7 @@ if __name__ == '__main__':
                 os.makedirs(models_output_dir, exist_ok=True)
                 weights_file = str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
                                + '_seed_' + str(s) + '_log.pt'
-
+                torch.save(best_weights, os.path.join(models_output_dir, weights_file))
 
     output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
