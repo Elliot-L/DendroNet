@@ -85,7 +85,7 @@ if __name__ == '__main__':
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
-    if args.use_multi_gpus == 'y' or args.use_multi_gpus == 'yes':
+    if (args.use_multi_gpus == 'y' or args.use_multi_gpus == 'yes') and USE_CUDA and torch.cuda.is_available() and (torch.cuda.device_count() > 1):
         MULTI_GPUs = True
     else:
         MULTI_GPUs = False
@@ -145,6 +145,11 @@ if __name__ == '__main__':
         init_time = time.time()
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
+
+        if MULTI_GPUs:
+            print("Let's use", torch.cuda.device_count(), "GPUs!")
+            dendronetParallel = nn.DistributedDataParallel(dendronet)
+
         best_root_weights = dendronet.root_weights
         best_delta_matrix = dendronet.delta_mat
 
@@ -227,7 +232,10 @@ if __name__ == '__main__':
                 idx_in_X = idx_batch[0]
                 idx_in_pp_mat = idx_batch[1]
                 # dendronet takes in a set of examples from X, and the corresponding column indices in the parent_path matrix
-                y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                if MULTI_GPUs:
+                    y_hat = dendronetParallel.forward(X[idx_in_X], idx_in_pp_mat)
+                else:
+                    y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 if y_hat.size() == torch.Size([]):
                     y_hat = torch.unsqueeze(y_hat, 0)
                 # collecting the loss terms for this batch
@@ -290,7 +298,10 @@ if __name__ == '__main__':
                 for step, idx_batch in enumerate(val_batch_gen):
                     idx_in_X = idx_batch[0]
                     idx_in_pp_mat = idx_batch[1]
-                    y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                    if MULTI_GPUs:
+                        y_hat = dendronetParallel.forward(X[idx_in_X], idx_in_pp_mat)
+                    else:
+                        y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                     if y_hat.size() == torch.Size([]):
                         y_hat = torch.unsqueeze(y_hat, 0)
                     # accumulate targets and prediction to compute AUC

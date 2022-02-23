@@ -15,21 +15,36 @@ if __name__ == '__main__':
     print(parent_child)
     print(topo_order)
 
-    levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genome_id']
+    levels = ['kingdom', 'phylum', 'safe_class', 'order', 'family', 'genus', 'species', 'genomeID']
     cur_level_pos = [0]
     next_level_pos = []
-    levels_members = {}
-    for i, level in enumerate(levels):
-        for pos in cur_level_pos:
-            for row in range(len(topo_order)):
-                if parent_child[pos][row] == 1:
-                    next_level_pos.append(row)
-
+    levels_members_pos = {}
+    levels_members_names = {}
+    for level in levels:
+        for parent in cur_level_pos:
+            for child in range(len(topo_order)):
+                if parent_child[parent][child] == 1:
+                    next_level_pos.append(child)
+        levels_members_pos[level] = cur_level_pos
+        levels_members_names[level] = []
+        for i in cur_level_pos:
+            levels_members_names[level].append(topo_order[i])
         cur_level_pos = next_level_pos
         next_level_pos = []
-        levels_members[level] = topo_order[]
 
-    print(levels_members)
+
+    print(levels_members_pos)
+    print(levels_members_names)
+
+    total = 0
+    for examples_list in node_examples:
+        total += len(examples_list)
+    print(total)
+    for level in levels:
+        print(level)
+        if level != 'genomeID':
+            for member in levels_members_pos[level]:
+                print(topo_order[member] + ' : ' + str(len(node_examples[member])/total))
 
 
 

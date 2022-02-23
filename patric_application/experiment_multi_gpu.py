@@ -81,7 +81,7 @@ if __name__ == '__main__':
     # flag to use cuda gpu if available
     USE_CUDA = True
     print('Using CUDA: ' + str(USE_CUDA))
-    device = torch.device("cuda:0" if torch.cuda.is_available() and USE_CUDA else "cpu")
+    device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
     # device = torch.device("cuda:0")
     # some other hyper-parameters for training
     LR = args.lr
@@ -146,7 +146,7 @@ if __name__ == '__main__':
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
 
-        if USE_CUDA and (torch.cuda.device_count() > 1):
+        if USE_CUDA and torch.cuda.is_available():
             print("Let's use", torch.cuda.device_count(), "GPUs!")
             dendronet = nn.DataParallel(dendronet)
 
