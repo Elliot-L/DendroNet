@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
         if MULTI_GPUs:
             print("Let's use", torch.cuda.device_count(), "GPUs!")
-            dendronetParallel = nn.parallel.DistributedDataParallel(dendronet)
+            dendronetParallel = nn.DataParallel(dendronet)
 
         best_root_weights = dendronet.root_weights
         best_delta_matrix = dendronet.delta_mat
