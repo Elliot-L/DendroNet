@@ -144,8 +144,8 @@ if __name__ == '__main__':
     for s in args.seeds:
 
         print('New seed: ' + str(s))
-        torch.cuda.memory_allocated()
-        torch.cuda.memory_reserved()
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
         init_time = time.time()
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
