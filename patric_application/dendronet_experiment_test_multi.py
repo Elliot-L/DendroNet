@@ -142,6 +142,10 @@ if __name__ == '__main__':
     average_time_seed = 0
 
     for s in args.seeds:
+
+        print('New seed: ' + str(s))
+        torch.cuda.memory_allocated()
+        torch.cuda.memory_reserved()
         init_time = time.time()
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
@@ -391,6 +395,10 @@ if __name__ == '__main__':
 
         final_time = time.time() - init_time
         average_time_seed += final_time
+
+        print('After training on seed: ' + str(s))
+        torch.cuda.memory_allocated()
+        torch.cuda.memory_reserved()
 
         if s in args.save_seed:
             models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
