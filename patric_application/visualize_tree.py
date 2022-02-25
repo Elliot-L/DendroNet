@@ -8,7 +8,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--group', type=str, default='Firmicutes')
     parser.add_argument('--antibiotic', type=str, default='betalactam')
-    parser.add_argument('--leaf-level', type=str, default='genome_id')
+    parser.add_argument('--leaf-level', type=str, default='genomeID')
     args = parser.parse_args()
 
     samples_file = args.group + '_' + args.antibiotic + '_0.0_samples.csv'
