@@ -397,8 +397,8 @@ if __name__ == '__main__':
         average_time_seed += final_time
 
         print('After training on seed: ' + str(s))
-        torch.cuda.memory_allocated()
-        torch.cuda.memory_reserved()
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
 
         if s in args.save_seed:
             models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'

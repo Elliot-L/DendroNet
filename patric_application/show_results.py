@@ -7,7 +7,7 @@ from build_parent_child_mat import build_pc_mat
 
 def entropy(antibiotic, group, threshold, leaf_level):
 
-    label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
+    label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic + '_' + threshold,
                               group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
@@ -30,7 +30,7 @@ def entropy(antibiotic, group, threshold, leaf_level):
 
 
 def phylo_entropy(antibiotic, group, threshold, leaf_level):
-    label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
+    label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic + '_' + threshold,
                               group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
@@ -66,7 +66,7 @@ def subtree_proportion(mat, p, proportions):
         return total_prop
 
 def quad_entropy(antibiotic, group, threshold, leaf_level):
-    label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic,
+    label_file = os.path.join('data_files', 'subproblems', group + '_' + antibiotic + '_' + threshold,
                               group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
