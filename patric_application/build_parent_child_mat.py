@@ -21,8 +21,8 @@ def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), l
     file_name = os.path.split(label_file)[1]
     group = file_name.split('_')[0]
     antibiotic = file_name.split('_')[1]
-    matrix_file = os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_('
-                               + leaf_level + ').json')
+    matrix_file = os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_'
+                               + leaf_level + '.json')
     if os.path.isfile(matrix_file) and not force_build:
         with open(matrix_file) as file:
             js_string = json.load(file)

@@ -12,6 +12,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     samples_file = args.group + '_' + args.antibiotic + '_0.0_samples.csv'
+    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_0.0',
+                                samples_file)
     parent_child, topo_order, node_examples = build_pc_mat(label_file=samples_file,
                                                            leaf_level=args.leaf_level)
     print(parent_child)
