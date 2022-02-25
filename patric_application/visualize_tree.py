@@ -1,6 +1,7 @@
 import argparse
 import os
 from build_parent_child_mat import build_pc_mat
+import ete3
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

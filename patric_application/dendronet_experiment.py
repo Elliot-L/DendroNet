@@ -386,6 +386,12 @@ if __name__ == '__main__':
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
 
+        torch.cuda.empty_cache()
+
+        print('After empty cache')
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
+
         final_time = time.time() - init_time
         average_time_seed += final_time
 
