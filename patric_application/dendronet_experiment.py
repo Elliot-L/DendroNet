@@ -144,6 +144,10 @@ if __name__ == '__main__':
     for s in args.seeds:
         init_time = time.time()
 
+        rint('New seed: ' + str(s))
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
+
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
         best_root_weights = dendronet.root_weights
         best_delta_matrix = dendronet.delta_mat
@@ -377,6 +381,10 @@ if __name__ == '__main__':
             print('Average total loss per batch on test set:', (total_test_loss / (step + 1)))
 
             test_auc_output.append(roc_auc)
+
+        print('After training on seed: ' + str(s))
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
 
         final_time = time.time() - init_time
         average_time_seed += final_time
