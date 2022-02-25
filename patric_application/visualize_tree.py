@@ -1,12 +1,13 @@
 import argparse
 import os
 from build_parent_child_mat import build_pc_mat
-import ete3
+import networkx as nx
+import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--group', type=str, default='Firmicutes')
-    parser.add_argument('--antibiotic', type=str, default='erythromycin')
+    parser.add_argument('--antibiotic', type=str, default='betalactam')
     parser.add_argument('--leaf-level', type=str, default='genome_id')
     args = parser.parse_args()
 
@@ -47,7 +48,53 @@ if __name__ == '__main__':
             for member in levels_members_pos[level]:
                 print(topo_order[member] + ' : ' + str(len(node_examples[member])/total))
 
+    # Defining a Class
+    class TreeVisualization:
+
+        def __init__(self):
+            # visual is a list which stores all
+            # the set of edges that constitutes a
+            # graph
+            self.visual = []
+
+        # addEdge function inputs the vertices of an
+        # edge and appends it to the visual list
+        def addEdge(self, a, b):
+            temp = [a, b]
+            self.visual.append(temp)
+
+        # In visualize function G is an object of
+        # class Graph given by networkx G.add_edges_from(visual)
+        # creates a graph with a given list
+        # nx.draw_networkx(G) - plots the graph
+        # plt.show() - displays the graph
+        def visualize(self):
+            G = nx.Graph()
+            G.add_edges_from(self.visual)
+            nx.draw_networkx(G)
+            plt.show()
 
 
+    # Driver code
+    G = TreeVisualization()
+
+    for level in levels:
+        if level == 'species':
+            break
+        else:
+            for parent in levels_members_pos[level]:
+                for child in range(len(topo_order)):
+                    if parent_child[parent][child] == 1:
+                        G.addEdge(topo_order[parent], topo_order[child])
+    G.visualize()
 
 
+"""
+    G.addEdge(0, 2)
+    G.addEdge(1, 2)
+    G.addEdge(1, 3)
+    G.addEdge(5, 3)
+    G.addEdge(3, 4)
+    G.addEdge(1, 0)
+    G.visualize()
+"""

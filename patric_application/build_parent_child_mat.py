@@ -5,7 +5,7 @@ import json
 import jsonpickle
 
 
-def build_pc_mat(genome_file='genome_lineage.csv', label_file='Firmicutes_erythromycin_samples.csv', leaf_level='genomeID', force_build=False, save_matrix=True, new_method=False):
+def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), label_file='Firmicutes_erythromycin_samples.csv', leaf_level='genomeID', force_build=False, save_matrix=True, new_method=False):
     """
     Build a parent-child matrix for a given subproblem (this binary matrix describes a taxonomical tree, where a one
     indicates that the node represented by a row is the parent of the node represented by the column)

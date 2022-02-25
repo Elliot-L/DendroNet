@@ -382,6 +382,17 @@ if __name__ == '__main__':
 
             test_auc_output.append(roc_auc)
 
+        if s in args.save_seed:
+            models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
+                                             + args.threshold, 'best_models')
+            os.makedirs(models_output_dir, exist_ok=True)
+            root_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
+                        + '_' + args.leaf_level + '_seed_' + str(s) + '_root.pt'
+            delta_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
+                         + '_' + args.leaf_level + '_seed_' + str(s) + '_delta.pt'
+            torch.save(best_root_weights, os.path.join(models_output_dir, root_file))
+            torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
+
         print('After training on seed: ' + str(s))
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
@@ -398,21 +409,8 @@ if __name__ == '__main__':
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
 
-
-
         final_time = time.time() - init_time
         average_time_seed += final_time
-
-        if s in args.save_seed:
-            models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
-                                             + args.threshold, 'best_models')
-            os.makedirs(models_output_dir, exist_ok=True)
-            root_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
-                        + '_' + args.leaf_level + '_seed_' + str(s) + '_root.pt'
-            delta_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
-                         + '_' + args.leaf_level + '_seed_' + str(s) + '_delta.pt'
-            torch.save(best_root_weights, os.path.join(models_output_dir, root_file))
-            torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
 
     average_time_seed = average_time_seed / len(args.seeds)
     print('Average time to train a model: ' + str(average_time_seed) + ' seconds')
