@@ -144,7 +144,7 @@ if __name__ == '__main__':
     for s in args.seeds:
         init_time = time.time()
 
-        rint('New seed: ' + str(s))
+        print('New seed: ' + str(s))
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
 
