@@ -89,7 +89,9 @@ if __name__ == '__main__':
                     if parent_child[parent][child] == 1:
                         G.addEdge(topo_order[parent], topo_order[child])
     G.visualize()
-
+    os.makedirs(os.path.join('data_files', 'Tree_visuals'), exist_ok=True)
+    tree_file = 'Tree_of_' + args.group + '_' + args.antibiotic + '_' + args.leaf_level
+    plt.savefig(os.path.join('data_files', 'Tree_visuals', tree_file))
 
 """
     G.addEdge(0, 2)
