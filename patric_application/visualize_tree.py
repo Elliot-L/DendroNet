@@ -15,7 +15,7 @@ if __name__ == '__main__':
     samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_0.0',
                                 samples_file)
     parent_child, topo_order, node_examples = build_pc_mat(label_file=samples_file,
-                                                           leaf_level=args.leaf_level)
+                                                           leaf_level='genomeID')
     print(parent_child)
     print(topo_order)
 
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     print(total)
     for level in levels:
         print(level)
-        if level != 'genus':
+        if level != args.leaf_level:
             for member in levels_members_pos[level]:
                 print(topo_order[member] + ' : ' + str(len(node_examples[member])/total))
 
