@@ -111,8 +111,7 @@ def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), l
         jdict['nodes'] = nodes
         jdict['node_data'] = node_examples
         os.makedirs(os.path.join('data_files', 'parent_child_matrices'), exist_ok=True)
-        with open(os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic
-                               + '_(' + leaf_level + ').json'), 'w') as outfile:
+        with open(matrix_file, 'w') as outfile:
             frozen = jsonpickle.encode(jdict)
             json.dump(frozen, outfile)
 
