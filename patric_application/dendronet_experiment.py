@@ -47,6 +47,14 @@ if __name__ == '__main__':
     parser.add_argument('--use-multi-gpus', type=str, default='n', help='options are yes (y) or no (n)')
     args = parser.parse_args()
 
+    #Check if subproblem exists
+
+    if os.path.isfile(samples_file):
+        samples_df = pd.read_csv(samples_file, dtype=str)
+    else:
+        print('The samples file does not exist.')
+        exit()
+
     # We get the parent_child matrix using the prexisting file or by creating it
 
     samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
@@ -57,11 +65,7 @@ if __name__ == '__main__':
                                                            label_file=samples_file,
                                                            leaf_level=args.leaf_level)
     # annotating leaves with labels and features
-    if os.path.isfile(samples_file):
-        samples_df = pd.read_csv(samples_file, dtype=str)
-    else:
-        print('The samples file does not exist.')
-        exit()
+
     """
     There are 3 components we need:
     1. A matrix X, where each row contains the features for a bacteria
