@@ -46,7 +46,7 @@ if __name__ == '__main__':
     print(total)
     for level in levels:
         print(level)
-        if level != 'genomeID':
+        if level != 'genus':
             for member in levels_members_pos[level]:
                 print(topo_order[member] + ' : ' + str(len(node_examples[member])/total))
 
