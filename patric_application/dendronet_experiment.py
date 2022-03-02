@@ -47,8 +47,10 @@ if __name__ == '__main__':
     parser.add_argument('--use-multi-gpus', type=str, default='n', help='options are yes (y) or no (n)')
     args = parser.parse_args()
 
-    #Check if subproblem exists
-
+    samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
+    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold,
+                                samples_file)
+    #  Check if subproblem exists
     if os.path.isfile(samples_file):
         samples_df = pd.read_csv(samples_file, dtype=str)
     else:
@@ -57,9 +59,6 @@ if __name__ == '__main__':
 
     # We get the parent_child matrix using the prexisting file or by creating it
 
-    samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
-    samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold,
-                                samples_file)
     matrix_file = args.group + '_' + args.antibiotic + '_' + args.leaf_level + '.json'
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                            label_file=samples_file,
