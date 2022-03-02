@@ -119,6 +119,8 @@ if __name__ == '__main__':
         col += 1
 
     final_df = pd.DataFrame(data={'ID': ids, 'Phenotype': phenotypes, 'Features': features})
+    os.makedirs(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
+                             + str(args.threshold)), exist_ok=True)
     final_df.to_csv(os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
                                  + str(args.threshold),
                                  args.group + '_' + args.antibiotic + '_'
