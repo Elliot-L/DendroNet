@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     matrix_file = args.group + '_' + args.antibiotic + '_' + args.leaf_level + '.json'
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
-                                                           sample_file=samples_file,
+                                                           samples_file=samples_file,
                                                            leaf_level=args.leaf_level)
     # annotating leaves with labels and features
 
