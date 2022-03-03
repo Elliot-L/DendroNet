@@ -25,7 +25,7 @@ parser.add_argument('--gpu-to-use', type=int, nargs='+', default=[0])
 parser.add_argument('--force-train_log', type=str, default='n', help='Decide if you want the model to recompute for'
                                                                      ' combination that were trained already on the '
                                                                      'logistic regression')
-parser.add_argument('--force-train_dendronet', type=str, default='y', help='Decide if you want the model to recompute '
+parser.add_argument('--force-train-dendronet', type=str, default='y', help='Decide if you want the model to recompute '
                                                                            'for combination that were trained already'
                                                                            'on dendronet')
 #parser.add_argument('--gpu-mode', type=str, default='single', help='Using a single or multiple GPUs')
