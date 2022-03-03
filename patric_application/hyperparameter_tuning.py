@@ -44,7 +44,6 @@ if __name__ == "__main__":
     elif args.gpu_mode == 'multiple':
         exp_file = 'experiment_multi_gpu.py'
     
-
     if torch.cuda.is_available():
         Cuda_str = 'CUDA_VISIBLE_DEVICES='
         for i, gpu_id in enumerate(args.gpu_to_use):
@@ -75,7 +74,7 @@ if __name__ == "__main__":
                             dir_name = args.group + '_' + args.antibiotic + '_' + args.threshold \
                                        + '_dendronet_' + str(dpf) + '_' + str(lr) \
                                        + '_' + str(l1) + '_' + str(e_stop) \
-                                       + '_' + leaf_level
+                                       + '_' + args.leaf_level
 
                             output_path = os.path.join('data_files', 'patric_tuning', dir_name, 'output.json')
                             print(dir_name)
@@ -88,7 +87,7 @@ if __name__ == "__main__":
                                           + ' --early-stopping ' + str(e_stop) \
                                           + ' --output-path ' + output_path \
                                           + ' --lineage-path ' + args.genome_lineage \
-                                          + ' --leaf-level ' + leaf_level \
+                                          + ' --leaf-level ' + args.leaf_level \
                                           + ' --batch-size ' + str(args.batch_size) \
                                           + ' --group ' + args.group \
                                           + ' --antibiotic ' + args.antibiotic \
