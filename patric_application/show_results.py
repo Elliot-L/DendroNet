@@ -164,7 +164,7 @@ if __name__ == "__main__":
             with open(os.path.join('data_files', 'Results', result)) as file:
                 dendro_dict = json.load(file)
             log_file = os.path.join('data_files', 'Results', 'refined_results_'
-                                    + group + '_' + antibiotic + '_' + threshold + '_'
+                                    + group + '_' + antibiotic + '_' + threshold
                                     + '_logistic.json')
 
             if os.path.isfile(log_file):
