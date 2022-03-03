@@ -177,10 +177,12 @@ if __name__ == "__main__":
             data1['Antibiotic'].append(antibiotic)
             data1['Leaf level'].append(leaf_level)
             data1['Threshold'].append(threshold)
+            """
             data2['Group'].append(group)
             data2['Antibiotic'].append(antibiotic)
             data2['Leaf level'].append(leaf_level)
             data2['Threshold'].append(threshold)
+            """
             data1['AUC on val'].append(dendro_dict['validation_average'])
             data1['AUC on test'].append(dendro_dict["test_average"])
             data1['DPF'].append(dendro_dict["best_combinations"]["DPF"])
@@ -192,16 +194,15 @@ if __name__ == "__main__":
             else:
                 data1['AUC on val (log)'].append('-')
                 data1['AUC on test (log)'].append('-')
-            print(data1)
-
+            """
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, threshold, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, threshold, leaf_level))
             data2['Phylogenetic entropy'].append(phylo_entropy(antibiotic, group, threshold, leaf_level))
-
+            """
     df1 = pd.DataFrame(data=data1)
-    df2 = pd.DataFrame(data=data2)
+    #df2 = pd.DataFrame(data=data2)
     print(df1.sort_values(by=['Group']))
-    print(df2.sort_values(by=['Group']))
+    #print(df2.sort_values(by=['Group']))
 
 
 
