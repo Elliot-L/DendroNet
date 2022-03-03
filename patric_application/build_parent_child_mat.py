@@ -5,24 +5,25 @@ import json
 import jsonpickle
 
 
-def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), label_file='Firmicutes_erythromycin_samples.csv', leaf_level='genomeID', force_build=False, save_matrix=True, new_method=False):
+def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), samples_file='Firmicutes_erythromycin_samples.csv', leaf_level='genomeID', force_build=False, save_matrix=True, new_method=False):
     """
     Build a parent-child matrix for a given subproblem (this binary matrix describes a taxonomical tree, where a one
     indicates that the node represented by a row is the parent of the node represented by the column)
     Args:
         genome_file: file with all the taxonomical classifications of the species in the PATRIC database
-        label_file: file containing of the IDs of the species of interest for a givne subproblem
+        samples_file: file containing of the IDs of the species of interest for a givne subproblem
         leaf_level: taxonomical deep of the tree (the matrix) that will be built
         force_build: Should the function build the matrix even if we already have it in memory
         save_matrix: Should the matrix be saved after being created for future use
         new_method: is not (should not) be used right now
     """
 
-    file_name = os.path.split(label_file)[1]
+    file_name = os.path.split(samples_file)[1]
     group = file_name.split('_')[0]
     antibiotic = file_name.split('_')[1]
     matrix_file = os.path.join('data_files', 'parent_child_matrices', group + '_' + antibiotic + '_'
                                + leaf_level + '.json')
+
     if os.path.isfile(matrix_file) and not force_build:
         with open(matrix_file) as file:
             js_string = json.load(file)
@@ -36,8 +37,8 @@ def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), l
     genome_df = genome_df[(genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safeClass'].notnull())
                           & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
                           & (genome_df['species'].notnull()) & (genome_df['genomeID'].notnull())]
-    label_df = pd.read_csv(label_file, dtype=str)
-    ids = list(set(label_df['ID']))
+    samples_df = pd.read_csv(samples_file, dtype=str)
+    ids = list(set(samples_df['ID']))
     genome_df = genome_df[genome_df['genomeID'].isin(ids)]
     new_idx = range(genome_df.shape[0])
     genome_df.set_index(pd.Index(new_idx), inplace=True) # Reindexing (part of the rows were removed)
@@ -119,7 +120,7 @@ def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), l
     return parent_child, nodes, node_examples
 
 if __name__ == "__main__":
-    pc, n, node_examples = build_pc_mat(leaf_level='order', force_build=True, save_matrix=True, genome_file='data_files/genome_lineage.csv', label_file='data_files/subproblems/Firmicutes_erythromycin_0.0/Firmicutes_erythromycin_0.0_samples.csv')
+    pc, n, node_examples = build_pc_mat(leaf_level='order', force_build=True, save_matrix=True, genome_file='data_files/genome_lineage.csv', samples_file='data_files/subproblems/Firmicutes_erythromycin_0.0/Firmicutes_erythromycin_0.0_samples.csv')
     print(pc)
     print(pc.shape)
     print(n)

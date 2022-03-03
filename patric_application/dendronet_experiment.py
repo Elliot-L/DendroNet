@@ -42,7 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('--threshold', type=str, default='0.0')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
-    parser.add_argument('--leaf-level', type=str, default='genome_id',
+    parser.add_argument('--leaf-level', type=str, default='genomeID',
                         help='taxonomical level down to which the tree will be built')
     parser.add_argument('--use-multi-gpus', type=str, default='n', help='options are yes (y) or no (n)')
     args = parser.parse_args()
@@ -50,6 +50,7 @@ if __name__ == '__main__':
     samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
     samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_' + args.threshold,
                                 samples_file)
+
     #  Check if subproblem exists
     if os.path.isfile(samples_file):
         samples_df = pd.read_csv(samples_file, dtype=str)

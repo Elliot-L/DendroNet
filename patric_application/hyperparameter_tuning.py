@@ -18,7 +18,7 @@ parser.add_argument('--early_stopping', nargs='+', default=[5], help='Default is
 #parser.add_argument('--early_stopping', nargs='+', default=[3], help='Default is [3, 5, 10]')
 parser.add_argument('--epochs', type=int, nargs='+', default=[1000], help='Default is 1000')
 parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2, 3, 4], help='Default is [0 ,1 ,2 ,3 ,4 ]')
-parser.add_argument('--leaf-level', type=str, default='genome_id', help='taxonomical level down to which the tree will be built')
+parser.add_argument('--leaf-level', type=str, default='genomeID', help='taxonomical level down to which the tree will be built')
 parser.add_argument('--model-to-run', type=str, default='both', help='both, dendronet or logistic')
 parser.add_argument('--batch-size', type=int, default=8)
 parser.add_argument('--gpu-to-use', type=int, nargs='+', default=[0])
@@ -63,10 +63,6 @@ if __name__ == "__main__":
     for s in args.seeds:
         seeds_str += ' '
         seeds_str += str(s)
-
-    leaf_level = args.leaf_level
-    if leaf_level == 'genome_id':
-       leaf_level = 'genomeID'
 
     if args.model_to_run == 'both' or args.model_to_run == 'dendronet':
         print("Dendronet")

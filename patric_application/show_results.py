@@ -141,6 +141,10 @@ if __name__ == "__main__":
     data1['AUC on val (log)'] = []
     data1['AUC on test'] = []
     data1['AUC on test (log)'] = []
+    data1['DPF'] = []
+    data1['LR'] = []
+    data1['L1'] = []
+
     data2 = {}
     data2['Group'] = []
     data2['Antibiotic'] = []
@@ -179,12 +183,16 @@ if __name__ == "__main__":
             data2['Threshold'].append(threshold)
             data1['AUC on val'].append(dendro_dict['validation_average'])
             data1['AUC on test'].append(dendro_dict["test_average"])
+            data1['DPF'].append(dendro_dict["best_combinations"]["DPF"])
+            data1['LR'].append(dendro_dict["best_combinations"]["LR"])
+            data1['L1'].append(dendro_dict["best_combinations"]["L1"])
             if len(log_dict) > 1:
                 data1['AUC on val (log)'].append(log_dict['validation_average'])
                 data1['AUC on test (log)'].append(log_dict['test_average'])
             else:
                 data1['AUC on val (log)'].append('-')
                 data1['AUC on test (log)'].append('-')
+            print(data1)
 
             data2["Shannon's index (entropy)"].append(entropy(antibiotic, group, threshold, leaf_level))
             data2['Quadratic entropy'].append(quad_entropy(antibiotic, group, threshold, leaf_level))
