@@ -11,7 +11,7 @@ def entropy(antibiotic, group, threshold, leaf_level):
                               group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
-                                                                  label_file=label_file,
+                                                                  samples_file=label_file,
                                                                   leaf_level=leaf_level)
     proportions = []
     total_examples = 0
@@ -34,7 +34,7 @@ def phylo_entropy(antibiotic, group, threshold, leaf_level):
                               group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
-                                                                  label_file=label_file,
+                                                                  samples_file=label_file,
                                                                   leaf_level=leaf_level)
     proportions = []
     total_examples = 0
@@ -70,7 +70,7 @@ def quad_entropy(antibiotic, group, threshold, leaf_level):
                               group + '_' + antibiotic + '_' + threshold + '_samples.csv')
     lineage_path = os.path.join('data_files', 'genome_lineage.csv')
     parent_child_matrix, topo_order, node_examples = build_pc_mat(genome_file=lineage_path,
-                                                                  label_file=label_file,
+                                                                  samples_file=label_file,
                                                                   leaf_level=leaf_level)
     proportions = []
     total_examples = 0
