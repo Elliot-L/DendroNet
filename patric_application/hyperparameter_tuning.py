@@ -96,7 +96,7 @@ if __name__ == "__main__":
                                 os.system(command)
 
         df, results = build_tab(antibiotic=args.antibiotic, group=args.group, model='dendronet',
-                                leaf_level=leaf_level, threshold=args.threshold, seeds=args.seeds)
+                                leaf_level=args.leaf_level, threshold=args.threshold, seeds=args.seeds)
         """ 
         This code was planned to be used as a way to avoid accumulation of data that has been used
         for directory in os.listdir(os.path.join('data_files', 'patric_tuning')):
