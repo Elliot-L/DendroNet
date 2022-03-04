@@ -2,20 +2,21 @@ import argparse
 import os
 import pandas as pd
 from build_parent_child_mat import build_pc_mat
-import networkx as nx
-import matplotlib.pyplot as plt
+#  import networkx as nx
+#  import matplotlib.pyplot as plt
+import ete3 as ete
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--group', type=str, default='Firmicutes')
     parser.add_argument('--antibiotic', type=str, default='erythromycin')
-    parser.add_argument('--leaf-level', type=str, default='family')
+    parser.add_argument('--leaf-level', type=str, default='species')
     args = parser.parse_args()
 
     samples_file = args.group + '_' + args.antibiotic + '_0.0_samples.csv'
     samples_file = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_0.0',
                                 samples_file)
-    parent_child, topo_order, node_examples = build_pc_mat(label_file=samples_file,
+    parent_child, topo_order, node_examples = build_pc_mat(samples_file=samples_file,
                                                            leaf_level=args.leaf_level)
     print(parent_child)
     print(topo_order)
@@ -43,8 +44,12 @@ if __name__ == '__main__':
         next_level_pos = []
 
     samples_df = pd.read_csv(samples_file, dtype=str)
-    pos_neg = {}
 
+    pheno_dict = {}
+    for row in range(samples_df.shape[0]):
+        pheno_dict[samples_df.loc[row, 'ID']] = samples_df.loc[row, 'Phenotype']
+
+    pos_neg = {}
     for leaf in levels_members_pos[args.leaf_level]:
         leaf_name = topo_order[leaf]
         samples = node_examples[leaf]
@@ -52,13 +57,40 @@ if __name__ == '__main__':
         neg = 0
         print(samples)
         for sample in samples:
-            for row in range(samples_df.shape[0]):
-                if samples_df.loc[row, 'ID'] == sample:
-                    if samples_df.loc[row, 'Phenotype'] == '[1]':
-                        pos += 1
-                    else:
-                        neg += 1
+            if pheno_dict[sample] == '[1]':
+                pos += 1
+            else:
+                neg += 1
         pos_neg[leaf_name] = (pos, neg)
+
+    root = ete.Tree()
+    curr_node = root
+    node_dict = {}
+    node_dict[topo_order[0]] = curr_node.add_child(name=topo_order[0])
+    for i, level in enumerate(levels):
+        for parent in levels_members_pos[level]:
+            curr_node = node_dict[topo_order[parent]]
+            for child in range(len(topo_order)):
+                if parent_child[parent][child] == 1:
+                    parent_name = topo_order[parent].split(' ')
+                    if len(parent_name) >= 2:
+                        parent_name = ' '.join(parent_name[1])
+                    else:
+                        parent_name = topo_order[parent]
+                    child_name = topo_order[child].split(' ')
+                    if len(child_name) >= 2:
+                        child_name = ' '.join(child_name[1:])
+                    else:
+                        child_name = topo_order[child]
+                    if i + 1 < len(levels) and levels[i + 1] == args.leaf_level:
+                        child_name += '\n' + str(pos_neg[topo_order[child]][0]) + '/' + str(
+                            pos_neg[topo_order[child]][1])
+                    node_dict[topo_order[child]] = curr_node.add_child(name=child_name)
+
+    os.makedirs(os.path.join('data_files', 'Tree_visuals'), exist_ok=True)
+    tree_file = 'Tree_of_' + args.group + '_' + args.antibiotic + '_' + args.leaf_level + '.png'
+    root.render(os.path.join('data_files', 'Tree_visuals', tree_file), w=200, units='mm')
+
 
     """
     total = 0
@@ -71,8 +103,7 @@ if __name__ == '__main__':
             print(topo_order[member] + ' : ' + str(len(node_examples[member])/total))
         if level == args.leaf_level:
             break
-    """
-
+    
     # Defining a Class
     class TreeVisualization:
 
@@ -126,7 +157,6 @@ if __name__ == '__main__':
     tree_file = 'Tree_of_' + args.group + '_' + args.antibiotic + '_' + args.leaf_level
     plt.savefig(os.path.join('data_files', 'Tree_visuals', tree_file))
 
-"""
     G.addEdge(0, 2)
     G.addEdge(1, 2)
     G.addEdge(1, 3)
@@ -134,4 +164,5 @@ if __name__ == '__main__':
     G.addEdge(3, 4)
     G.addEdge(1, 0)
     G.visualize()
-"""
+
+    """
