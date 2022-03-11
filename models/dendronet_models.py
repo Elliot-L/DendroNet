@@ -18,7 +18,9 @@ class DendroMatrixLinReg(nn.Module):
         if init_deltas:
             torch.nn.init.normal_(self.delta_mat, mean=0.0, std=0.01)
 
-    def delta_loss(self):
+    def delta_loss(self, idx):
+        if idx is not None:
+            return torch.norm(torch.matmul(self.delta_mat, self.path_mat[:, idx]), p=self.p)
         return torch.norm(self.delta_mat, p=self.p)
 
     # node_idx identifies the paths relevant to all samples in x, in the same order

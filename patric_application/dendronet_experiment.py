@@ -148,9 +148,11 @@ if __name__ == '__main__':
     for s in args.seeds:
         init_time = time.time()
 
+        """
         print('New seed: ' + str(s))
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
+        """
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
         best_root_weights = dendronet.root_weights
@@ -239,7 +241,7 @@ if __name__ == '__main__':
                 if y_hat.size() == torch.Size([]):
                     y_hat = torch.unsqueeze(y_hat, 0)
                 # collecting the loss terms for this batch
-                batch_delta_loss = dendronet.delta_loss()
+                batch_delta_loss = dendronet.delta_loss(idx=idx_in_pp_mat)
                 batch_root_loss = 0.0
                 for w in dendronet.root_weights:
                     batch_root_loss += abs(float(w))
@@ -275,7 +277,7 @@ if __name__ == '__main__':
             roc_auc = auc(fpr, tpr)
             print("training ROC AUC for epoch: ", roc_auc)
 
-            final_delta_loss_for_epoch = dendronet.delta_loss()
+            final_delta_loss_for_epoch = dendronet.delta_loss(None)
             final_root_loss_for_epoch = 0.0
             for w in dendronet.root_weights:
                 final_root_loss_for_epoch += abs(float(w))
@@ -355,7 +357,7 @@ if __name__ == '__main__':
             total_test_loss = 0.0
             total_test_error_loss = 0.0
 
-            best_delta_loss = best_dendronet.delta_loss()
+            best_delta_loss = best_dendronet.delta_loss(None)
             best_l1_loss = 0
             for w in best_dendronet.root_weights:
                 best_l1_loss += abs(float(w))
@@ -397,6 +399,7 @@ if __name__ == '__main__':
             torch.save(best_root_weights, os.path.join(models_output_dir, root_file))
             torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
 
+        """
         print('After training on seed: ' + str(s))
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
@@ -412,6 +415,7 @@ if __name__ == '__main__':
         print('After empty cache')
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
+        """
 
         final_time = time.time() - init_time
         average_time_seed += final_time

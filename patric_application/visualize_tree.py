@@ -8,8 +8,8 @@ import ete3 as ete
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', type=str, default='Firmicutes')
-    parser.add_argument('--antibiotic', type=str, default='erythromycin')
+    parser.add_argument('--group', type=str, default='Bacteria')
+    parser.add_argument('--antibiotic', type=str, default='gentamicin')
     parser.add_argument('--leaf-level', type=str, default='species')
     args = parser.parse_args()
 
@@ -55,6 +55,7 @@ if __name__ == '__main__':
         samples = node_examples[leaf]
         pos = 0
         neg = 0
+        print(leaf_name)
         print(samples)
         for sample in samples:
             if pheno_dict[sample] == '[1]':
@@ -72,6 +73,7 @@ if __name__ == '__main__':
             curr_node = node_dict[topo_order[parent]]
             for child in range(len(topo_order)):
                 if parent_child[parent][child] == 1:
+                    """
                     parent_name = topo_order[parent].split(' ')
                     if len(parent_name) >= 2:
                         parent_name = ' '.join(parent_name[1])
@@ -83,14 +85,19 @@ if __name__ == '__main__':
                     else:
                         child_name = topo_order[child]
                     if i + 1 < len(levels) and levels[i + 1] == args.leaf_level:
-                        child_name += '\n' + str(pos_neg[topo_order[child]][0]) + '/' + str(
-                            pos_neg[topo_order[child]][1])
-                    node_dict[topo_order[child]] = curr_node.add_child(name=child_name)
+                        child_name += ' ' + str(pos_neg[topo_order[child]][0]) + '/' \
+                                      + str(pos_neg[topo_order[child]][1])
+                    """
+                    if i + 1 < len(levels) and levels[i + 1] == args.leaf_level:
+                        node_dict[topo_order[child]] = curr_node.add_child(name=topo_order[child]
+                                                                           + ' ' + str(pos_neg[topo_order[child]][0])
+                                                                           + '/' + str(pos_neg[topo_order[child]][1]))
+                    else:
+                        node_dict[topo_order[child]] = curr_node.add_child(name=topo_order[child])
 
     os.makedirs(os.path.join('data_files', 'Tree_visuals'), exist_ok=True)
     tree_file = 'Tree_of_' + args.group + '_' + args.antibiotic + '_' + args.leaf_level + '.png'
-    root.render(os.path.join('data_files', 'Tree_visuals', tree_file), w=200, units='mm')
-
+    root.render(os.path.join('data_files', 'Tree_visuals', tree_file), w=400, units='mm')
 
     """
     total = 0
