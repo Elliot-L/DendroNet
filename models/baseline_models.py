@@ -43,3 +43,4 @@ class NeuralNet2Layer(nn.Module):
     def forward(self, x):
         l1_out = torch.nn.functional.relu(self.layer_1(x))
         return self.layer_2(l1_out)
+
