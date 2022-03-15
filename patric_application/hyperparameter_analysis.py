@@ -56,6 +56,8 @@ if __name__ == '__main__':
             if dendronet_df.loc[row, 'DPF'] == dpf:
                 test_list.append(float(dendronet_df.loc[row, 'Test AUC']))
                 val_list.append(float(dendronet_df.loc[row, 'Val AUC']))
+        print(test_list)
+        print(val_list)
         test_average = 0
         val_average = 0
         for t in test_list:
@@ -81,38 +83,6 @@ if __name__ == '__main__':
         data['Test variance'].append(test_variance)
 
     print("LRs: ")
-    for dpf in dpfs:
-        test_list = []
-        val_list = []
-        for row in range(dendronet_df.shape[0]):
-            if dendronet_df.loc[row, 'DPF'] == dpf:
-                test_list.append(float(dendronet_df.loc[row, 'Test AUC']))
-                val_list.append(float(dendronet_df.loc[row, 'Val AUC']))
-        test_average = 0
-        val_average = 0
-        for t in test_list:
-            test_average += t
-        for v in val_list:
-            val_average += v
-        test_average = test_average / len(test_list)
-        val_average = val_average / len(val_list)
-        test_variance = 0
-        val_variance = 0
-        for t in test_list:
-            test_variance += (t - test_average) ** 2
-        for v in val_list:
-            val_variance += (v - val_average) ** 2
-
-        data['DPF'].append(dpf)
-        data['LR'].append('-')
-        data['L1'].append('-')
-        data['Early Stop'].append('-')
-        data['Val mean'].append(val_average)
-        data['Val variance'].append(val_variance)
-        data['Test mean'].append(test_average)
-        data['Test variance'].append(test_variance)
-
-    print("L1s: ")
     for lr in lrs:
         test_list = []
         val_list = []
@@ -120,6 +90,8 @@ if __name__ == '__main__':
             if dendronet_df.loc[row, 'LR'] == lr:
                 test_list.append(float(dendronet_df.loc[row, 'Test AUC']))
                 val_list.append(float(dendronet_df.loc[row, 'Val AUC']))
+        print(test_list)
+        print(val_list)
         test_average = 0
         val_average = 0
         for t in test_list:
@@ -152,6 +124,8 @@ if __name__ == '__main__':
             if dendronet_df.loc[row, 'L1'] == l1:
                 test_list.append(float(dendronet_df.loc[row, 'Test AUC']))
                 val_list.append(float(dendronet_df.loc[row, 'Val AUC']))
+        print(test_list)
+        print(val_list)
         test_average = 0
         val_average = 0
         for t in test_list:
