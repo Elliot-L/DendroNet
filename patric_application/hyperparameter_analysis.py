@@ -173,7 +173,7 @@ if __name__ == '__main__':
         for t in test_list:
             test_variance += (t - test_average) ** 2
         for v in val_list:
-            val_average += (v - val_average) ** 2
+            val_variance += (v - val_average) ** 2
 
         data['DPF'].append('-')
         data['LR'].append('-')
