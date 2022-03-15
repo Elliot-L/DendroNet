@@ -72,6 +72,8 @@ if __name__ == '__main__':
             test_variance += (t - test_average) ** 2
         for v in val_list:
             val_variance += (v - val_average) ** 2
+        test_variance = test_variance / len(test_list)
+        val_variance = val_variance / len(val_list)
 
         data['DPF'].append(dpf)
         data['LR'].append('-')
@@ -106,6 +108,8 @@ if __name__ == '__main__':
             test_variance += (t - test_average) ** 2
         for v in val_list:
             val_variance += (v - val_average) ** 2
+        test_variance = test_variance / len(test_list)
+        val_variance = val_variance / len(val_list)
 
         data['DPF'].append('-')
         data['LR'].append(lr)
@@ -140,6 +144,8 @@ if __name__ == '__main__':
             test_variance += (t - test_average) ** 2
         for v in val_list:
             val_variance += (v - val_average) ** 2
+        test_variance = test_variance / len(test_list)
+        val_variance = val_variance / len(val_list)
 
         data['DPF'].append('-')
         data['LR'].append('-')
@@ -174,6 +180,8 @@ if __name__ == '__main__':
             test_variance += (t - test_average) ** 2
         for v in val_list:
             val_variance += (v - val_average) ** 2
+        test_variance = test_variance / len(test_list)
+        val_variance = val_variance / len(val_list)
 
         data['DPF'].append('-')
         data['LR'].append('-')
