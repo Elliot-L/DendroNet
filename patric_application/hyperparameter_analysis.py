@@ -156,10 +156,10 @@ if __name__ == '__main__':
         val_list = []
         for row in range(dendronet_df.shape[0]):
             if dendronet_df.loc[row, 'Early Stopping'] == early:
-                test_list.append(dendronet_df.loc[row, 'Test AUC'])
-                val_list.append(dendronet_df.loc[row, 'Val AUC'])
-        print(test_list)
-        print(val_list)
+                test_list.append(float(dendronet_df.loc[row, 'Test AUC']))
+                val_list.append(float(dendronet_df.loc[row, 'Val AUC']))
+        #print(test_list)
+        #print(val_list)
         test_average = 0
         val_average = 0
         for t in test_list:
