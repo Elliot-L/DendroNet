@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--save-seed', type=int, nargs='+', default=[0], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
-    parser.add_argument('--dpf', type=float, default=0.1, metavar='D',
+    parser.add_argument('--dpf', type=float, default=0.0, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
     parser.add_argument('--l1', type=float, default=0.001)
     parser.add_argument('--p', type=int, default=1)
@@ -141,6 +141,7 @@ if __name__ == '__main__':
     root_weights = np.zeros(shape=num_features)
     edge_tensor_matrix = np.zeros(shape=(num_features, num_edges))
 
+    train_auc_output = []
     test_auc_output = []
     val_auc_output = []
     average_time_seed = 0
@@ -388,6 +389,11 @@ if __name__ == '__main__':
 
             test_auc_output.append(roc_auc)
 
+            all_train_predictions = torch.sigmoid(best_dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()
+            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
+            roc_auc = auc(fpr, tpr)
+            train_auc_output.append(roc_auc)
+
         if s in args.save_seed:
             models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
                                              + args.threshold, 'best_models')
@@ -502,7 +508,7 @@ if __name__ == '__main__':
         if s in args.save_seed:
             plt.savefig(os.path.join('data_files', 'AUC_plots', plot_file_name))
 
-    output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
+    output_dict = {'train_auc': train_auc_output, 'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
     dict_file_name = args.output_path
     os.makedirs(os.path.dirname(dict_file_name), exist_ok=True)
