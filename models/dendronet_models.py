@@ -20,7 +20,9 @@ class DendroMatrixLinReg(nn.Module):
 
     def delta_loss(self, idx):
         if idx is not None:
-            return torch.norm(torch.matmul(self.delta_mat, self.path_mat[:, idx]), p=self.p)
+            edges = torch.max(self.path_mat[:, idx], dim=1)
+            mat_slice = self.delta_mat.T[torch.nonzero(edges.values == 1.0).reshape(-1)]
+            return torch.norm(mat_slice, p=self.p)
         return torch.norm(self.delta_mat, p=self.p)
 
     # node_idx identifies the paths relevant to all samples in x, in the same order
