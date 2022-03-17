@@ -3,30 +3,33 @@ import torch.nn as nn
 
 
 class DendroMatrixLinReg(nn.Module):
-    def __init__(self, device, root_weights, path_mat, delta_mat, p=1, init_deltas=False):
+    def __init__(self, device, root_weights, path_mat, delta_mat, p=1, init_deltas=False, init_root=True):
         """
         param p: type of norm to take for dendronet loss
         """
         super(DendroMatrixLinReg, self).__init__()
         self.device = device
         self.path_mat = torch.tensor(path_mat, device=device, dtype=torch.double)
-
         self.p = p
         self.root_weights = nn.Parameter(torch.tensor(root_weights, device=device, dtype=torch.double, requires_grad=True))
-        torch.nn.init.normal_(self.root_weights, mean=0.0, std=0.01)
+        if init_root:
+            torch.nn.init.normal_(self.root_weights, mean=0.0, std=0.01)
         self.delta_mat = nn.Parameter(torch.tensor(delta_mat, device=device, dtype=torch.double, requires_grad=True))
         if init_deltas:
             torch.nn.init.normal_(self.delta_mat, mean=0.0, std=0.01)
 
-    def delta_loss(self):
+    def delta_loss(self, idx):
+        if idx is not None:
+            return torch.norm(torch.matmul(self.delta_mat, self.path_mat[:, idx]), p=self.p)
         return torch.norm(self.delta_mat, p=self.p)
 
     # node_idx identifies the paths relevant to all samples in x, in the same order
     def forward(self, x, node_idx):
+        self.path_mat = self.path_mat.to(x.device)
         effective_weights = torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
         # this works for linreg with bias-in only
+        #  print("Inside: " + str(x.size()))
         return torch.sum((x * effective_weights), dim=1)
-
 
 class DendroMatrixLogReg(DendroMatrixLinReg):
     def __init__(self, device, root_weights, path_mat, delta_mat, p=1, init_deltas=False):

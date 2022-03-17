@@ -1,0 +1,157 @@
+
+
+
+
+A little guide on how to get started with using DendroNet in the context of AMR identification
+
+Basic setup:
+
+First, in order to get all the necessary code to run DendroNet, start by cloning the project GitHub repository
+inside a local directory. The repository can be found at https://github.com/Elliot-L/DendroNet.
+
+The repository has a certain organization that needs to be conserve. The code that is of interest in the context
+of the AMR identification is found inside the patric_application directory. Inside of it, you can find multiple python files whose
+functions will be explained later. You can also find the directory data_files that will contain all the data that will
+be needed to run DendroNet. This directory should be empty for now.
+
+Some files will need to be downloaded from the following link: https://docs.patricbrc.org/user_guides/ftp.html .
+The first file, called genome_lineage, will be used to create a phylogenetic tree using the taxonomical classification
+of the bacterial species of interest. Call this file genome_lineage.csv and place it inside the data_files directory.
+The second, called PATRIC_genome_AMR.txt, will be used to gather the AMR data that will be needed
+for training the model. This file must be called amr_phenotypes.csv and placed in the data_files directory
+An alternative and more flexible method to gather the AMR data will be presented later. Downloading these files can
+be done from the command line using wget or curl.
+
+Selection a subproblem:
+
+DendroNet for the AMR application was designed to work on what could be called a AMR "subproblem". These subproblems
+consist in the choice of specific antibiotic (ex: ciprofloxacin, erythromycin, etc) and taxonomical group inside the
+Bacterial kingdom. This taxonomical group can be from any level. Groups like the phylums Proteobacteria and Firmicutes
+and even the whole kingdom Bacteria were used so far. However, any subgroup, like a class, an order, a family or a genus
+can be used. Be careful though. Selecting a smaller group could lead to having very limited available data.
+
+After choosing a group and an antibiotic, a.k.a a subproblem, it is now possible to create a basic file that will
+contain the IDs of the genome of interest for this subproblem and their respective phenotype. To create this file, use
+create_basic_from_amr_file.py using two commande line parameters: antibiotic and group. For example, in the case of
+the subproblem of group Proteobacteria (a phylum) with the antibiotic ciprofloxacin, a basic file can be created using:
+
+python create_basic_from_amr_file.py --group Proteobacteria --antibiotic ciprofloxacin
+
+This command will create a new directory inside data_files called basic_files containing now a new csv file.
+All subsequent basic files created using create_basic_from_amr_file.py will be placed there.
+
+These basic files consists of two columns:
+    - The first contains all genome ids of genomes corresponding to the subproblem and available inside both the
+      amr_phenotype file and the genome_lineage file.
+    - The second corresponds to their respective phenotype (resistant or susceptible).
+
+NOTE: inside the amr file, other phenotypes are available (ex: intermediate resistance). The code was written to
+enforce only two classes, but could be modified to change how phenotypes are classified.
+
+For certain subproblems, using the amr_phenotypes and genome_lineage file could be limiting. Instead, it
+is possible to directly download the equivalent of a basic file from the PATRIC database. For this, it is first
+necessary to download the PATRIC CLI from https://docs.patricbrc.org/cli_tutorial/.
+
+Next, open the PATRIC terminal and run the following command to download a file for the Proteobacteria-ciprofloxacin
+subproblem:
+
+p3-all-genomes --eq phylum,Proteobacteria | p3-get-genome-drugs --eq antibiotic,ciprofloxacin --attr genome_name --attr resistant_phenotype > Proteobacteria_ciprofloxacin_basic.csv
+
+In case that data about all bacterial genomes available in the database is required, the following command should be run
+instead, again for the antibiotic ciprofloxacin (this comes down to the subproblem Bacteria-ciprofloxacin):
+
+p3-all-genomes | p3-get-genome-drugs --eq antibiotic,ciprofloxacin --attr genome_name --attr resistant_phenotype > Bacteria_ciprofloxacin_basic.csv
+
+NOTE: It is possible that for the same subproblem, the two methods give access to different amounts of data.
+NOTE: The basic files downloaded directly from PATRIC need to be placed inside data_file/basic_files to be visible
+to the other programs.
+
+Feature collection:
+
+Now that we know which genome are available for our subproblem and what their phenotypes are (in the language of
+machine learning, we could say that we have our training examples and their target values), we now need the feature
+vectors associated to each genome/training example.
+
+The features that will be used will be AMR specialy available from the PATRIC database. AMR specialy genes are genes
+that were identified as producing a protein that helps a bacterial species to defend itself against antibiotics.
+On example of such a protein is beta-lactamase, an enzyme that degrades the beta-lactam antibiotics. It was decided
+that a good way to produce a feature vector that will represent the ability of given genome to defend itself against
+an antibiotic would be to count the number of specialy genes that have the same functions inside the genome and to use
+this number as the value of the feature. For example, in a given subproblem, the genes coding for a beta-lactamase
+could be the ith feature. Let say that that the jth training example (the jth genome) has 37 genes coding for a
+beta-lactamase, meaning that the value of the feature vector of the jth training example will have a 37 at the ith
+position.
+
+Now comes into play another important characteristic of a subproblem which we will call the feature selection threshold.
+This number (between 0 and 1), represents the fraction of the training examples that will need to possess a certain
+specialty gene type in order for that gene to be used as a feature. Using again the example of beta-lactamase and using
+a threshold of 0.05, in the case of a subproblem with 1000 available genomes (training examples), we need at least 50
+genomes with at least one gene coding for beta-lactamase to add this gene type among the features that will be used.
+
+NOTE: As it can be observed, the number of occurences of a gene type in a genome does not influence the feature
+selection process. A genome that has 167 or only 1 beta-lactamase coding gene will influence the choice of
+beta-lactamase in the exact same way. Only one occurence is necessary.
+
+In summary, a subproblem is now fully defined by the taxonomical group that contains all its training examples,
+the antibiotic of interest and its feature selection threshold. Ex: Proteobacteria-ciprofloxacin-0.05.
+
+NOTE: In order to select all the available features on PATRIC, a threshold of 0 can be used.
+
+Now, from the basic files created earlier, it is possible to create a sample file containing all the information
+needed for the training of DendroNet (but also other classification models). For this, the create_subproblem.py file
+will be used, on the Proteobacteria-ciprofloxacin-0.05 subproblem for example, as follow:
+
+python create_samples_file.py --group Proteobacteria --antibiotic ciprofloxacin --threshold 0.05
+
+This program will automatically find the basic file associated with this subproblem and use it. In case the basic
+file does not exist, it will warn you and ask you to create it. After successfully running create_samples_file.py, a
+directory called subproblems will be created inside the directory data_files. Inside subproblems, a directory named
+after the group and antibiotic will be created and will contain:
+
+    1) samples files for each choice of threshold that was used
+    2) a directory called spgenes (the same spgenes files are used for all subproblems with the same antibiotic and
+       group, thus they are reused, avoiding downloading the same file again)
+
+NOTE: In addition to the arguments group, antibiotic and threshold, the optional argument force-download can be used to
+make the program download the spgenes files, even though they were already available locally. This option is available
+in case new specialty genes were added to the PATRIC database for example.
+
+NOTE: The program subproblem_summary.py can be used to show useful information on a given subproblem, such as the
+number of training examples, number of features and proportion of positive and negative label inside dataset. To get
+a summary of the subproblem Proteobacteria-ciprofloxacin-0.05 for example, use:
+
+python subproblem_summary.py --group Proteobacteria --antibiotic ciprofloxacin --threshold 0.05
+
+In summary, after successfully running create_samples_file.py, a file named group_antibiotic_threshold_samples.csv
+will be available inside the directory patric_application/data_files/subproblems/group_antibiotic/. This file can
+be now used to start training a model!
+
+
+Simple Training:
+
+Note: This documentation will not contain many details on the principles behind Dendronet.
+Additional information can be found in the following paper: https://pubmed.ncbi.nlm.nih.gov/33381838/.
+
+Now that a samples file was created, all the necessary elements needed to train an instance of Dendronet are present.
+For that purpose, the program experiment.py will be used. This program allows us to heavily configure the training of
+Dendronet, but for now, let's see how a simple training for the subproblem Proteobacteria-ciprofloxacin-0.05 could
+be launched. For this, we will need two of the many command line arguments:
+
+1) --samples-file: Allows to specify the location of the samples of the subproblem.
+2) --output-path: Allows to specify the location of the output file.
+
+To start the training on this subproblem, use
+
+python experiment.py --samples-file data_file/subproblems/Proteobacteria_ciprofloxacin/Proteobacteria_ciprofloxacin_0.05_samples.csv --output-path data_files/output.json
+
+This program will produce a output file in the
+
+
+
+
+
+
+
+
+
+
