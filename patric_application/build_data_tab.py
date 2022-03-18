@@ -41,7 +41,10 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
                         data['L1'].append(directory.split("_")[6])
                         data['Early Stopping'].append(directory.split("_")[7])
                         data['Seed'].append(seed)
-                        data['Train AUC'].append(JSdict['train_auc'][i])
+                        if 'train_auc' in JSdict.keys():
+                            data['Train AUC'].append(JSdict['train_auc'][i])
+                        else:
+                            data['Train AUC'].append(0.0)
                         data['Val AUC'].append(JSdict['val_auc'][i])
                         data['Test AUC'].append(JSdict['test_auc'][i])
 
@@ -50,7 +53,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
 
         #  Selecting best results
 
-        best_results = {'validation_average': -1}
+        best_results = {'train_average': -1, 'validation_average': -1, 'test_average': -1, 'best_combinations': {}}
 
         for row in range(0, df.shape[0], len(seeds)):
             train_average_auc = 0.0
@@ -90,7 +93,10 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
                         data['L1'].append(directory.split("_")[5])
                         data['Early Stopping'].append(directory.split("_")[6])
                         data['Seed'].append(seed)
-                        data['Train AUC'].append(JSdict['train_auc'][i])
+                        if 'train_auc' in JSdict.keys():
+                            data['Train AUC'].append(JSdict['train_auc'][i])
+                        else:
+                            data['Train AUC'].append(0.0)
                         data['Val AUC'].append(JSdict['val_auc'][i])
                         data['Test AUC'].append(JSdict['test_auc'][i])
 
