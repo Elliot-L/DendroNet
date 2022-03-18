@@ -8,7 +8,7 @@ parser.add_argument('--antibiotic', type=str, default='erythromycin', metavar='A
 parser.add_argument('--group', type=str, default='Firmicutes', metavar='GR')
 parser.add_argument('--threshold', type=str, default='0.0', help='Threshold for feature selection')
 parser.add_argument('--genome-lineage', type=str, default=os.path.join('data_files', 'genome_lineage.csv'))
-parser.add_argument('--dpfs', type=float, nargs='+', default=[0.0, 0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1], help='Default is [0.001, 0.01, 0.1, 1.0]')
+parser.add_argument('--dpfs', type=float, nargs='+', default=[0.0, 0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 100000000.0], help='Default is [0.001, 0.01, 0.1, 1.0]')
 parser.add_argument('--lrs', type=float, nargs='+', default=[0.1, 0.01, 0.001, 0.0001], help='Default is [0.01, 0.001, 0.0001]')
 parser.add_argument('--l1s', type=float, nargs='+', default=[0.01, 0.1, 1.0], help='Default is [0.0, 0.01, 0.1, 1.0]')
 parser.add_argument('--early_stopping', nargs='+', default=[5], help='Default is [3, 5, 10]')
