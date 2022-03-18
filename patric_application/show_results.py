@@ -137,6 +137,8 @@ if __name__ == "__main__":
     data1['Antibiotic'] = []
     data1['Threshold'] = []
     data1['Leaf level'] = []
+    data1['AUC on train'] = []
+    data1['AUC on train (log)'] = []
     data1['AUC on val'] = []
     data1['AUC on val (log)'] = []
     data1['AUC on test'] = []
@@ -183,15 +185,18 @@ if __name__ == "__main__":
             data2['Leaf level'].append(leaf_level)
             data2['Threshold'].append(threshold)
             """
+            data1['AUC on train'].append(dendro_dict['train_average'])
             data1['AUC on val'].append(dendro_dict['validation_average'])
             data1['AUC on test'].append(dendro_dict["test_average"])
             data1['DPF'].append(dendro_dict["best_combinations"]["DPF"])
             data1['LR'].append(dendro_dict["best_combinations"]["LR"])
             data1['L1'].append(dendro_dict["best_combinations"]["L1"])
             if len(log_dict) > 1:
+                data1['AUC on train (log)'].append(log_dict['train_average'])
                 data1['AUC on val (log)'].append(log_dict['validation_average'])
                 data1['AUC on test (log)'].append(log_dict['test_average'])
             else:
+                data1['AUC on train (log)'].append('-')
                 data1['AUC on val (log)'].append('-')
                 data1['AUC on test (log)'].append('-')
             """

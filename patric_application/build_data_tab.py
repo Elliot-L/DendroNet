@@ -25,6 +25,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
         data['L1'] = []
         data['Early Stopping'] = []
         data['Seed'] = []
+        data['Train AUC'] = []
         data['Val AUC'] = []
         data['Test AUC'] = []
 
@@ -40,6 +41,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
                         data['L1'].append(directory.split("_")[6])
                         data['Early Stopping'].append(directory.split("_")[7])
                         data['Seed'].append(seed)
+                        data['Train AUC'].append(JSdict['train_auc'][i])
                         data['Val AUC'].append(JSdict['val_auc'][i])
                         data['Test AUC'].append(JSdict['test_auc'][i])
 
@@ -51,17 +53,21 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
         best_results = {'validation_average': -1}
 
         for row in range(0, df.shape[0], len(seeds)):
+            train_average_auc = 0.0
             val_average_auc = 0.0
             test_average_auc = 0.0
             for seed in range(len(seeds)):
+                train_average_auc += df.loc[row + seed, 'Train AUC']
                 val_average_auc += df.loc[row + seed, 'Val AUC']
                 test_average_auc += df.loc[row + seed, 'Test AUC']
+            train_average_auc = train_average_auc / len(seed)
             val_average_auc = val_average_auc / len(seeds)
             test_average_auc = test_average_auc / len(seeds)
 
             if val_average_auc > best_results['validation_average']:
-                best_results['best_combinations'] = {"DPF": df['DPF'][row], "LR": df['LR'][row], "L1": df['L1'][row],
-                                                'Early Stop': df['Early Stopping'][row]}
+                best_results['best_combinations'] = {"DPF": df.loc[row, 'DPF'], "LR": df.loc[row, 'LR'], "L1": df.loc[row, 'L1'],
+                                                'Early Stop': df.loc[row, 'Early Stopping']}
+                best_results['train_average'] = train_average_auc
                 best_results['validation_average'] = val_average_auc
                 best_results['test_average'] = test_average_auc
 
@@ -71,6 +77,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
         data['L1'] = []
         data['Early Stopping'] = []
         data['Seed'] = []
+        data['Train AUC'] = []
         data['Val AUC'] = []
         data['Test AUC'] = []
 
@@ -83,6 +90,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
                         data['L1'].append(directory.split("_")[5])
                         data['Early Stopping'].append(directory.split("_")[6])
                         data['Seed'].append(seed)
+                        data['Train AUC'].append(JSdict['train_auc'][i])
                         data['Val AUC'].append(JSdict['val_auc'][i])
                         data['Test AUC'].append(JSdict['test_auc'][i])
 
@@ -92,17 +100,20 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
         best_results = {'validation_average': -1}
 
         for row in range(0, df.shape[0], len(seeds)):
+            train_average_auc = 0.0
             val_average_auc = 0.0
             test_average_auc = 0.0
             for seed in range(len(seeds)):
-                val_average_auc += df['Val AUC'][row + seed]
-                test_average_auc += df['Test AUC'][row + seed]
+                train_average_auc += df.loc[row + seed, 'Train AUC']
+                val_average_auc += df.loc[row + seed, 'Val AUC']
+                test_average_auc += df.loc[row + seed, 'Test AUC']
             val_average_auc = val_average_auc / len(seeds)
             test_average_auc = test_average_auc / len(seeds)
 
             if val_average_auc > best_results['validation_average']:
-                best_results['best_combinations'] = {"LR:": df['LR'][row], "L1:": df['L1'][row],
-                                                'Early Stop:': df['Early Stopping'][row]}
+                best_results['best_combinations'] = {"LR:": df.loc[row, 'LR'], "L1:": df.loc[row, 'L1'],
+                                                'Early Stop:': df.loc[row, 'Early Stopping']}
+                best_results['train_average'] = train_average_auc
                 best_results['validation_average'] = val_average_auc
                 best_results['test_average'] = test_average_auc
 
