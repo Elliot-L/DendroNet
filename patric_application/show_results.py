@@ -196,7 +196,7 @@ if __name__ == "__main__":
             data1['LR'].append(dendro_dict["best_combinations"]["LR"])
             data1['L1'].append(dendro_dict["best_combinations"]["L1"])
             if len(log_dict) > 1:
-                if 'train_average' in dendro_dict.keys():
+                if 'train_average' in log_dict.keys():
                     data1['AUC on train (log)'].append(log_dict["train_average"])
                 else:
                     data1['AUC on train (log)'].append(0.0)
