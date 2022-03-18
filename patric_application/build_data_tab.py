@@ -60,7 +60,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
                 train_average_auc += df.loc[row + seed, 'Train AUC']
                 val_average_auc += df.loc[row + seed, 'Val AUC']
                 test_average_auc += df.loc[row + seed, 'Test AUC']
-            train_average_auc = train_average_auc / len(seed)
+            train_average_auc = train_average_auc / len(seeds)
             val_average_auc = val_average_auc / len(seeds)
             test_average_auc = test_average_auc / len(seeds)
 
@@ -107,6 +107,7 @@ def build_tab(antibiotic, group, threshold, model, leaf_level='none', seeds=[0, 
                 train_average_auc += df.loc[row + seed, 'Train AUC']
                 val_average_auc += df.loc[row + seed, 'Val AUC']
                 test_average_auc += df.loc[row + seed, 'Test AUC']
+            train_average_auc = train_average_auc / len(seeds)
             val_average_auc = val_average_auc / len(seeds)
             test_average_auc = test_average_auc / len(seeds)
 
