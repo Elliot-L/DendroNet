@@ -47,3 +47,54 @@ class DendroMatrixLogReg(DendroMatrixLinReg):
     # todo: incorporate into forward to eliminate repeat code? Currently used for feature importance analysis
     def get_effective_weights(self, node_idx):
         return torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
+
+
+"""
+EXPERIMENTAL - NEEDS TO BE TESTED
+For now, this is being implemented as a 1-hidden layer neural net, with variable layer sizes
+todo: can this be generalized to take in a varying number of layers as well?
+"""
+class DendroMatrixNN(nn.Module):
+    def __init__(self, device, num_features, layer_sizes, path_mat, p=1, init_deltas=False):
+        """
+        param p: type of norm to take for dendronet loss
+        """
+        super(DendroMatrixNN, self).__init__()
+        assert len(layer_sizes) == 2, 'unsupported number of layer sizes'
+        self.device = device
+        self.num_features = num_features
+        self.layer_sizes = layer_sizes
+        self.p = p
+        self.init_deltas = init_deltas
+        self.path_mat = torch.tensor(path_mat, device=device, dtype=torch.double)
+        self.num_edges = self.path_mat.shape[0]
+        # creating the weights present at the root node for each layer
+        self.root_lin1 = nn.Parameter(torch.zeros(size=(num_features, layer_sizes[0]), device=device,
+                                                  dtype=torch.double, requires_grad=True))
+        self.root_lin2 = nn.Parameter(torch.zeros(size=(layer_sizes[0], layer_sizes[1]), device=device,
+                                                  dtype=torch.double, requires_grad=True))
+        # initializing the root layers
+        torch.nn.init.normal_(self.root_lin1, mean=0.0, std=0.01)
+        torch.nn.init.normal_(self.root_lin2, mean=0.0, std=0.01)
+
+        # creating the delta matrices for each layer, of size (outputs, inputs, num_edges)
+        self.delta_mat1 = nn.Parameter(torch.zeros(size=(layer_sizes[0], num_features, self.num_edges),
+                                                   device=device, dtype=torch.double, requires_grad=True))
+        self.delta_mat2 = nn.Parameter(torch.zeros(size=(layer_sizes[1], layer_sizes[0], self.num_edges),
+                                                   device=device, dtype=torch.double, requires_grad=True))
+        if init_deltas:
+            torch.nn.init.normal_(self.delta_mat1, mean=0.0, std=0.01)
+            torch.nn.init.normal_(self.delta_mat2, mean=0.0, std=0.01)
+
+    def delta_loss(self):
+        return torch.norm(self.delta_mat1, p=self.p) + torch.norm(self.delta_mat2, p=self.p)
+
+    def forward(self, x, node_idx):
+        # operations for the first layer, with relu activation
+        effective_weights_lin1 = torch.add(self.root_lin1, torch.matmul(self.delta_mat1, self.path_mat[:, node_idx]).T)
+        lin1_out = torch.nn.functional.relu(torch.sum((x * effective_weights_lin1.permute(-1, 0, 1)), dim=-1).T)
+
+        # operations for the output layer, raw scores for use with CrossEntropyLoss, assumes bias is in
+        # todo: confirm 1 output with MSELoss is equivalent for regression here, should be fine
+        effective_weights_lin2 = torch.add(self.root_lin2, torch.matmul(self.delta_mat2, self.path_mat[:, node_idx]).T)
+        return torch.sum((lin1_out * effective_weights_lin2.permute(-1, 0, 1)), dim=-1).T
