@@ -11,7 +11,8 @@ class DendroMatrixLinReg(nn.Module):
         self.device = device
         self.path_mat = torch.tensor(path_mat, device=device, dtype=torch.double)
         self.p = p
-        self.root_weights = nn.Parameter(torch.tensor(root_weights, device=device, dtype=torch.double, requires_grad=True))
+        self.root_weights = nn.Parameter(torch.tensor(root_weights, device=device, dtype=torch.double,
+                                                      requires_grad=True))
         if init_root:
             torch.nn.init.normal_(self.root_weights, mean=0.0, std=0.01)
         self.delta_mat = nn.Parameter(torch.tensor(delta_mat, device=device, dtype=torch.double, requires_grad=True))

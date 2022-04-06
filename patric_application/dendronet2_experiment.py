@@ -16,21 +16,22 @@ from build_parent_child_mat import build_pc_mat
 from models.dendronet_models import DendroMatrixLinReg
 from utils.model_utils import build_parent_path_mat, split_indices, IndicesDataset
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=1000, metavar='N')
     parser.add_argument('--early-stopping', type=int, default=5, metavar='E',
                         help='Number of epochs without improvement before early stopping')
-    parser.add_argument('--seeds', type=int, nargs='+', default=[0], metavar='S',
+    parser.add_argument('--seeds', type=int, nargs='+', default=[0, 1, 2], metavar='S',
                         help='random seed for train/test/validation split (default: [0,1,2,3,4])')
     parser.add_argument('--save-seed', type=int, nargs='+', default=[0], metavar='SS',
                         help='seeds for which the training (AUC score) will be plotted and saved')
     parser.add_argument('--validation-interval', type=int, default=1, metavar='VI')
-    parser.add_argument('--dpf', type=float, default=0.01, metavar='D',
+    parser.add_argument('--dpf', type=float, default=0.1, metavar='D',
                         help='scaling factor applied to delta term in the loss (default: 1.0)')
     parser.add_argument('--l1', type=float, default=0.001)
-    parser.add_argument('--p', type=int, default=2)
-    parser.add_argument('--lr', type=float, default=0.001, metavar='LR')
+    parser.add_argument('--p', type=int, default=1)
+    parser.add_argument('--lr', type=float, default=0.1, metavar='LR')
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
@@ -42,9 +43,11 @@ if __name__ == '__main__':
     parser.add_argument('--threshold', type=str, default='0.0')
     parser.add_argument('--output-path', type=str, default=os.path.join('data_files', 'output.json'),
                         metavar='OUT', help='file where the ROC AUC scores of the model will be outputted')
-    parser.add_argument('--leaf-level', type=str, default='order',
+    parser.add_argument('--leaf-level', type=str, default='genomeID',
                         help='taxonomical level down to which the tree will be built')
     parser.add_argument('--use-multi-gpus', type=str, default='n', help='options are yes (y) or no (n)')
+    parser.add_argument('--architecture', nargs='+', type=int, default=[], help='Add size of hidden layers')
+    parser.add_argument('--non-linearity', type=str, default='relu', help='Choose between relu and sigmoid')
     args = parser.parse_args()
 
     samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
@@ -64,7 +67,6 @@ if __name__ == '__main__':
     parent_child, topo_order, node_examples = build_pc_mat(genome_file=args.lineage_path,
                                                            samples_file=samples_file,
                                                            leaf_level=args.leaf_level)
-    print(parent_child)
     # annotating leaves with labels and features
 
     """
@@ -128,8 +130,7 @@ if __name__ == '__main__':
                     phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
                     features = eval(getattr(row, 'Features'))  # the x value
                     y.append(phenotype)
-                    #X.append(features)
-                    X.append(features[0:8])
+                    X.append(features)
                     added_in_X_and_y = True
                 mapping.append((example_number, i))
         if added_in_X_and_y:
@@ -143,7 +144,6 @@ if __name__ == '__main__':
     root_weights = np.zeros(shape=num_features)
     edge_tensor_matrix = np.zeros(shape=(num_features, num_edges))
 
-    train_auc_output = []
     test_auc_output = []
     val_auc_output = []
     average_time_seed = 0
@@ -151,11 +151,9 @@ if __name__ == '__main__':
     for s in args.seeds:
         init_time = time.time()
 
-        """
         print('New seed: ' + str(s))
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
-        """
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
         best_root_weights = dendronet.root_weights
@@ -214,6 +212,7 @@ if __name__ == '__main__':
             l1_per_batch = []
             first_epoch = True
 
+
         # Generate two lists containing 1) the index in the vector y of all the training example (whole train set)
         # 2) the corresponding positions of these training examples in the parent-path matrix.
         # This is done in order generate a list of all the phenotypes of the training set (train_set_targets), and to
@@ -226,12 +225,6 @@ if __name__ == '__main__':
             all_pp_train_idx.append(tup[1])
         all_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
         # running the training loop
-
-        print(dendronet.delta_mat)
-        print(dendronet.delta_mat.size())
-        print(dendronet.root_weights)
-        print(dendronet.path_mat.T)
-        print(dendronet.path_mat.size())
 
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
@@ -249,28 +242,18 @@ if __name__ == '__main__':
                 if y_hat.size() == torch.Size([]):
                     y_hat = torch.unsqueeze(y_hat, 0)
                 # collecting the loss terms for this batch
-                batch_delta_loss = dendronet.delta_loss(idx=idx_in_pp_mat)
-                print(batch_delta_loss)
+                batch_delta_loss = dendronet.delta_loss()
                 batch_root_loss = 0.0
                 for w in dendronet.root_weights:
                     batch_root_loss += abs(float(w))
-                print(batch_root_loss)
                 # idx_in_X is also used to fetch the appropriate entries from y.
                 batch_error_loss = loss_function(y_hat, y[idx_in_X])
-                print(batch_error_loss)
                 # A sigmoid is applied to the output of the model inside loss_function
                 # to make them fit between 0 and 1.
 
                 batch_loss = batch_error_loss + (batch_delta_loss * DPF) + (batch_root_loss * L1)
-                print(batch_loss)
                 batch_loss.backward(retain_graph=True)
                 optimizer.step()
-
-                print(dendronet.delta_mat)
-                print(dendronet.delta_mat.grad)
-                print(dendronet.root_weights)
-                print(dendronet.root_weights.grad)
-
                 new_y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
                 new_error_loss = loss_function(new_y_hat, y[idx_in_X])
                 total_train_error_loss += float(batch_error_loss)
@@ -295,7 +278,7 @@ if __name__ == '__main__':
             roc_auc = auc(fpr, tpr)
             print("training ROC AUC for epoch: ", roc_auc)
 
-            final_delta_loss_for_epoch = dendronet.delta_loss(None)
+            final_delta_loss_for_epoch = dendronet.delta_loss()
             final_root_loss_for_epoch = 0.0
             for w in dendronet.root_weights:
                 final_root_loss_for_epoch += abs(float(w))
@@ -375,7 +358,7 @@ if __name__ == '__main__':
             total_test_loss = 0.0
             total_test_error_loss = 0.0
 
-            best_delta_loss = best_dendronet.delta_loss(None)
+            best_delta_loss = best_dendronet.delta_loss()
             best_l1_loss = 0
             for w in best_dendronet.root_weights:
                 best_l1_loss += abs(float(w))
@@ -406,11 +389,6 @@ if __name__ == '__main__':
 
             test_auc_output.append(roc_auc)
 
-            all_train_predictions = torch.sigmoid(best_dendronet.forward(X[all_y_train_idx], all_pp_train_idx)).detach().cpu().numpy()
-            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
-            roc_auc = auc(fpr, tpr)
-            train_auc_output.append(roc_auc)
-
         if s in args.save_seed:
             models_output_dir = os.path.join('data_files', 'subproblems', args.group + '_' + args.antibiotic + '_'
                                              + args.threshold, 'best_models')
@@ -422,7 +400,6 @@ if __name__ == '__main__':
             torch.save(best_root_weights, os.path.join(models_output_dir, root_file))
             torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
 
-        """
         print('After training on seed: ' + str(s))
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
@@ -438,7 +415,6 @@ if __name__ == '__main__':
         print('After empty cache')
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
-        """
 
         final_time = time.time() - init_time
         average_time_seed += final_time
@@ -525,15 +501,12 @@ if __name__ == '__main__':
         if s in args.save_seed:
             plt.savefig(os.path.join('data_files', 'AUC_plots', plot_file_name))
 
-    output_dict = {'train_auc': train_auc_output, 'val_auc': val_auc_output, 'test_auc': test_auc_output}
-
-    pd.DataFrame(best_delta_matrix.detach().cpu().numpy()).to_csv(os.path.join('data_files', 'final_delta_mat.csv'))
+    output_dict = {'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
     dict_file_name = args.output_path
     os.makedirs(os.path.dirname(dict_file_name), exist_ok=True)
     with open(dict_file_name, 'w') as outfile:
         json.dump(output_dict, outfile)
-
 
 
 

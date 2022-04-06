@@ -4,8 +4,8 @@ import pandas as pd
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', type=str, metavar='G', default='Proteobacteria')
-    parser.add_argument('--antibiotic', type=str, metavar='A', default='ciprofloxacin')
+    parser.add_argument('--group', type=str, metavar='G', default='Firmicutes')
+    parser.add_argument('--antibiotic', type=str, metavar='A', default='erythromycin')
     parser.add_argument('--threshold', type=str, metavar='T', default='0.0')
     args = parser.parse_args()
 
