@@ -128,8 +128,8 @@ if __name__ == '__main__':
                     phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
                     features = eval(getattr(row, 'Features'))  # the x value
                     y.append(phenotype)
-                    #X.append(features)
-                    X.append(features[0:8])
+                    X.append(features)
+                    #X.append(features[0:8])
                     added_in_X_and_y = True
                 mapping.append((example_number, i))
         if added_in_X_and_y:
