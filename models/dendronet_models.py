@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 
+
 class DendroMatrixLinReg(nn.Module):
     def __init__(self, device, root_weights, path_mat, delta_mat, p=1, init_deltas=False, init_root=True):
         """
@@ -48,7 +49,6 @@ class DendroMatrixLogReg(DendroMatrixLinReg):
     def get_effective_weights(self, node_idx):
         return torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
 
-
 """
 EXPERIMENTAL - NEEDS TO BE TESTED
 For now, this is being implemented as a 1-hidden layer neural net, with variable layer sizes
@@ -91,10 +91,10 @@ class DendroMatrixNN(nn.Module):
 
     def forward(self, x, node_idx):
         # operations for the first layer, with relu activation
-        effective_weights_lin1 = torch.add(self.root_lin1, torch.matmul(self.delta_mat1, self.path_mat[:, node_idx]).T)
-        lin1_out = torch.nn.functional.relu(torch.sum((x * effective_weights_lin1.permute(-1, 0, 1)), dim=-1).T)
+        effective_weights_lin1 = torch.add(self.root_lin1, torch.matmul(self.delta_mat1, self.path_mat[:, node_idx]).permute(1, 0, 2))
+        lin1_out = torch.nn.functional.relu(torch.sum((x * effective_weights_lin1.permute(-1, 0, 1)), dim=-1).T) # potentially, the dimension over which to sum should be 1 instead of -1
 
         # operations for the output layer, raw scores for use with CrossEntropyLoss, assumes bias is in
         # todo: confirm 1 output with MSELoss is equivalent for regression here, should be fine
-        effective_weights_lin2 = torch.add(self.root_lin2, torch.matmul(self.delta_mat2, self.path_mat[:, node_idx]).T)
-        return torch.sum((lin1_out * effective_weights_lin2.permute(-1, 0, 1)), dim=-1).T
+        effective_weights_lin2 = torch.add(self.root_lin2, torch.matmul(self.delta_mat2, self.path_mat[:, node_idx]).permute(1, 0, 2))
+        return torch.sum((lin1_out * effective_weights_lin2.permute(-1, 0, 1)), dim=-1).T  # potentially, the dimension over which to sum should be 1 instead of -1

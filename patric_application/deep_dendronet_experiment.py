@@ -13,8 +13,9 @@ import torch.nn as nn
 
 # imports from inside the project
 from build_parent_child_mat import build_pc_mat
-from models.dendronet_models import DendroMatrixLinReg
+from models.deep_dendronet_models import DeepNNDendroMatrix
 from utils.model_utils import build_parent_path_mat, split_indices, IndicesDataset
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -157,7 +158,12 @@ if __name__ == '__main__':
         print(torch.cuda.memory_reserved())
         """
 
-        dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
+        dendronet = DeepNNDendroMatrix(device=device, num_features=num_features, layer_sizes=(4, 3, 2, 1), path_mat=parent_path_tensor,init_deltas=True)
+
+        for i in range(len(dendronet.delta_layers)):
+            print(dendronet.root_layers[i])
+            print(dendronet.delta_layers[i])
+        """
         best_root_weights = dendronet.root_weights
         best_delta_matrix = dendronet.delta_mat
 
@@ -423,6 +429,7 @@ if __name__ == '__main__':
             torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
 
         """
+        """
         print('After training on seed: ' + str(s))
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
@@ -439,7 +446,7 @@ if __name__ == '__main__':
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
         """
-
+        """
         final_time = time.time() - init_time
         average_time_seed += final_time
 
@@ -494,6 +501,7 @@ if __name__ == '__main__':
             axis[1].axvline(x=best_epoch)
 
         """
+        """
         #axis[0].xlabel('epochs')
         #axis[0].ylabel('ROC AUC')
 
@@ -514,6 +522,7 @@ if __name__ == '__main__':
         axis[1, 1].plot(error_per_batch, c='k', label='E')  # error loss
         axis[1, 1].plot(losses_per_batch, c='b', label='T')  # total loss
         #axis[1, 1].legend(loc='upper left', bbox_to_anchor=(0, -0.5), ncol=4)
+        """
         """
     plt.show()
 
@@ -536,4 +545,4 @@ if __name__ == '__main__':
 
 
 
-
+    """
