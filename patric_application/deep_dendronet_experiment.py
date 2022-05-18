@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('--l1', type=float, default=0.001)
     parser.add_argument('--p', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR')
-    parser.add_argument('--batch-size', type=int, default=8)
+    parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--runtest', dest='runtest', action='store_true')
     parser.add_argument('--no-runtest', dest='runtest', action='store_false')
     parser.set_defaults(runtest=False)
@@ -46,6 +46,8 @@ if __name__ == '__main__':
     parser.add_argument('--leaf-level', type=str, default='order',
                         help='taxonomical level down to which the tree will be built')
     parser.add_argument('--use-multi-gpus', type=str, default='n', help='options are yes (y) or no (n)')
+    parser.add_argument("--architecture", type=int, nargs="+", default=[5, 3, 1], help="number of nodes for hidden layers"
+                                                                                    + " ( includes the output layer)")
     args = parser.parse_args()
 
     samples_file = args.group + '_' + args.antibiotic + '_' + args.threshold + '_samples.csv'
@@ -129,8 +131,8 @@ if __name__ == '__main__':
                     phenotype = eval(getattr(row, 'Phenotype'))[0]  # the y value
                     features = eval(getattr(row, 'Features'))  # the x value
                     y.append(phenotype)
-                    X.append(features)
-                    #X.append(features[0:8])
+                    # X.append(features)
+                    X.append(features[0:8])
                     added_in_X_and_y = True
                 mapping.append((example_number, i))
         if added_in_X_and_y:
@@ -158,14 +160,14 @@ if __name__ == '__main__':
         print(torch.cuda.memory_reserved())
         """
 
-        dendronet = DeepNNDendroMatrix(device=device, num_features=num_features, layer_sizes=(4, 3, 2, 1), path_mat=parent_path_tensor,init_deltas=True)
+        dendronet = DeepNNDendroMatrix(device=device, num_features=num_features, layer_sizes=args.architecture, path_mat=parent_path_tensor)
 
-        for i in range(len(dendronet.delta_layers)):
-            print(dendronet.root_layers[i])
-            print(dendronet.delta_layers[i])
-        """
-        best_root_weights = dendronet.root_weights
-        best_delta_matrix = dendronet.delta_mat
+        print(parent_path_tensor.shape)
+        print(dendronet.root_layers)
+        print(dendronet.delta_layers)
+
+        best_root_layers = dendronet.root_layers
+        best_delta_layers = dendronet.delta_layers
 
         train_idx, test_idx = split_indices(mapping, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=s)
@@ -233,12 +235,6 @@ if __name__ == '__main__':
         all_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
         # running the training loop
 
-        print(dendronet.delta_mat)
-        print(dendronet.delta_mat.size())
-        print(dendronet.root_weights)
-        print(dendronet.path_mat.T)
-        print(dendronet.path_mat.size())
-
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
@@ -256,28 +252,28 @@ if __name__ == '__main__':
                     y_hat = torch.unsqueeze(y_hat, 0)
                 # collecting the loss terms for this batch
                 batch_delta_loss = dendronet.delta_loss(idx=idx_in_pp_mat)
-                print(batch_delta_loss)
-                batch_root_loss = 0.0
-                for w in dendronet.root_weights:
-                    batch_root_loss += abs(float(w))
-                print(batch_root_loss)
+                # print(batch_delta_loss)
+                batch_root_loss = dendronet.root_loss()
+                # print(batch_root_loss)
                 # idx_in_X is also used to fetch the appropriate entries from y.
                 batch_error_loss = loss_function(y_hat, y[idx_in_X])
-                print(batch_error_loss)
+                # print(batch_error_loss)
                 # A sigmoid is applied to the output of the model inside loss_function
                 # to make them fit between 0 and 1.
 
                 batch_loss = batch_error_loss + (batch_delta_loss * DPF) + (batch_root_loss * L1)
-                print(batch_loss)
+                # print(batch_loss)
+
+                for r, d in zip(dendronet.root_layers, dendronet.delta_layers):
+                    print(r.data)
+                    print(d.data)
+
                 batch_loss.backward(retain_graph=True)
                 optimizer.step()
 
-                print(dendronet.delta_mat)
-                print(dendronet.delta_mat.grad)
-                print(dendronet.root_weights)
-                print(dendronet.root_weights.grad)
-
                 new_y_hat = dendronet.forward(X[idx_in_X], idx_in_pp_mat)
+                if new_y_hat.size() == torch.Size([]):
+                    new_y_hat = torch.unsqueeze(new_y_hat, 0)
                 new_error_loss = loss_function(new_y_hat, y[idx_in_X])
                 total_train_error_loss += float(batch_error_loss)
                 total_train_loss += float(batch_loss)
@@ -302,9 +298,7 @@ if __name__ == '__main__':
             print("training ROC AUC for epoch: ", roc_auc)
 
             final_delta_loss_for_epoch = dendronet.delta_loss(None)
-            final_root_loss_for_epoch = 0.0
-            for w in dendronet.root_weights:
-                final_root_loss_for_epoch += abs(float(w))
+            final_root_loss_for_epoch = dendronet.root_loss()
             with torch.no_grad():
                 final_train_error_loss_for_epoch = loss_function(torch.tensor(all_train_predictions), torch.tensor(all_train_targets))
 
@@ -356,8 +350,13 @@ if __name__ == '__main__':
                     early_stopping_count = 0
                     print("Improvement!!!")
                     best_epoch = epoch
-                    best_root_weights = dendronet.root_weights.clone().detach().cpu()
-                    best_delta_matrix = dendronet.delta_mat.clone().detach().cpu()
+                    best_root_layers= []
+                    best_delta_layers = []
+                    for layer in dendronet.root_layers:
+                        best_root_layers.append(layer.clone().detach().cpu())
+                    for layer in dendronet.delta_layers:
+                        best_delta_layers.append(layer.clone().detach().cpu())
+
                 else:
                     early_stopping_count += 1
                     print("Oups,... we are at " + str(early_stopping_count) + ", best: " + str(best_val_auc))
@@ -373,8 +372,10 @@ if __name__ == '__main__':
             X = X.cpu()
             y = y.cpu()
             # The best model obtained so far, based on AUC score on validation set will be used here
-            best_dendronet = DendroMatrixLinReg(torch.device('cpu'), best_root_weights, parent_path_tensor,
-                                                best_delta_matrix,
+            best_dendronet = DeepNNDendroMatrix(torch.device('cpu'), num_features=num_features,
+                                                layer_sizes=args.architecture, path_mat=parent_path_tensor,
+                                                root_layers=best_root_layers,
+                                                delta_layers=best_delta_layers,
                                                 init_root=False)
             all_test_targets = []
             all_best_model_predictions = []
@@ -382,9 +383,7 @@ if __name__ == '__main__':
             total_test_error_loss = 0.0
 
             best_delta_loss = best_dendronet.delta_loss(None)
-            best_l1_loss = 0
-            for w in best_dendronet.root_weights:
-                best_l1_loss += abs(float(w))
+            best_l1_loss = best_dendronet.root_loss()
 
             for step, idx_batch in enumerate(test_batch_gen):
                 idx_in_X = idx_batch[0]
@@ -425,10 +424,9 @@ if __name__ == '__main__':
                         + '_' + args.leaf_level + '_seed_' + str(s) + '_root.pt'
             delta_file = str(DPF) + '_' + str(LR) + '_' + str(L1) + '_' + str(args.early_stopping) \
                          + '_' + args.leaf_level + '_seed_' + str(s) + '_delta.pt'
-            torch.save(best_root_weights, os.path.join(models_output_dir, root_file))
-            torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
+            # torch.save(best_root_weights, os.path.join(models_output_dir, root_file))
+            # torch.save(best_delta_matrix, os.path.join(models_output_dir, delta_file))
 
-        """
         """
         print('After training on seed: ' + str(s))
         print(torch.cuda.memory_allocated())
@@ -446,7 +444,7 @@ if __name__ == '__main__':
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
         """
-        """
+
         final_time = time.time() - init_time
         average_time_seed += final_time
 
@@ -501,7 +499,7 @@ if __name__ == '__main__':
             axis[1].axvline(x=best_epoch)
 
         """
-        """
+        
         #axis[0].xlabel('epochs')
         #axis[0].ylabel('ROC AUC')
 
@@ -523,7 +521,7 @@ if __name__ == '__main__':
         axis[1, 1].plot(losses_per_batch, c='b', label='T')  # total loss
         #axis[1, 1].legend(loc='upper left', bbox_to_anchor=(0, -0.5), ncol=4)
         """
-        """
+
     plt.show()
 
     if SAVE_PLOT and PLOT:
@@ -536,7 +534,7 @@ if __name__ == '__main__':
 
     output_dict = {'train_auc': train_auc_output, 'val_auc': val_auc_output, 'test_auc': test_auc_output}
 
-    pd.DataFrame(best_delta_matrix.detach().cpu().numpy()).to_csv(os.path.join('data_files', 'final_delta_mat.csv'))
+    # pd.DataFrame(best_delta_matrix.detach().cpu().numpy()).to_csv(os.path.join('data_files', 'final_delta_mat.csv'))
 
     dict_file_name = args.output_path
     os.makedirs(os.path.dirname(dict_file_name), exist_ok=True)
@@ -545,4 +543,4 @@ if __name__ == '__main__':
 
 
 
-    """
+

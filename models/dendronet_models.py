@@ -92,9 +92,9 @@ class DendroMatrixNN(nn.Module):
     def forward(self, x, node_idx):
         # operations for the first layer, with relu activation
         effective_weights_lin1 = torch.add(self.root_lin1, torch.matmul(self.delta_mat1, self.path_mat[:, node_idx]).permute(1, 0, 2))
-        lin1_out = torch.nn.functional.relu(torch.sum((x * effective_weights_lin1.permute(-1, 0, 1)), dim=-1).T) # potentially, the dimension over which to sum should be 1 instead of -1
+        lin1_out = torch.nn.functional.relu(torch.sum((x * effective_weights_lin1.permute(-1, 0, 1)), dim=-1).T)
 
         # operations for the output layer, raw scores for use with CrossEntropyLoss, assumes bias is in
         # todo: confirm 1 output with MSELoss is equivalent for regression here, should be fine
         effective_weights_lin2 = torch.add(self.root_lin2, torch.matmul(self.delta_mat2, self.path_mat[:, node_idx]).permute(1, 0, 2))
-        return torch.sum((lin1_out * effective_weights_lin2.permute(-1, 0, 1)), dim=-1).T  # potentially, the dimension over which to sum should be 1 instead of -1
+        return torch.squeeze(torch.sum((lin1_out * effective_weights_lin2.permute(-1, 0, 1)), dim=-1).T)

@@ -114,6 +114,8 @@ if __name__ == '__main__':
     #  (row_in_X, row_in_parent_child)
     #  This is done in order to save computer memory. This way the X matrix can be smaller
     #  as only the leaves of the tree have features.
+    #  Also, in the case where we don't build the phylogenetic tree down to the genomeID level, we can mal
+    #  multiple samples to the same node.
 
     X = []
     y = []
@@ -136,6 +138,7 @@ if __name__ == '__main__':
             example_number += 1
 
     parent_path_tensor = build_parent_path_mat(parent_child)
+    print(parent_path_tensor)
     num_features = len(X[0])
     num_nodes = len(parent_child[0])
     num_edges = len(parent_path_tensor)
@@ -225,7 +228,6 @@ if __name__ == '__main__':
             all_y_train_idx.append(tup[0])
             all_pp_train_idx.append(tup[1])
         all_train_targets = y[all_y_train_idx].detach().cpu().numpy()  # target values for whole training set
-        # running the training loop
 
         print(dendronet.delta_mat)
         print(dendronet.delta_mat.size())
@@ -233,6 +235,7 @@ if __name__ == '__main__':
         print(dendronet.path_mat.T)
         print(dendronet.path_mat.size())
 
+        # running the training loop
         for epoch in range(EPOCHS):
             print('Train epoch ' + str(epoch))
             # we'll track the running loss over each batch so we can compute the average per epoch
