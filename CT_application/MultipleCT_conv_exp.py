@@ -3,6 +3,7 @@ import pandas as pd
 import argparse
 from tqdm import tqdm
 import numpy as np
+import json
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -15,7 +16,7 @@ from utils.model_utils import split_indices, IndicesDataset
 
 
 def get_one_hot_encoding(seq):
-    # (A,G,T,C), ex: A = (1, 0, 0, 0), T = (0, 0, 1, 0)
+    #  (A,G,T,C), ex: A = (1, 0, 0, 0), T = (0, 0, 1, 0)
     encoding = []
     for c in seq:
         if c == 'A':
@@ -28,17 +29,25 @@ def get_one_hot_encoding(seq):
             encoding.append([0, 0, 0, 1])
     return encoding
 
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cts', type=str, nargs='+',
-                        default=['active.distal.CTCF-ascending_aorta', 'active.distal.CTCF-adrenal_gland',
-                                 'active.distal.CTCF-body_of_pancreas', 'active.distal.CTCF-breast_epithelium',
-                                 'active.distal.CTCF-coronary_artery'])
+    parser.add_argument('--cts', type=str, nargs='+', default=['active.distal.nonCTCF.nonAS-adrenal_gland',
+                                                               'active.distal.nonCTCF.nonAS-thyroid_gland'],
+                        help='if empty, we take all available datasets')
+    """
+                        default=['repressed.distal.nonCTCF.nonAS-body_of_pancreas',
+                                 'repressed.distal.nonCTCF.nonAS-Peyers_patch',
+                                 'repressed.distal.nonCTCF.nonAS-thyroid_gland',
+                                 'repressed.distal.nonCTCF.nonAS-thyroid_gland',
+                                 'repressed.distal.nonCTCF-body_of_pancreas',
+                                 'repressed.distal.nonCTCF-Peyers_patch',
+                                 'repressed.distal.nonCTCF-thyroid_gland',
+                                 'repressed.distal.nonCTCF-tibial_nerve'])
+    """
     parser.add_argument('--LR', type=float, default=0.01)
     parser.add_argument('--USE-CUDA', type=bool, default=False)
-    parser.add_argument('--BATCH-SIZE', type=int, default=64)
+    parser.add_argument('--BATCH-SIZE', type=int, default=128)
     args = parser.parse_args()
 
     LR = args.LR
@@ -46,10 +55,21 @@ if __name__ == '__main__':
     BATCH_SIZE = args.BATCH_SIZE
 
     device = torch.device('cpu')
+
     ct_datasets = {}
-    for ct in args.cts:
-        samples_df = pd.read_csv(os.path.join('data_files', ct + '_samples.csv'), dtype=str)
-        ct_datasets[ct] = samples_df
+
+    if len(args.cts) == 0:
+        for s_file in os.listdir(os.path.join('data_files', 'single_cell_datasets')):
+            samples_df = pd.read_csv(os.path.join('data_files', 'single_cell_datasets', s_file)
+                                     , dtype=str)
+            ct_datasets[s_file[0:-12]] = samples_df
+    else:
+        for ct in args.cts:
+            samples_df = pd.read_csv(os.path.join('data_files', 'single_cell_datasets', ct + '_samples.csv'), dtype=str)
+            ct_datasets[ct] = samples_df
+
+    with open(os.path.join('data_files', 'enhancers_seqs.json')) as e_file:
+        enhancers_dict = json.load(e_file)
 
     y = []
     X = []
@@ -71,15 +91,15 @@ if __name__ == '__main__':
         for row in range(ct_datasets[ct].shape[0]):
             if int(ct_datasets[ct].loc[row, 'labels']) == 0 and neg_counter[ct] < pos_count[ct]:
                 y.append(int(ct_datasets[ct].loc[row, 'labels']))
-                X.append(get_one_hot_encoding(ct_datasets[ct].loc[row, 'sequences']))
+                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'IDs']]))
                 # encoding cell type as one hot encoding (same order as in argument list)
-                cell_encodings.append([1 if j == i else 0 for j in range(len(args.cts))])
+                cell_encodings.append([1 if j == i else 0 for j in range(len(ct_datasets.keys()))])
                 neg_counter[ct] += 1
             if int(ct_datasets[ct].loc[row, 'labels']) == 1:
                 y.append(int(ct_datasets[ct].loc[row, 'labels']))
-                X.append(get_one_hot_encoding(ct_datasets[ct].loc[row, 'sequences']))
+                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'IDs']]))
                 # encoding cell type as one hot encoding (same order as in argument list)
-                cell_encodings.append([1 if j == i else 0 for j in range(len(args.cts))])
+                cell_encodings.append([1 if j == i else 0 for j in range(len(ct_datasets.keys()))])
 
     print(neg_counter)
     print(len(X))
@@ -195,7 +215,9 @@ if __name__ == '__main__':
         if y[i] == 0 and cell_encodings[i] == [0, 0, 0, 0, 1]:
             X[i] = X[i][0:76] + motif10 + X[i][96:501]
     """
-    Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(args.cts), seq_length=501, kernel_size=24)
+
+    Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(args.cts), seq_length=501,
+                                   kernel_size=24, number_of_kernels=64)
 
     train_idx, test_idx = split_indices(range(0, len(X)), seed=0)
 
@@ -219,7 +241,7 @@ if __name__ == '__main__':
         loss_function = loss_function.cuda()
     optimizer = torch.optim.Adam(Multi_CT_conv.parameters(), lr=LR)
 
-    for epoch in range(1):
+    for epoch in range(5):
         print("Epoch " + str(epoch))
         for step, idx_batch in enumerate(tqdm(train_batch_gen)):
             optimizer.zero_grad()
@@ -233,6 +255,17 @@ if __name__ == '__main__':
             error_loss.backward(retain_graph=True)
             optimizer.step()
             # print(CT_specific_conv.convLayer.weight)
-            print(torch.max(Multi_CT_conv.convLayer.weight.grad))
+            # print(torch.max(Multi_CT_conv.convLayer.weight.grad))
             test_loss2 = loss_function(Multi_CT_conv(X[test_idx], cell_encodings[test_idx]), y[test_idx])
-            print("error loss on test set after optimization: " + str(float(test_loss2)))
+            # print("error loss on test set after optimization: " + str(float(test_loss2)))
+
+        test_error_loss = 0.0
+        all_test_targets = []
+        all_test_predictions = []
+        for step, idx_batch in enumerate(tqdm(test_batch_gen)):
+            y_hat = Multi_CT_conv(X[idx_batch])
+            test_error_loss += float(loss_function(y_hat, y[idx_batch]))
+            all_test_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+            print(len(all_test_targets))
+            all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
+            print(len(all_test_predictions))

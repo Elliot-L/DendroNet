@@ -184,7 +184,7 @@ if __name__ == '__main__':
             loss_function = loss_function.cuda()
         optimizer = torch.optim.SGD(dendronet.parameters(), lr=LR)
 
-        # shows ratios between datasets
+        # shows ratios between single_cell_datasets
         #  print("train:", 100*len(train_idx)/(len(train_idx)+len(test_idx)),"%")
         #  print("val:", 100*len(val_idx)/(len(train_idx)+ len(val_idx)+ len(test_idx)),"%")
         #  print("test:", 100*len(test_idx)/(len(train_idx)+ len(val_idx)+len(test_idx)),"%")
