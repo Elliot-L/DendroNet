@@ -29,7 +29,7 @@ if __name__ == "__main__":
         # for chromosomes 1 to 22
         for i in range(1, 23):
             print(i)
-            file_name = os.path.join('data_files', 'chr seqs', 'chr' + str(i) + '.fa')
+            file_name = os.path.join('data_files', 'chr_seqs', 'chr' + str(i) + '.fa')
             print(file_name)
             chr_rec = parse(file_name, 'fasta')
             for c in chr_rec:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
             chromosomes[chr.id] = str(chr.seq)
         # for X chromosome
         print('X')
-        file_name = os.path.join('data_files', 'chr seqs', 'chrX.fa')
+        file_name = os.path.join('data_files', 'chr_seqs', 'chrX.fa')
         print(file_name)
         chr_rec = parse(file_name, 'fasta')
         for c in chr_rec:
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         chromosomes[chr.id] = str(chr.seq)
         # for Y chromosome
         print('Y')
-        file_name = os.path.join('data_files', 'chr seqs', 'chrY.fa')
+        file_name = os.path.join('data_files', 'chr_seqs', 'chrY.fa')
         print(file_name)
         chr_rec = parse(file_name, 'fasta')
         for c in chr_rec:
@@ -61,7 +61,7 @@ if __name__ == "__main__":
                                   dtype=str, sep='\t')
         enhancers_dict = {}
 
-        activity_file = os.path.join('data_files', 'cCRE_decoration.matrix.1', 'cCRE_decoration.matrix.1.txt')
+        activity_file = os.path.join('data_files', 'cCRE_decoration.matrix.1.csv')
         activity_df = pd.read_csv(activity_file, dtype=str, sep='\t')
 
         activity_pos_dict = {}
@@ -93,10 +93,12 @@ if __name__ == "__main__":
     else:
         print('Didn\'t have to make sequence files!')
 
+"""
+
         with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as dict_file:
             enhancers_dict = json.load(dict_file)
 
-    activity_file = os.path.join('data_files', 'cCRE_decoration.matrix.1', 'cCRE_decoration.matrix.1.txt')
+    activity_file = os.path.join('data_files', 'cCRE_decoration.matrix.1.csv')
     activity_df = pd.read_csv(activity_file, dtype=str, sep='\t')
 
     print(activity_df)
@@ -169,7 +171,7 @@ if __name__ == "__main__":
         file_name = os.path.join('data_files', 'single_cell_datasets', cell + '_samples.csv')
         df1.to_csv(file_name, index=False)
 
-    """
+    
     ct_name1 = best_cells[0]
     ct_name2 = best_cells[1]
     ct_name3 = best_cells[2]
@@ -266,4 +268,5 @@ if __name__ == "__main__":
     df9.to_csv(os.path.join('data_files', ct_name9 + '_samples.csv'), index=False)
     df10.to_csv(os.path.join('data_files', ct_name10 + '_samples.csv'), index=False)
 
-    """
+    
+"""

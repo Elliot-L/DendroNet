@@ -4,6 +4,7 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 import json
+from sklearn.metrics import roc_curve, auc
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -32,9 +33,11 @@ def get_one_hot_encoding(seq):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    """
     parser.add_argument('--cts', type=str, nargs='+', default=['active.distal.nonCTCF.nonAS-adrenal_gland',
                                                                'active.distal.nonCTCF.nonAS-thyroid_gland'],
                         help='if empty, we take all available datasets')
+    """
     """
                         default=['repressed.distal.nonCTCF.nonAS-body_of_pancreas',
                                  'repressed.distal.nonCTCF.nonAS-Peyers_patch',
@@ -45,6 +48,7 @@ if __name__ == '__main__':
                                  'repressed.distal.nonCTCF-thyroid_gland',
                                  'repressed.distal.nonCTCF-tibial_nerve'])
     """
+    parser.add_argument('--feature', type=str, default='nonCTCF')
     parser.add_argument('--LR', type=float, default=0.01)
     parser.add_argument('--USE-CUDA', type=bool, default=False)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
@@ -53,23 +57,21 @@ if __name__ == '__main__':
     LR = args.LR
     USE_CUDA = args.USE_CUDA
     BATCH_SIZE = args.BATCH_SIZE
+    feature = args.feature
 
-    device = torch.device('cpu')
+    device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
     ct_datasets = {}
 
-    if len(args.cts) == 0:
-        for s_file in os.listdir(os.path.join('data_files', 'single_cell_datasets')):
-            samples_df = pd.read_csv(os.path.join('data_files', 'single_cell_datasets', s_file)
-                                     , dtype=str)
-            ct_datasets[s_file[0:-12]] = samples_df
-    else:
-        for ct in args.cts:
-            samples_df = pd.read_csv(os.path.join('data_files', 'single_cell_datasets', ct + '_samples.csv'), dtype=str)
-            ct_datasets[ct] = samples_df
+    for ct_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
+        ct_name = ct_file[1:-29]
+        samples_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices', ct_file), dtype=str)
+        ct_datasets[ct_name] = samples_df
 
     with open(os.path.join('data_files', 'enhancers_seqs.json')) as e_file:
         enhancers_dict = json.load(e_file)
+
+    cell_names = ct_datasets.keys()  # list that describe order of one-hot encoding
 
     y = []
     X = []
@@ -82,23 +84,23 @@ if __name__ == '__main__':
         pos_count[ct] = 0
         neg_counter[ct] = 0
         for row in range(ct_datasets[ct].shape[0]):
-            if int(ct_datasets[ct].loc[row, 'labels']) == 1:
+            if int(ct_datasets[ct].loc[row, feature]) == 1:
                 pos_count[ct] += 1
 
     print(pos_count)
 
     for i, ct in enumerate(ct_datasets.keys()):
         for row in range(ct_datasets[ct].shape[0]):
-            if int(ct_datasets[ct].loc[row, 'labels']) == 0 and neg_counter[ct] < pos_count[ct]:
-                y.append(int(ct_datasets[ct].loc[row, 'labels']))
-                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'IDs']]))
-                # encoding cell type as one hot encoding (same order as in argument list)
+            if int(ct_datasets[ct].loc[row, feature]) == 0 and neg_counter[ct] < pos_count[ct]:
+                y.append(int(ct_datasets[ct].loc[row, feature]))
+                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'cCRE_id']]))
+                # encoding cell type as one hot encoding
                 cell_encodings.append([1 if j == i else 0 for j in range(len(ct_datasets.keys()))])
                 neg_counter[ct] += 1
-            if int(ct_datasets[ct].loc[row, 'labels']) == 1:
-                y.append(int(ct_datasets[ct].loc[row, 'labels']))
-                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'IDs']]))
-                # encoding cell type as one hot encoding (same order as in argument list)
+            if int(ct_datasets[ct].loc[row, feature]) == 1:
+                y.append(int(ct_datasets[ct].loc[row, feature]))
+                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'cCRE_id']]))
+                # encoding cell type as one hot encoding
                 cell_encodings.append([1 if j == i else 0 for j in range(len(ct_datasets.keys()))])
 
     print(neg_counter)
@@ -217,7 +219,7 @@ if __name__ == '__main__':
     """
 
     Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(args.cts), seq_length=501,
-                                   kernel_size=24, number_of_kernels=64)
+                                   kernel_size=26, number_of_kernels=64, polling_window=7)
 
     train_idx, test_idx = split_indices(range(0, len(X)), seed=0)
 
@@ -251,21 +253,38 @@ if __name__ == '__main__':
             # error_loss = loss_function(y_hat, y[idx_batch])
             error_loss = loss_function(y_hat, y[idx_batch])
 
-            print("error loss on batch: " + str(float(error_loss)))
+            # print("error loss on batch: " + str(float(error_loss)))
             error_loss.backward(retain_graph=True)
             optimizer.step()
             # print(CT_specific_conv.convLayer.weight)
             # print(torch.max(Multi_CT_conv.convLayer.weight.grad))
-            test_loss2 = loss_function(Multi_CT_conv(X[test_idx], cell_encodings[test_idx]), y[test_idx])
-            # print("error loss on test set after optimization: " + str(float(test_loss2)))
+        with torch.no_grad():
+            print("Test performance on train set for epoch " + str(epoch))
+            train_error_loss = 0.0
+            all_train_targets = []
+            all_train_predictions = []
+            for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                y_hat = Multi_CT_conv(X[idx_batch], cell_encodings[idx_batch])
+                train_error_loss += float(loss_function(y_hat, y[idx_batch]))
+                all_train_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
-        test_error_loss = 0.0
-        all_test_targets = []
-        all_test_predictions = []
-        for step, idx_batch in enumerate(tqdm(test_batch_gen)):
-            y_hat = Multi_CT_conv(X[idx_batch])
-            test_error_loss += float(loss_function(y_hat, y[idx_batch]))
-            all_test_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
-            print(len(all_test_targets))
-            all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
-            print(len(all_test_predictions))
+            print("average error loss on test set : " + str(float(train_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
+            roc_auc = auc(fpr, tpr)
+            print('ROC AUC on train set : ' + str(roc_auc))
+
+            print("Test performance on test set for epoch " + str(epoch))
+            test_error_loss = 0.0
+            all_test_targets = []
+            all_test_predictions = []
+            for step, idx_batch in enumerate(tqdm(test_batch_gen)):
+                y_hat = Multi_CT_conv(X[idx_batch], cell_encodings[idx_batch])
+                test_error_loss += float(loss_function(y_hat, y[idx_batch]))
+                all_test_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+            print("average error loss on test set : " + str(float(test_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_test_targets, all_test_predictions)
+            roc_auc = auc(fpr, tpr)
+            print('ROC AUC on test set : ' + str(roc_auc))
