@@ -32,8 +32,8 @@ if __name__ == '__main__':
                      'AS': 0, 'nonAS': 0, 'both_AS': 0}
 
         for i, enhancer in enumerate(enhancers_list):
-            if enhancer % 10000 == 0:
-                print(enhancer)
+            if i % 10000 == 0:
+                print(i)
             for feature in features:
                 if cell_df.loc[enhancer, feature] == '1':
                     cell_dict[feature] += 1
