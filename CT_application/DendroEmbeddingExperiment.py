@@ -67,6 +67,8 @@ if __name__ == '__main__':
     X = []
     y = []
     enhancers_list = list(enhancers_dict.keys())
+    num_enhancers = len(enhancers_list)
+
     print(enhancers_list[0])
     print(len(enhancers_list))
     num_cells_used = 0
@@ -159,7 +161,7 @@ if __name__ == '__main__':
             # error_loss = loss_function(y_hat, y[idx_batch])
             y_idx = []
             for x, c in zip(X_idx, cell_idx):
-                y_idx.append(c*len(enhancers_list) + x)
+                y_idx.append(c*num_enhancers + x)
             y_idx = torch.tensor(y_idx, dtype=torch.long, device=device)
             error_loss = loss_function(y_hat, y[y_idx])
             delta_loss = dendronet.delta_loss(cell_idx)
@@ -185,7 +187,7 @@ if __name__ == '__main__':
                 y_hat = fully_connected(torch.cat((seq_features, cell_embeddings), 1))
                 y_idx = []
                 for x, c in zip(X_idx, cell_idx):
-                    y_idx.append(c * len(enhancers_list) + x)
+                    y_idx.append(c * num_enhancers + x)
                 y_idx = torch.tensor(y_idx, dtype=torch.long, device=device)
                 train_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
@@ -208,7 +210,7 @@ if __name__ == '__main__':
                 y_hat = fully_connected(torch.cat((seq_features, cell_embeddings), 1))
                 y_idx = []
                 for x, c in zip(X_idx, cell_idx):
-                    y_idx.append(c * len(enhancers_list) + x)
+                    y_idx.append(c * num_enhancers + x)
                 y_idx = torch.tensor(y_idx, dtype=torch.long, device=device)
                 test_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_test_targets.extend(list(y[y_idx].detach().cpu().numpy()))

@@ -31,86 +31,82 @@ def get_one_hot_encoding(seq):
     return encoding
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
-    """
-    parser.add_argument('--cts', type=str, nargs='+', default=['active.distal.nonCTCF.nonAS-adrenal_gland',
-                                                               'active.distal.nonCTCF.nonAS-thyroid_gland'],
+    parser.add_argument('--cts', type=str, nargs='+', default=['vagina', 'adrenal_gland', 'prostate_gland',
+                                                               'sigmoid_colon', 'testis', 'stomach',
+                                                               'uterus', 'tibial_nerve', 'spleen'],
                         help='if empty, we take all available datasets')
-    """
-    """
-                        default=['repressed.distal.nonCTCF.nonAS-body_of_pancreas',
-                                 'repressed.distal.nonCTCF.nonAS-Peyers_patch',
-                                 'repressed.distal.nonCTCF.nonAS-thyroid_gland',
-                                 'repressed.distal.nonCTCF.nonAS-thyroid_gland',
-                                 'repressed.distal.nonCTCF-body_of_pancreas',
-                                 'repressed.distal.nonCTCF-Peyers_patch',
-                                 'repressed.distal.nonCTCF-thyroid_gland',
-                                 'repressed.distal.nonCTCF-tibial_nerve'])
-    """
-    parser.add_argument('--feature', type=str, default='nonCTCF')
-    parser.add_argument('--LR', type=float, default=0.01)
+    parser.add_argument('--feature', type=str, default='active')
+    parser.add_argument('--LR', type=float, default=0.001)
     parser.add_argument('--USE-CUDA', type=bool, default=False)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
+    parser.add_argument('--whole-dataset', type=bool, default=False)
     args = parser.parse_args()
 
-    LR = args.LR
-    USE_CUDA = args.USE_CUDA
-    BATCH_SIZE = args.BATCH_SIZE
     feature = args.feature
+    LR = args.LR
+    BATCH_SIZE = args.BATCH_SIZE
+    USE_CUDA = args.USE_CUDA
+    whole_dataset = args.whole_dataset
+    cell_names = args.cts
+
+    if not cell_names:
+        print('using all cell types')
+        cell_names = []
+        for ct_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
+            ct_name = ct_file[0:-29]
+            cell_names.append(ct_name)
 
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
-    ct_datasets = {}
+    with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as enhancers_file:
+        enhancers_dict = json.load(enhancers_file)
 
-    for ct_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
-        ct_name = ct_file[1:-29]
-        samples_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices', ct_file), dtype=str)
-        ct_datasets[ct_name] = samples_df
-
-    with open(os.path.join('data_files', 'enhancers_seqs.json')) as e_file:
-        enhancers_dict = json.load(e_file)
-
-    cell_names = ct_datasets.keys()  # list that describe order of one-hot encoding
-
-    y = []
     X = []
+    y = []
     cell_encodings = []
 
-    pos_count = {}
-    neg_counter = {}
+    enhancers_list = list(enhancers_dict.keys())
+    num_enhancers = len(enhancers_list)
+    print(enhancers_list[0])
+    print(len(enhancers_list))
+    print(cell_names)
 
-    for ct in ct_datasets.keys():
-        pos_count[ct] = 0
-        neg_counter[ct] = 0
-        for row in range(ct_datasets[ct].shape[0]):
-            if int(ct_datasets[ct].loc[row, feature]) == 1:
-                pos_count[ct] += 1
+    for ct in cell_names:
+        ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
+                                         ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+        ct_df = ct_df.loc[enhancers_list]
+        y.extend(list(ct_df.loc[:, feature]))
 
-    print(pos_count)
-
-    for i, ct in enumerate(ct_datasets.keys()):
-        for row in range(ct_datasets[ct].shape[0]):
-            if int(ct_datasets[ct].loc[row, feature]) == 0 and neg_counter[ct] < pos_count[ct]:
-                y.append(int(ct_datasets[ct].loc[row, feature]))
-                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'cCRE_id']]))
-                # encoding cell type as one hot encoding
-                cell_encodings.append([1 if j == i else 0 for j in range(len(ct_datasets.keys()))])
-                neg_counter[ct] += 1
-            if int(ct_datasets[ct].loc[row, feature]) == 1:
-                y.append(int(ct_datasets[ct].loc[row, feature]))
-                X.append(get_one_hot_encoding(enhancers_dict[ct_datasets[ct].loc[row, 'cCRE_id']]))
-                # encoding cell type as one hot encoding
-                cell_encodings.append([1 if j == i else 0 for j in range(len(ct_datasets.keys()))])
-
-    print(neg_counter)
-    print(len(X))
     print(len(y))
-    print(len(cell_encodings))
+
+    for enhancer in enhancers_list:
+        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+
+    for ct in range(len(cell_names)):
+        cell_encodings.append([1 if j == ct else 0 for j in range(len(cell_names))])
+
+    print(cell_encodings)
+    print(len(X))
     print(len(X[0]))
-    print(y[0])
-    print(X[0])
-    print(cell_encodings[0])
+
+    # the list "samples" is a list of tuples each representing a sample. The first
+    # entry is the row of the X matrix where the sequence and the label associated
+    # to that samples can be found and the second entry represent the cell type of the samples,
+    # or more precisely the index of the associated cell type in the cell_names list.
+    # From these two information, the target value associated with a given sample, found in the
+    # y vector can be extracted by multiplying the cell_type index by the number enhancers
+    # and then adding the number of the row in X. This is similar to how you would access entries of
+    # a 2D matrix when it is stored in a 1D format, in memory for example.
+
+    samples = []
+
+    for ct_idx in range(len(cell_names)):
+        for enhancer_idx in range(len(enhancers_list)):
+            samples.append((enhancer_idx, ct_idx))
+
+    print(len(samples))
+    print(samples[0:100])
 
     """
     # TEST 1 : Adding motifs to the positive and/or negative sequences for testing purposes
@@ -221,7 +217,7 @@ if __name__ == '__main__':
     Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(args.cts), seq_length=501,
                                    kernel_size=26, number_of_kernels=64, polling_window=7)
 
-    train_idx, test_idx = split_indices(range(0, len(X)), seed=0)
+    train_idx, test_idx = split_indices(samples, seed=0)
 
     train_set = IndicesDataset(train_idx)
     test_set = IndicesDataset(test_idx)
@@ -236,6 +232,7 @@ if __name__ == '__main__':
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
     y = torch.tensor(y, dtype=torch.float, device=device)
+    print(torch.sum(y))
     cell_encodings = torch.tensor(cell_encodings, dtype=torch.float, device=device)
 
     loss_function = nn.BCELoss()
@@ -247,26 +244,32 @@ if __name__ == '__main__':
         print("Epoch " + str(epoch))
         for step, idx_batch in enumerate(tqdm(train_batch_gen)):
             optimizer.zero_grad()
-            # print(y[idx_batch])
-            y_hat = Multi_CT_conv(X[idx_batch], cell_encodings[idx_batch])
-            # print(y_hat)
-            # error_loss = loss_function(y_hat, y[idx_batch])
-            error_loss = loss_function(y_hat, y[idx_batch])
-
-            # print("error loss on batch: " + str(float(error_loss)))
+            X_idx = idx_batch[0]
+            cell_idx = idx_batch[1]
+            y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+            y_idx = []
+            for x, c in zip(X_idx, cell_idx):
+                y_idx.append(c * num_enhancers + x)
+            y_idx = torch.tensor(y_idx, dtype=torch.long, device=device)
+            error_loss = loss_function(y_hat, y[y_idx])
             error_loss.backward(retain_graph=True)
             optimizer.step()
-            # print(CT_specific_conv.convLayer.weight)
-            # print(torch.max(Multi_CT_conv.convLayer.weight.grad))
         with torch.no_grad():
             print("Test performance on train set for epoch " + str(epoch))
             train_error_loss = 0.0
             all_train_targets = []
             all_train_predictions = []
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
-                y_hat = Multi_CT_conv(X[idx_batch], cell_encodings[idx_batch])
-                train_error_loss += float(loss_function(y_hat, y[idx_batch]))
-                all_train_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                X_idx = idx_batch[0]
+                cell_idx = idx_batch[1]
+                y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                y_idx = []
+                for x, c in zip(X_idx, cell_idx):
+                    y_idx.append(c * num_enhancers + x)
+                y_idx = torch.tensor(y_idx, dtype=torch.long, device=device)
+                print(y_idx.size())
+                train_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
             print("average error loss on test set : " + str(float(train_error_loss) / (step + 1)))
@@ -279,9 +282,15 @@ if __name__ == '__main__':
             all_test_targets = []
             all_test_predictions = []
             for step, idx_batch in enumerate(tqdm(test_batch_gen)):
-                y_hat = Multi_CT_conv(X[idx_batch], cell_encodings[idx_batch])
-                test_error_loss += float(loss_function(y_hat, y[idx_batch]))
-                all_test_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                X_idx = idx_batch[0]
+                cell_idx = idx_batch[1]
+                y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                y_idx = []
+                for x, c in zip(X_idx, cell_idx):
+                    y_idx.append(c * num_enhancers + x)
+                y_idx = torch.tensor(y_idx, dtype=torch.long, device=device)
+                test_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_test_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
             print("average error loss on test set : " + str(float(test_error_loss) / (step + 1)))

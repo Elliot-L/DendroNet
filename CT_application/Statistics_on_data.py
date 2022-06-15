@@ -6,7 +6,6 @@ if __name__ == '__main__':
 
     with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as jfile:
         enhancer_dict = json.load(jfile)
-    print(enhancer_dict)
 
     cell_names = []
 
@@ -36,16 +35,15 @@ if __name__ == '__main__':
                 for feature in features:
                     if cell_df.loc[row, feature] == '1':
                         cell_dict[feature] += 1
-                    if cell_df.loc[row, 'active'] == '1' and cell_df.loc[row, 'repressed'] == '1' and cell_df.loc[row, 'bivalent'] == '1':
-                        cell_dict['act_rep_biv'] += 1
-                    if cell_df.loc[row, 'proximal'] == '1' and cell_df.loc[row, 'distal'] == '1':
-                        cell_dict['both_positions'] += 1
-                    if cell_df.loc[row, 'CTCF'] == '1' and cell_df.loc[row, 'nonCTCF'] == '1':
-                        cell_dict['both_CTCF'] += 1
-                    if cell_df.loc[row, 'AS'] == '1' and cell_df.loc[row, 'nonAS'] == '1':
-                        cell_dict['both_AS'] += 1
+                if cell_df.loc[row, 'active'] == '1' and cell_df.loc[row, 'repressed'] == '1' and cell_df.loc[row, 'bivalent'] == '1':
+                    cell_dict['act_rep_biv'] += 1
+                if cell_df.loc[row, 'proximal'] == '1' and cell_df.loc[row, 'distal'] == '1':
+                    cell_dict['both_positions'] += 1
+                if cell_df.loc[row, 'CTCF'] == '1' and cell_df.loc[row, 'nonCTCF'] == '1':
+                    cell_dict['both_CTCF'] += 1
+                if cell_df.loc[row, 'AS'] == '1' and cell_df.loc[row, 'nonAS'] == '1':
+                    cell_dict['both_AS'] += 1
 
-        print(cell_dict)
         for feature in data.keys():
             data[feature].append(cell_dict[feature])
 
