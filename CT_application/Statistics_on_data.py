@@ -31,19 +31,19 @@ if __name__ == '__main__':
                      'CTCF': 0, 'nonCTCF': 0, 'both_CTCF': 0,
                      'AS': 0, 'nonAS': 0, 'both_AS': 0}
 
-        for row in range(cell_df.shape[0]):
-            if row % 10000 == 0:
-                print(row)
+        for i, enhancer in enumerate(enhancers_list):
+            if enhancer % 10000 == 0:
+                print(enhancer)
             for feature in features:
-                if cell_df.loc[row, feature] == '1':
+                if cell_df.loc[enhancer, feature] == '1':
                     cell_dict[feature] += 1
-            if cell_df.loc[row, 'active'] == '1' and cell_df.loc[row, 'repressed'] == '1' and cell_df.loc[row, 'bivalent'] == '1':
+            if cell_df.loc[enhancer, 'active'] == '1' and cell_df.loc[enhancer, 'repressed'] == '1' and cell_df.loc[enhancer, 'bivalent'] == '1':
                 cell_dict['act_rep_biv'] += 1
-            if cell_df.loc[row, 'proximal'] == '1' and cell_df.loc[row, 'distal'] == '1':
+            if cell_df.loc[enhancer, 'proximal'] == '1' and cell_df.loc[enhancer, 'distal'] == '1':
                 cell_dict['both_positions'] += 1
-            if cell_df.loc[row, 'CTCF'] == '1' and cell_df.loc[row, 'nonCTCF'] == '1':
+            if cell_df.loc[enhancer, 'CTCF'] == '1' and cell_df.loc[enhancer, 'nonCTCF'] == '1':
                 cell_dict['both_CTCF'] += 1
-            if cell_df.loc[row, 'AS'] == '1' and cell_df.loc[row, 'nonAS'] == '1':
+            if cell_df.loc[enhancer, 'AS'] == '1' and cell_df.loc[enhancer, 'nonAS'] == '1':
                 cell_dict['both_AS'] += 1
 
         for feature in data.keys():
