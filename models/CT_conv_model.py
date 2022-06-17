@@ -286,6 +286,12 @@ class DendronetModule(nn.Module):
 
         return torch.norm(self.delta_mat, p=self.p)
 
+    def root_loss(self):
+        root_loss = 0.0
+        for w in self.root_weights:
+            root_loss += abs(float(w))
+        return root_loss
+
     def forward(self, node_idx):
         #print('Dendronet component:')
         p = False
@@ -293,6 +299,10 @@ class DendronetModule(nn.Module):
         embeddings = torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
         if p:
             print(embeddings.size())
+        return embeddings
+
+    def get_embedding(self, node_idx):
+        embeddings = torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
         return embeddings
 
 

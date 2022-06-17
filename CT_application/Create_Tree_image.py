@@ -150,6 +150,7 @@ if __name__ == '__main__':
             distance_mat[i][j] = hamming_distance(enhancer_activity_list[i], enhancer_activity_list[j])
 
     print(distance_mat)
+    np.save(os.path.join('data_files', 'complete_distance_matrix.npy', 'distance_mat'))
 
     agg = AgglomerativeClustering(n_clusters=None, affinity='precomputed', linkage='average', distance_threshold=0)
     model = agg.fit(distance_mat)
