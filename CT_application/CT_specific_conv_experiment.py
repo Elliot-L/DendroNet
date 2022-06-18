@@ -42,7 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('--whole-dataset', type=bool, default=False)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
-    parser.add_argument('num-epoches', type=int, default=100)
+    parser.add_argument('--num-epoches', type=int, default=100)
 
     args = parser.parse_args()
 
