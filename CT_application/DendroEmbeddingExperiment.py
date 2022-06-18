@@ -43,7 +43,7 @@ if __name__ == '__main__':
     parser.add_argument('--embedding-size', type=int, default=10)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
-    parser.add_argument('num-epoches', type=int, default=100)
+    parser.add_argument('--num-epoches', type=int, default=100)
 
     args = parser.parse_args()
 
