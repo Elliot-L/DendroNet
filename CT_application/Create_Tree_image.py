@@ -27,7 +27,6 @@ def create_pc_mat():
             features_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices', cell_file))
 
             cell_names.append(cell_file[0:-29])
-            print(cell_names)
             feature_vector = []
             for feature in features_df.columns:
                 if feature != 'cCRE_id':
@@ -40,7 +39,6 @@ def create_pc_mat():
         print(len(enhancer_activity_list[0]))
 
         for i in range(n_samples):
-            print(i)
             for j in range(n_samples):
                 distance_mat[i][j] = hamming_distance(enhancer_activity_list[i], enhancer_activity_list[j])
         print(distance_mat)

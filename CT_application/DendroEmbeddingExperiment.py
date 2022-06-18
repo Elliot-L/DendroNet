@@ -43,7 +43,7 @@ if __name__ == '__main__':
     parser.add_argument('--embedding-size', type=int, default=10)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
-    parser.add_argument('--num-epoches', type=int, default=100)
+    parser.add_argument('--num-epochs', type=int, default=100)
 
     args = parser.parse_args()
 
@@ -57,8 +57,9 @@ if __name__ == '__main__':
     embedding_size = args.embedding_size
     seeds = args.seeds
     early_stop = args.early_stopping
-    epoches = args.num_epoches
+    epochs = args.num_epochs
 
+    print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
     pc_mat, nodes = create_pc_mat()
@@ -196,7 +197,7 @@ if __name__ == '__main__':
         best_val_auc = 0
         early_stop_count = 0
 
-        for epoch in range(epoches):
+        for epoch in range(epochs):
             print("Epoch " + str(epoch))
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
@@ -302,12 +303,14 @@ if __name__ == '__main__':
             print(tissue)
             print(dendronet.get_embedding([i]))
 
-    dir_path = os.path.join('results', 'single_tissue_experiments', args.ct)
+    dir_path = os.path.join('results', 'dendronet_embedding_experiments')
     os.makedirs(dir_path, exist_ok=True)
     if whole_dataset:
-        filename = args.ct + '_' + feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced'
+        filename = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
+                   + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced.json'
     else:
-        filename = args.ct + '_' + feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced'
+        filename = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
+                   + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced.json'
 
     with open(os.path.join(dir_path, filename), 'w') as outfile:
         json.dump(output, outfile)

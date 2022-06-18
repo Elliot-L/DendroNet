@@ -42,7 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('--whole-dataset', type=bool, default=False)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
-    parser.add_argument('--num-epoches', type=int, default=100)
+    parser.add_argument('--num-epochs', type=int, default=100)
 
     args = parser.parse_args()
 
@@ -53,8 +53,9 @@ if __name__ == '__main__':
     feature = args.feature
     seeds =args.seeds
     early_stop = args.early_stopping
-    epoches = args.num_epoches
+    epochs = args.num_epochs
 
+    print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
     samples_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
@@ -202,7 +203,7 @@ if __name__ == '__main__':
         best_val_auc = 0
         early_stop_count = 0
 
-        for epoch in range(epoches):
+        for epoch in range(epochs):
             print("Epoch " + str(epoch))
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()

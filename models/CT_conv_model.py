@@ -331,7 +331,7 @@ class FCModule(nn.Module):
             if p:
                 print(x.size())
 
-        x = func.sigmoid(self.linear_layers[-1](x))
+        x = torch.sigmoid(self.linear_layers[-1](x))
         if p:
             print(x.size())
 

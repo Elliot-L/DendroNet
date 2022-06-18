@@ -46,7 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('--whole-dataset', type=bool, default=False)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
-    parser.add_argument('--num-epoches', type=int, default=100)
+    parser.add_argument('--num-epochs', type=int, default=100)
 
     args = parser.parse_args()
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     cell_names = args.cts
     seeds = args.seeds
     early_stop = args.early_stopping
-    epoches = args.num_epoches
+    epochs = args.num_epochs
 
     if not cell_names:
         print('using all cell types')
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         for ct_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
             ct_name = ct_file[0:-29]
             cell_names.append(ct_name)
-
+    print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
     with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as enhancers_file:
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type.
-        # the third is the index of the target in the y vector.
+        # The third is the index of the target in the y vector.
 
         for i, ct in enumerate(cell_names):
             ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
@@ -293,7 +293,7 @@ if __name__ == '__main__':
         best_val_auc = 0
         early_stop_count = 0
 
-        for epoch in range(epoches):
+        for epoch in range(epochs):
             print("Epoch " + str(epoch))
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
