@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--ct', type=str, default='testis')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
-    parser.add_argument('--USE-CUDA', type=bool, default=False)
+    parser.add_argument('--USE-CUDA', type=bool, default=True)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, default=False)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
@@ -79,8 +79,6 @@ if __name__ == '__main__':
         if samples_df.loc[enhancer, feature] == 1:
             pos_count += 1
 
-    print(pos_count)
-
     if whole_dataset:
         for enhancer in enhancer_list:
             if samples_df.loc[enhancer, feature] == 0:
@@ -100,6 +98,7 @@ if __name__ == '__main__':
                 y.append(1)
                 X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
+    print(pos_count)
     print(neg_counter)
     print(len(X))
     print(len(X[0]))

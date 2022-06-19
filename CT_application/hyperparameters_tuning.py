@@ -5,12 +5,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--feature', type=str, default='active')
+    parser.add_argument('--single_tissues', type=str, nargs='+', default=[])
     parser.add_argument('--LRs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
     parser.add_argument('--L1s', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
     parser.add_argument('--DPFs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
     parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[10])  # [3, 5, 10])
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 2, 3, 4, 5])
-    parser.add_argument('--USE-CUDA', type=bool, default=False)
+    parser.add_argument('--USE-CUDA', type=bool, default=True)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, default=False)
     parser.add_argument('--num-epochs', type=int, default=5)
@@ -29,6 +30,13 @@ if __name__ == '__main__':
     epochs = args.num_epochs
     whole_dataset = args.whole_dataset
     models_to_train = args.models_to_train
+    USE_CUDA =args.USE_CUDA
+    single_tissues = args.single_tissues
+
+    if not single_tissues:
+        for tissue_matrix in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
+            tissue_name = tissue_matrix[0:-29]
+            single_tissues.append(tissue_name)
 
     seeds_str = ''
     for s in args.seeds:
@@ -45,20 +53,22 @@ if __name__ == '__main__':
         for LR in lr_list:
             for tissue_matrix in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
                 tissue_name = tissue_matrix[0:-29]
-                tissue_file = os.path.join('results', 'single_tissue_experiments', tissue_name,
-                                                    feature + '_' + str(LR) + '_' + str(early_stop) + type_data)
-                print(tissue_file)
-                if not os.path.isfile(tissue_file):
-                    command = 'python CT_specific_conv_experiment.py' \
-                              + ' --ct ' + tissue_name \
-                              + ' --feature ' + feature \
-                              + ' --LR ' + str(LR) \
-                              + ' --early-stopping ' + str(early_stop) \
-                              + ' --num-epochs ' + str(epochs) \
-                              + ' --seeds' + seeds_str \
-                              + ' --whole-dataset ' + str(whole_dataset)
+                if tissue_name in single_tissues:
+                    tissue_file = os.path.join('results', 'single_tissue_experiments', tissue_name,
+                                                        feature + '_' + str(LR) + '_' + str(early_stop) + type_data)
+                    print(tissue_file)
+                    if not os.path.isfile(tissue_file):
+                        command = 'python CT_specific_conv_experiment.py' \
+                                  + ' --ct ' + tissue_name \
+                                  + ' --feature ' + feature \
+                                  + ' --LR ' + str(LR) \
+                                  + ' --early-stopping ' + str(early_stop) \
+                                  + ' --num-epochs ' + str(epochs) \
+                                  + ' --seeds' + seeds_str \
+                                  + ' --whole-dataset ' + str(whole_dataset) \
+                                  + ' --USE-CUDA ' + str(USE_CUDA)
 
-                    os.system(command)
+                        os.system(command)
 
     if 'm' in models_to_train:
         print('Baseline 2: Multi Tissue model')
@@ -73,7 +83,8 @@ if __name__ == '__main__':
                           + ' --early-stopping ' + str(early_stop) \
                           + ' --num-epochs ' + str(epochs) \
                           + ' --seeds' + seeds_str \
-                          + ' --whole-dataset ' + str(whole_dataset)
+                          + ' --whole-dataset ' + str(whole_dataset) \
+                          + ' --USE-CUDA ' + str(USE_CUDA)
 
                 os.system(command)
 
@@ -96,7 +107,8 @@ if __name__ == '__main__':
                                       + ' --early-stopping ' + str(early_stop) \
                                       + ' --num-epochs ' + str(epochs) \
                                       + ' --seeds' + seeds_str \
-                                      + ' --whole-dataset ' + str(whole_dataset)
+                                      + ' --whole-dataset ' + str(whole_dataset) \
+                                      + ' --USE-CUDA ' + str(USE_CUDA)
 
                             os.system(command)
 

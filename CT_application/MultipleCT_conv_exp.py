@@ -41,7 +41,7 @@ if __name__ == '__main__':
     parser.add_argument('--cts', type=str, nargs='+', default=[], help='if empty, we take all available datasets')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
-    parser.add_argument('--USE-CUDA', type=bool, default=False)
+    parser.add_argument('--USE-CUDA', type=bool, default=True)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, default=False)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
