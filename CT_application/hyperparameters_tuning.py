@@ -5,15 +5,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--feature', type=str, default='active')
-    parser.add_argument('--LRs', type=float, nargs='+', default= [0.001]) # [0.1, 0.01, 0.001])
-    parser.add_argument('--L1s', type=float, nargs='+', default= [0.001]) # [0.1, 0.01, 0.001])
-    parser.add_argument('--DPFs', type=float, nargs='+', default= [0.001]) # [0.1, 0.01, 0.001])
-    parser.add_argument('--embedding-sizes', type=int, nargs='+', default= [10]) # [3, 5, 10])
+    parser.add_argument('--LRs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
+    parser.add_argument('--L1s', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
+    parser.add_argument('--DPFs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
+    parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[10])  # [3, 5, 10])
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 2, 3, 4, 5])
     parser.add_argument('--USE-CUDA', type=bool, default=False)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, default=False)
-    parser.add_argument('--num-epoches', type=int, default=5)
+    parser.add_argument('--num-epochs', type=int, default=5)
     parser.add_argument('--models-to-train', type=str, default='smd', help='s: single, m:multiple, d:dendronet')
     parser.add_argument('--early-stopping', type=int, default=3, help='number of epoches after which, if no'
                                                                       + 'improvement is observed on the AUC of '
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     l1_list = args.L1s
     embedding_size = args.embedding_sizes
     early_stop =args.early_stopping
-    epochs = args.num_epoches
+    epochs = args.num_epochs
     whole_dataset = args.whole_dataset
     models_to_train = args.models_to_train
 
@@ -52,11 +52,11 @@ if __name__ == '__main__':
                     command = 'python CT_specific_conv_experiment.py' \
                               + ' --ct ' + tissue_name \
                               + ' --feature ' + feature \
-                              + ' --LR ' + LR \
-                              + ' --early-stopping ' + early_stop \
-                              + ' --num-epochs ' + epochs \
+                              + ' --LR ' + str(LR) \
+                              + ' --early-stopping ' + str(early_stop) \
+                              + ' --num-epochs ' + str(epochs) \
                               + ' --seeds' + seeds_str \
-                              + ' --whole-dataset ' + whole_dataset
+                              + ' --whole-dataset ' + str(whole_dataset)
 
                     os.system(command)
 
@@ -68,12 +68,12 @@ if __name__ == '__main__':
             print(multi_file)
             if not os.path.isfile(multi_file):
                 command = 'python MultipleCT_conv_exp.py' \
-                + ' --feature ' + feature \
-                + ' --LR ' + LR \
-                + ' --early-stopping ' + early_stop \
-                + ' --num-epochs ' + epochs \
-                + ' --seeds' + seeds_str \
-                + ' --whole-dataset ' + whole_dataset
+                          + ' --feature ' + feature \
+                          + ' --LR ' + str(LR) \
+                          + ' --early-stopping ' + str(early_stop) \
+                          + ' --num-epochs ' + str(epochs) \
+                          + ' --seeds' + seeds_str \
+                          + ' --whole-dataset ' + str(whole_dataset)
 
                 os.system(command)
 
@@ -89,14 +89,14 @@ if __name__ == '__main__':
                         if not os.path.isfile(multi_file):
                             command = 'python MultipleCT_conv_exp.py' \
                                       + ' --feature ' + feature \
-                                      + ' --LR ' + LR \
-                                      + ' --DPF ' + DPF \
-                                      + ' --L1 ' + L1 \
-                                      + ' --embedding-size ' + emb_size \
-                                      + ' --early-stopping ' + early_stop \
-                                      + ' --num-epochs ' + epochs \
+                                      + ' --LR ' + str(LR) \
+                                      + ' --DPF ' + str(DPF) \
+                                      + ' --L1 ' + str(L1) \
+                                      + ' --embedding-size ' + str(emb_size) \
+                                      + ' --early-stopping ' + str(early_stop) \
+                                      + ' --num-epochs ' + str(epochs) \
                                       + ' --seeds' + seeds_str \
-                                      + ' --whole-dataset ' + whole_dataset
+                                      + ' --whole-dataset ' + str(whole_dataset)
 
                             os.system(command)
 
