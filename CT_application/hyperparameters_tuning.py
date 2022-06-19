@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('--USE-CUDA', type=bool, default=True)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, default=False)
+    parser.add_argument('--force-train', type=bool, default=False, help='train even if result file exists')
     parser.add_argument('--num-epochs', type=int, default=5)
     parser.add_argument('--models-to-train', type=str, default='smd', help='s: single, m:multiple, d:dendronet')
     parser.add_argument('--early-stopping', type=int, default=3, help='number of epoches after which, if no'
@@ -29,6 +30,7 @@ if __name__ == '__main__':
     early_stop =args.early_stopping
     epochs = args.num_epochs
     whole_dataset = args.whole_dataset
+    force_train = args.force_train
     models_to_train = args.models_to_train
     USE_CUDA =args.USE_CUDA
     single_tissues = args.single_tissues
@@ -57,7 +59,7 @@ if __name__ == '__main__':
                     tissue_file = os.path.join('results', 'single_tissue_experiments', tissue_name,
                                                         feature + '_' + str(LR) + '_' + str(early_stop) + type_data)
                     print(tissue_file)
-                    if not os.path.isfile(tissue_file):
+                    if not os.path.isfile(tissue_file or force_train):
                         command = 'python CT_specific_conv_experiment.py' \
                                   + ' --ct ' + tissue_name \
                                   + ' --feature ' + feature \
@@ -76,7 +78,7 @@ if __name__ == '__main__':
             multi_file = os.path.join('results', 'multi_tissue_experiments',
                                       feature + '_' + str(LR) + '_' + str(early_stop) + type_data)
             print(multi_file)
-            if not os.path.isfile(multi_file):
+            if not os.path.isfile(multi_file or force_train):
                 command = 'python MultipleCT_conv_exp.py' \
                           + ' --feature ' + feature \
                           + ' --LR ' + str(LR) \
@@ -94,11 +96,12 @@ if __name__ == '__main__':
             for L1 in l1_list:
                 for DPF in dpf_list:
                     for emb_size in embedding_size:
-                        multi_file = os.path.join('results', 'single_tissue_experiments', tissue_name,
-                                                   feature + '_' + str(LR) + '_' + str(early_stop) + type_data)
-                        print(multi_file)
-                        if not os.path.isfile(multi_file):
-                            command = 'python MultipleCT_conv_exp.py' \
+                        dendro_file = os.path.join('results', 'dendronet_embedding_experiments',
+                                                   feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1)
+                                                   + '_' + str(embedding_size) + '_' + str(early_stop) + type_data)
+                        print(dendro_file)
+                        if not os.path.isfile(dendro_file or force_train):
+                            command = 'python DendroEmbeddingExperiment.py' \
                                       + ' --feature ' + feature \
                                       + ' --LR ' + str(LR) \
                                       + ' --DPF ' + str(DPF) \
