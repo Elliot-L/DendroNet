@@ -326,6 +326,8 @@ class FCModule(nn.Module):
         #print('Fully connected component:')
         x = x.type(torch.cuda.FloatTensor)
         p = False
+        if len(x.size()) == 1:
+            x = torch.unsqueeze(x, 0)
         x = self.flatten(x)
         if p:
             print(x.size())

@@ -6,9 +6,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--single_tissues', type=str, nargs='+', default=[])
-    parser.add_argument('--LRs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
-    parser.add_argument('--L1s', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
-    parser.add_argument('--DPFs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
+    parser.add_argument('--LRs', type=float, nargs='+', default=[0.1, 0.01, 0.001])
+    parser.add_argument('--L1s', type=float, nargs='+', default=[0.1, 0.01, 0.001])
+    parser.add_argument('--DPFs', type=float, nargs='+', default=[0.1, 0.01, 0.001])
     parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[10])  # [3, 5, 10])
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 2, 3, 4, 5])
     parser.add_argument('--GPU', default=True, action='store_true')
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     dpf_list = args.DPFs
     lr_list = args.LRs
     l1_list = args.L1s
-    embedding_size = args.embedding_sizes
+    embedding_sizes = args.embedding_sizes
     early_stop = args.early_stopping
     epochs = args.num_epochs
     balanced = args.balanced
@@ -115,10 +115,10 @@ if __name__ == '__main__':
         for LR in lr_list:
             for L1 in l1_list:
                 for DPF in dpf_list:
-                    for emb_size in embedding_size:
+                    for emb_size in embedding_sizes:
                         dendro_file = os.path.join('results', 'dendronet_embedding_experiments',
                                                    feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1)
-                                                   + '_' + str(embedding_size) + '_' + str(early_stop) + type_data)
+                                                   + '_' + str(emb_size) + '_' + str(early_stop) + type_data)
                         print(dendro_file)
                         if not os.path.isfile(dendro_file or force_train):
                             command = 'python DendroEmbeddingExperiment.py' \
@@ -140,7 +140,6 @@ if __name__ == '__main__':
                                 command += ' --balanced'
                             else:
                                 command += ' --unbalanced'
-
 
                             os.system(command)
 
