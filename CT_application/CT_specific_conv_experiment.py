@@ -218,7 +218,6 @@ if __name__ == '__main__':
                 # print(y[idx_batch])
                 # y_hat = CT_specific_conv(X[idx_batch])
                 seq_features = convolution(X[idx_batch])
-                print(seq_features.device)
                 y_hat = fully_connected(seq_features)
                 error_loss = loss_function(y_hat, y[idx_batch])
                 error_loss.backward(retain_graph=True)

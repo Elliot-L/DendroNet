@@ -324,14 +324,11 @@ class FCModule(nn.Module):
 
     def forward(self, x):
         #print('Fully connected component:')
-        print(x.device)
         # x = x.type(torch.FloatTensor)
         p = False
-        print(x.device)
         x = self.flatten(x)
         if p:
             print(x.size())
-        print(x.device)
 
         for layer in range(len(self.linear_layers) - 1):
             x = func.relu(self.linear_layers[layer](x))
