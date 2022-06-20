@@ -209,8 +209,6 @@ if __name__ == '__main__':
                 y_idx = idx_batch[2]
                 seq_features = convolution(X[X_idx])
                 cell_embeddings = dendronet(cell_idx)
-                print(seq_features.dtype)
-                print(cell_embeddings.dtype)
                 y_hat = fully_connected(torch.cat((seq_features, cell_embeddings), 1))
                 # print(y_hat)
                 # error_loss = loss_function(y_hat, y[idx_batch])
