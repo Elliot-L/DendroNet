@@ -53,7 +53,7 @@ if __name__ == '__main__':
     BATCH_SIZE = args.BATCH_SIZE
     whole_dataset = args.whole_dataset
     feature = args.feature
-    seeds =args.seeds
+    seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
 
