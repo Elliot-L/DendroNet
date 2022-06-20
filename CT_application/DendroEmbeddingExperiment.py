@@ -106,16 +106,16 @@ if __name__ == '__main__':
 
         samples = []
 
-        for ct in cell_names:
+        for ct_idx, ct in enumerate(cell_names):
             ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
                                              ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
             ct_df = ct_df.loc[enhancers_list]
             y.extend(list(ct_df.loc[:, feature]))
 
-        for ct_idx in range(len(cell_names)):
             for enhancer_idx in range(len(enhancers_list)):
-                samples.append((enhancer_idx, ct_idx + num_internal_nodes,
-                                ct_idx * len(enhancers_list) + enhancer_idx))
+                if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
+                    samples.append((enhancer_idx, ct_idx + num_internal_nodes,
+                                    ct_idx * len(enhancers_list) + enhancer_idx))
 
     else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
            # is the same, which gives us a balanced dataset
@@ -143,18 +143,20 @@ if __name__ == '__main__':
             ct_df = ct_df.loc[enhancers_list]
 
             for enhancer in enhancers_list:
-                if ct_df.loc[enhancer, feature] == 1:
-                    pos_count[ct] += 1
+                if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
+                    if ct_df.loc[enhancer, feature] == 1:
+                        pos_count[ct] += 1
 
             for j, enhancer in enumerate(enhancers_list):
-                if ct_df.loc[enhancer, feature] == 1:
-                    samples.append((j, i, len(y)))
-                    y.append(1)
+                if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
+                    if ct_df.loc[enhancer, feature] == 1:
+                        samples.append((j, i, len(y)))
+                        y.append(1)
 
-                if ct_df.loc[enhancer, feature] == 0 and neg_counter[ct] < pos_count[ct]:
-                    samples.append((j, i, len(y)))
-                    y.append(0)
-                    neg_counter[ct] += 1
+                    if ct_df.loc[enhancer, feature] == 0 and neg_counter[ct] < pos_count[ct]:
+                        samples.append((j, i, len(y)))
+                        y.append(0)
+                        neg_counter[ct] += 1
         print(pos_count)
         print(neg_counter)
 

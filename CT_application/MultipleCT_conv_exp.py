@@ -41,7 +41,6 @@ if __name__ == '__main__':
     parser.add_argument('--cts', type=str, nargs='+', default=[], help='if empty, we take all available datasets')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
-    # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
@@ -70,6 +69,7 @@ if __name__ == '__main__':
         for ct_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
             ct_name = ct_file[0:-29]
             cell_names.append(ct_name)
+
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
@@ -85,38 +85,33 @@ if __name__ == '__main__':
     print(len(enhancers_list))
     print(cell_names)
 
+    for enhancer in enhancers_list:
+        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+
+    for ct in range(len(cell_names)):
+        cell_encodings.append([1 if j == ct else 0 for j in range(len(cell_names))])
+
     if not balanced:  # if we want to use all the samples, usually leads to unbalanced dataset
         print('Using whole dataset')
-        for ct in cell_names:
-            ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                             ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
-            ct_df = ct_df.loc[enhancers_list]
-            y.extend(list(ct_df.loc[:, feature]))
-
-        for enhancer in enhancers_list:
-            X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-
-        for ct in range(len(cell_names)):
-            cell_encodings.append([1 if j == ct else 0 for j in range(len(cell_names))])
+        samples = []
 
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type.
         # the third is the index of the target in the y vector.
 
-        samples = []
+        for ct_idx, ct in enumerate(cell_names):
+            ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
+                                             ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+            ct_df = ct_df.loc[enhancers_list]
+            y.extend(list(ct_df.loc[:, feature]))
 
-        for ct_idx in range(len(cell_names)):
             for enhancer_idx in range(len(enhancers_list)):
-                samples.append((enhancer_idx, ct_idx, ct_idx * len(enhancers_list) + enhancer_idx))
+                if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
+                    samples.append((enhancer_idx, ct_idx, ct_idx * len(enhancers_list) + enhancer_idx))
 
     else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
            # is the same, which gives us a balanced dataset
         print('Using a balanced dataset')
-        for enhancer in enhancers_list:
-           X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-
-        for ct in range(len(cell_names)):
-           cell_encodings.append([1 if j == ct else 0 for j in range(len(cell_names))])
 
         pos_count = {}
         neg_counter = {}
@@ -141,14 +136,15 @@ if __name__ == '__main__':
                     pos_count[ct] += 1
 
             for j, enhancer in enumerate(enhancers_list):
-                if ct_df.loc[enhancer, feature] == 1:
-                    samples.append((j, i, len(y)))
-                    y.append(1)
+                if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
+                    if ct_df.loc[enhancer, feature] == 1:
+                        samples.append((j, i, len(y)))
+                        y.append(1)
 
-                if ct_df.loc[enhancer, feature] == 0 and neg_counter[ct] < pos_count[ct]:
-                    samples.append((j, i, len(y)))
-                    y.append(0)
-                    neg_counter[ct] += 1
+                    if ct_df.loc[enhancer, feature] == 0 and neg_counter[ct] < pos_count[ct]:
+                        samples.append((j, i, len(y)))
+                        y.append(0)
+                        neg_counter[ct] += 1
         print(pos_count)
         print(neg_counter)
 
