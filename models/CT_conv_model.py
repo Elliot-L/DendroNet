@@ -23,7 +23,7 @@ class SimpleCTspecificConvNet(nn.Module):
         self.initial_channels = initial_channels
 
         # We take in an input of length L, with 4 channels (input shape is (n,4,L), where n is batch size)
-        self.convLayer1 = nn.Conv1d(self.initial_channels, self.num_of_kernels, self.kernel_size)
+        self.convLayer1 = nn.Conv1d(self.initial_channels, self.num_of_kernels, self.kernel_size, device=device)
         # we get an output of length L - k1 + 1, with m1 channels(number of kernels), output shape is (n,m,L - k + 1)
 
         # we perform max polling for each convolution
@@ -37,8 +37,8 @@ class SimpleCTspecificConvNet(nn.Module):
         fully connected part
         """
         self.fc1 = nn.Linear(self.num_of_kernels*(int((self.seq_length - self.kernel_size + 1)/self.polling_window)),
-                             32)
-        self.fc2 = nn.Linear(32, 1)
+                             32, device=device)
+        self.fc2 = nn.Linear(32, 1, device=device)
 
     def forward(self, x):
         p = False
@@ -88,7 +88,7 @@ class CTspecificConvNet(nn.Module):
         # we get an output of length L - k1 + 1, with m1 channels(number of kernels), output shape is (n,m1,L - k1 + 1)
 
         # we perform local max polling for each convolution
-        self.MaxPoolLayer1 = nn.MaxPool1d(self.polling_window[0], device=device)
+        self.MaxPoolLayer1 = nn.MaxPool1d(self.polling_window[0])
         # thus, output shape is (n, m1, (L - k1 + 1)/p1)
 
         # we perform a second convolutional operation
@@ -97,7 +97,7 @@ class CTspecificConvNet(nn.Module):
         # output here has shape (n, m2, ((L - k1 + 1)/p1) - k2 + 1)
 
         # we perform a second local max polling on the second convolution result
-        self.MaxPoolLayer2 = nn.MaxPool1d(self.polling_window[1], device=device)
+        self.MaxPoolLayer2 = nn.MaxPool1d(self.polling_window[1])
         # output here has shape (n, m2, (((L - k1 + 1)/p1) - k2 + 1)/p2)
 
         # we perform a final convolutional operation
@@ -106,11 +106,11 @@ class CTspecificConvNet(nn.Module):
         # output here has shape (n, m3, ((((L - k1 + 1)/p1) - k2 + 1)/p2) - k3 + 1)
 
         # we perform a global max pooling to
-        self.MaxPoolLayer3 = nn.MaxPool1d(self.polling_window[2], device=device)
+        self.MaxPoolLayer3 = nn.MaxPool1d(self.polling_window[2])
         # output has shape (n, m3, 1)
 
         # Flattening output of convolution to make it 2D
-        self.flatten = nn.Flatten(device=device)
+        self.flatten = nn.Flatten()
         # new shape is (n, m3)
 
         """
@@ -177,11 +177,11 @@ class MultiCTConvNet(nn.Module):
         # we get an output of length L - k + 1, with m channels (number of kernels) (output shape is (n,m , L - k + 1))
 
         # we perform max pooling for each convolution without overlap (stride is size of polling window)
-        self.globalMaxPool = nn.MaxPool1d(self.polling_window, device=device)
+        self.globalMaxPool = nn.MaxPool1d(self.polling_window)
         # thus, output shape is (n, m, (L - k + 1)/p)
 
         # Flattening output of convolution to make it 2D
-        self.flatten = nn.Flatten(device=device)
+        self.flatten = nn.Flatten()
         # new shape is (n, m((L - k + 1)/p))
 
         # fully connected part
@@ -217,14 +217,14 @@ class MultiCTConvNet(nn.Module):
         return torch.squeeze(x)
 
 class SeqConvModule(nn.Module):
-    def __init__(self, device, seq_lenght, kernel_sizes, num_of_kernels,
+    def __init__(self, device, seq_length, kernel_sizes, num_of_kernels,
                  polling_windows, input_channels):
         """
         by default, the last polling layer is a global polling
         """
         super().__init__()
         self.device = device
-        self.seq_length = seq_lenght
+        self.seq_length = seq_length
         self.kernel_sizes = kernel_sizes
         self.num_of_kernels = num_of_kernels
         self.num_of_layers = len(kernel_sizes)
@@ -243,7 +243,7 @@ class SeqConvModule(nn.Module):
             else:
                 conv_layer = nn.Conv1d(self.num_of_kernels[layer-1], self.num_of_kernels[layer],
                                        self.kernel_sizes[layer], device=device)
-            poll_layer = nn.MaxPool1d(self.polling_windows[layer], device=device)
+            poll_layer = nn.MaxPool1d(self.polling_windows[layer])
 
             self.conv_layer_list.append(conv_layer)
             self.polling_layer_list.append(poll_layer)
@@ -315,7 +315,7 @@ class FCModule(nn.Module):
         super().__init__()
         self.layer_sizes = layer_sizes
 
-        self.flatten = nn.Flatten(device=device)
+        self.flatten = nn.Flatten()
         self.linear_layers = nn.ModuleList()
 
         for layer in range(len(layer_sizes) - 1):
