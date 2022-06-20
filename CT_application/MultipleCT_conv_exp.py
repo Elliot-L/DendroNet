@@ -12,7 +12,7 @@ import torch.optim
 import torch.nn as nn
 
 # Local imports
-from models.CT_conv_model import MultiCTConvNet
+from models.CT_conv_model import SeqConvModule, FCModule, MultiCTConvNet
 from utils.model_utils import split_indices, IndicesDataset
 
 
@@ -262,8 +262,12 @@ if __name__ == '__main__':
 
     for seed in seeds:
 
-        Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(cell_names), seq_length=501,
-                                       kernel_size=26, number_of_kernels=64, polling_window=7)
+        # Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(cell_names), seq_length=501,
+        #                                 kernel_size=26, number_of_kernels=64, polling_window=7)
+
+        convolution = SeqConvModule(device=device, seq_lenght=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
+                                    polling_windows=(3, 4), input_channels=4)
+        fully_connected = FCModule(device=device, layer_sizes=(len(cell_encodings[0]) + 32, 32, 1))
 
         train_idx, test_idx = split_indices(samples, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=seed)
@@ -288,7 +292,8 @@ if __name__ == '__main__':
         loss_function = nn.BCELoss()
         if torch.cuda.is_available() and USE_CUDA:
             loss_function = loss_function.cuda()
-        optimizer = torch.optim.Adam(Multi_CT_conv.parameters(), lr=LR)
+        optimizer = torch.optim.Adam(list(convolution.parameters()) + list(fully_connected.parameters())
+                                     , lr=LR)
 
         best_val_auc = 0
         early_stop_count = 0
@@ -300,7 +305,9 @@ if __name__ == '__main__':
                 X_idx = idx_batch[0]
                 cell_idx = idx_batch[1]
                 y_idx = idx_batch[2]
-                y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                #y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
                 error_loss = loss_function(y_hat, y[y_idx])
                 error_loss.backward(retain_graph=True)
                 optimizer.step()
@@ -313,7 +320,9 @@ if __name__ == '__main__':
                     X_idx = idx_batch[0]
                     cell_idx = idx_batch[1]
                     y_idx = idx_batch[2]
-                    y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                    # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                    seq_features = convolution(X[X_idx])
+                    y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
                     train_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -331,7 +340,9 @@ if __name__ == '__main__':
                     X_idx = idx_batch[0]
                     cell_idx = idx_batch[1]
                     y_idx = idx_batch[2]
-                    y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                    # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                    seq_features = convolution(X[X_idx])
+                    y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
                     val_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -363,7 +374,9 @@ if __name__ == '__main__':
                 X_idx = idx_batch[0]
                 cell_idx = idx_batch[1]
                 y_idx = idx_batch[2]
-                y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
                 test_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_test_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))

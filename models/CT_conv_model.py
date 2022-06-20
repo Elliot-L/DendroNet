@@ -83,39 +83,42 @@ class CTspecificConvNet(nn.Module):
         # which is the length of the output for the second convolution)
 
         # We take in an input of length L, with 4 channels (input shape is (n,4,L), where n is batch size)
-        self.convLayer1 = nn.Conv1d(self.initial_channels, self.num_of_kernels[0], self.kernel_size[0])
+        self.convLayer1 = nn.Conv1d(self.initial_channels, self.num_of_kernels[0],
+                                    self.kernel_size[0], device=device)
         # we get an output of length L - k1 + 1, with m1 channels(number of kernels), output shape is (n,m1,L - k1 + 1)
 
         # we perform local max polling for each convolution
-        self.MaxPoolLayer1 = nn.MaxPool1d(self.polling_window[0])
+        self.MaxPoolLayer1 = nn.MaxPool1d(self.polling_window[0], device=device)
         # thus, output shape is (n, m1, (L - k1 + 1)/p1)
 
         # we perform a second convolutional operation
-        self.convLayer2 = nn.Conv1d(self.num_of_kernels[0], self.num_of_kernels[1], self.kernel_size[1])
+        self.convLayer2 = nn.Conv1d(self.num_of_kernels[0], self.num_of_kernels[1],
+                                    self.kernel_size[1], device=device)
         # output here has shape (n, m2, ((L - k1 + 1)/p1) - k2 + 1)
 
         # we perform a second local max polling on the second convolution result
-        self.MaxPoolLayer2 = nn.MaxPool1d(self.polling_window[1])
+        self.MaxPoolLayer2 = nn.MaxPool1d(self.polling_window[1], device=device)
         # output here has shape (n, m2, (((L - k1 + 1)/p1) - k2 + 1)/p2)
 
         # we perform a final convolutional operation
-        self.convLayer3 = nn.Conv1d(self.num_of_kernels[1], self.num_of_kernels[2], self.kernel_size[2])
+        self.convLayer3 = nn.Conv1d(self.num_of_kernels[1], self.num_of_kernels[2],
+                                    self.kernel_size[2], device=device)
         # output here has shape (n, m3, ((((L - k1 + 1)/p1) - k2 + 1)/p2) - k3 + 1)
 
         # we perform a global max pooling to
-        self.MaxPoolLayer3 = nn.MaxPool1d(self.polling_window[2])
+        self.MaxPoolLayer3 = nn.MaxPool1d(self.polling_window[2], device=device)
         # output has shape (n, m3, 1)
 
         # Flattening output of convolution to make it 2D
-        self.flatten = nn.Flatten()
+        self.flatten = nn.Flatten(device=device)
         # new shape is (n, m3)
 
         """
         fully connected part
         """
 
-        self.fc1 = nn.Linear(self.num_of_kernels[2], 32)
-        self.fc2 = nn.Linear(32, 1)
+        self.fc1 = nn.Linear(self.num_of_kernels[2], 32, device=device)
+        self.fc2 = nn.Linear(32, 1, device=device)
 
     def forward(self, x):
         p = False
@@ -162,30 +165,30 @@ class MultiCTConvNet(nn.Module):
         self.num_cell_types = num_cell_types
         self.seq_length = seq_length  # this is L that we see below
         self.kernel_size = kernel_size  # this is k that we see below
-        self.num_of_kernels = number_of_kernels # this is m
+        self.num_of_kernels = number_of_kernels  # this is m
         if polling_window == 0:
-            self.polling_window = self.seq_length - self.kernel_size + 1 # this is p
+            self.polling_window = self.seq_length - self.kernel_size + 1  # this is p
         else:
-            self.polling_window = polling_window # this is p
+            self.polling_window = polling_window  # this is p
 
 
         # We take in an input of length L, with 4 channels (input shape is (n,4, L), where n is batch size)
-        self.convLayer = nn.Conv1d(4, self.num_of_kernels, self.kernel_size)
+        self.convLayer = nn.Conv1d(4, self.num_of_kernels, self.kernel_size, device=device)
         # we get an output of length L - k + 1, with m channels (number of kernels) (output shape is (n,m , L - k + 1))
 
         # we perform max pooling for each convolution without overlap (stride is size of polling window)
-        self.globalMaxPool = nn.MaxPool1d(self.polling_window)
+        self.globalMaxPool = nn.MaxPool1d(self.polling_window, device=device)
         # thus, output shape is (n, m, (L - k + 1)/p)
 
         # Flattening output of convolution to make it 2D
-        self.flatten = nn.Flatten()
+        self.flatten = nn.Flatten(device=device)
         # new shape is (n, m((L - k + 1)/p))
 
         # fully connected part
         # We add the size of the cell type vector (one hot encoding, to the inputted feature vector)
         self.fc1 = nn.Linear(self.num_of_kernels*(int((self.seq_length - self.kernel_size + 1)/self.polling_window))
-                             + self.num_cell_types, 32)
-        self.fc2 = nn.Linear(32, 1)
+                             + self.num_cell_types, 32, device=device)
+        self.fc2 = nn.Linear(32, 1, device=device)
 
     def forward(self, x, cell_types):
         p = False
@@ -235,11 +238,12 @@ class SeqConvModule(nn.Module):
 
         for layer in range(self.num_of_layers):
             if layer == 0:
-                conv_layer = nn.Conv1d(self.input_channels, self.num_of_kernels[layer], self.kernel_sizes[layer])
+                conv_layer = nn.Conv1d(self.input_channels, self.num_of_kernels[layer],
+                                       self.kernel_sizes[layer], device=device)
             else:
                 conv_layer = nn.Conv1d(self.num_of_kernels[layer-1], self.num_of_kernels[layer],
-                                       self.kernel_sizes[layer])
-            poll_layer = nn.MaxPool1d(self.polling_windows[layer])
+                                       self.kernel_sizes[layer], device=device)
+            poll_layer = nn.MaxPool1d(self.polling_windows[layer], device=device)
 
             self.conv_layer_list.append(conv_layer)
             self.polling_layer_list.append(poll_layer)
@@ -311,11 +315,11 @@ class FCModule(nn.Module):
         super().__init__()
         self.layer_sizes = layer_sizes
 
-        self.flatten = nn.Flatten()
+        self.flatten = nn.Flatten(device=device)
         self.linear_layers = nn.ModuleList()
 
         for layer in range(len(layer_sizes) - 1):
-            lin_layer = self.fc1 = nn.Linear(layer_sizes[layer], layer_sizes[layer + 1])
+            lin_layer = self.fc1 = nn.Linear(layer_sizes[layer], layer_sizes[layer + 1], device=device)
             self.linear_layers.append(lin_layer)
 
     def forward(self, x):

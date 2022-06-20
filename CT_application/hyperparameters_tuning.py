@@ -27,7 +27,7 @@ if __name__ == '__main__':
     lr_list = args.LRs
     l1_list = args.L1s
     embedding_size = args.embedding_sizes
-    early_stop =args.early_stopping
+    early_stop = args.early_stopping
     epochs = args.num_epochs
     whole_dataset = args.whole_dataset
     force_train = args.force_train

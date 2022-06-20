@@ -13,7 +13,7 @@ import torch.optim
 import torch.nn as nn
 
 # Local imports
-from models.CT_conv_model import CTspecificConvNet, SimpleCTspecificConvNet
+from models.CT_conv_model import SeqConvModule, FCModule, CTspecificConvNet, SimpleCTspecificConvNet
 from utils.model_utils import split_indices, IndicesDataset
 
 
@@ -172,8 +172,14 @@ if __name__ == '__main__':
     for seed in seeds:
         # CT_specific_conv = SimpleCTspecificConvNet(cell_type='test', device=device, seq_length=501, kernel_size=16,
         #                                num_of_kernels=128, polling_window=0, initial_channels=4)
-        CT_specific_conv = CTspecificConvNet(device=device, cell_type=args.ct, seq_length=501,
-                                             kernel_size=(16, 3, 3), num_of_kernels=(64, 64, 32), polling_window=(3, 4))
+        # CT_specific_conv = CTspecificConvNet(device=device, cell_type=args.ct, seq_length=501,
+        #                                      kernel_size=(16, 3, 3), num_of_kernels=(64, 64, 32),
+        #                                      polling_window=(3, 4))
+
+        convolution = SeqConvModule(device=device, seq_lenght=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
+                                    polling_windows=(3, 4), input_channels=4)
+
+        fully_connected = FCModule(device=device, layer_sizes=(32, 32, 1))
 
         train_idx, test_idx = split_indices(range(len(X)), seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=seed)
@@ -197,7 +203,8 @@ if __name__ == '__main__':
         loss_function = nn.BCELoss()
         if torch.cuda.is_available() and USE_CUDA:
             loss_function = loss_function.cuda()
-        optimizer = torch.optim.Adam(CT_specific_conv.parameters(), lr=LR)
+        optimizer = torch.optim.Adam(list(convolution.parameters()) + list(fully_connected.parameters())
+                                     , lr=LR)
 
         best_val_auc = 0
         early_stop_count = 0
@@ -207,22 +214,21 @@ if __name__ == '__main__':
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
                 # print(y[idx_batch])
-                y_hat = CT_specific_conv(X[idx_batch])
-                # print(y_hat)
-                # error_loss = loss_function(y_hat, y[idx_batch])
+                # y_hat = CT_specific_conv(X[idx_batch])
+                seq_features = convolution(X[idx_batch])
+                y_hat = fully_connected(seq_features)
                 error_loss = loss_function(y_hat, y[idx_batch])
-                #print("error loss on batch: " + str(float(error_loss)))
                 error_loss.backward(retain_graph=True)
                 optimizer.step()
-                # print(CT_specific_conv.convLayer.weight)
-                # print(torch.max(CT_specific_conv.convLayer.weight.grad))
             with torch.no_grad():
                 print("Test performance on train set for epoch " + str(epoch))
                 all_train_targets = []
                 all_train_predictions = []
                 train_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(train_batch_gen)):
-                    y_hat = CT_specific_conv(X[idx_batch])
+                    # y_hat = CT_specific_conv(X[idx_batch])
+                    seq_features = convolution(X[idx_batch])
+                    y_hat = fully_connected(seq_features)
                     train_error_loss += float(loss_function(y_hat, y[idx_batch]))
                     all_train_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
                     all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -237,7 +243,9 @@ if __name__ == '__main__':
                 all_val_predictions = []
                 val_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(val_batch_gen)):
-                    y_hat = CT_specific_conv(X[idx_batch])
+                    # y_hat = CT_specific_conv(X[idx_batch])
+                    seq_features = convolution(X[idx_batch])
+                    y_hat = fully_connected(seq_features)
                     val_error_loss += float(loss_function(y_hat, y[idx_batch]))
                     all_val_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
                     all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -266,7 +274,9 @@ if __name__ == '__main__':
             all_test_predictions = []
             test_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(test_batch_gen)):
-                y_hat = CT_specific_conv(X[idx_batch])
+                # y_hat = CT_specific_conv(X[idx_batch])
+                seq_features = convolution(X[idx_batch])
+                y_hat = fully_connected(seq_features)
                 test_error_loss += float(loss_function(y_hat, y[idx_batch]))
                 all_test_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
                 all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
