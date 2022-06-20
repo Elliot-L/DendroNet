@@ -37,7 +37,9 @@ if __name__ == '__main__':
     parser.add_argument('--ct', type=str, default='testis')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
-    parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
+    # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
+    parser.add_argument('--GPU', default=True, action='store_true')
+    parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
@@ -46,9 +48,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    print(args.USE_CUDA)
     LR = args.LR
-    USE_CUDA = args.USE_CUDA
+    USE_CUDA = args.GPU
     BATCH_SIZE = args.BATCH_SIZE
     whole_dataset = args.whole_dataset
     feature = args.feature

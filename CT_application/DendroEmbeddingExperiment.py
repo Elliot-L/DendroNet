@@ -37,7 +37,9 @@ if __name__ == '__main__':
     parser.add_argument('--LR', type=float, default=0.001)
     parser.add_argument('--DPF', type=float, default=0.01)
     parser.add_argument('--L1', type=float, default=0.01)
-    parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
+    # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
+    parser.add_argument('--GPU', default=True, action='store_true')
+    parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
     parser.add_argument('--embedding-size', type=int, default=10)
@@ -52,7 +54,7 @@ if __name__ == '__main__':
     DPF = args.DPF
     L1 = args.L1
     BATCH_SIZE = args.BATCH_SIZE
-    USE_CUDA = args.USE_CUDA
+    USE_CUDA = args.GPU
     whole_dataset = args.whole_dataset
     embedding_size = args.embedding_size
     seeds = args.seeds

@@ -11,7 +11,9 @@ if __name__ == '__main__':
     parser.add_argument('--DPFs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
     parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[10])  # [3, 5, 10])
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 2, 3, 4, 5])
-    parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
+    # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
+    parser.add_argument('--GPU', default=True, action='store_true')
+    parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
     parser.add_argument('--force-train', type=bool, default=False, choices=[True, False],
@@ -33,7 +35,7 @@ if __name__ == '__main__':
     whole_dataset = args.whole_dataset
     force_train = args.force_train
     models_to_train = args.models_to_train
-    USE_CUDA =args.USE_CUDA
+    USE_CUDA =args.GPU
     single_tissues = args.single_tissues
 
     if not single_tissues:

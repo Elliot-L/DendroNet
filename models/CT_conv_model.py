@@ -329,6 +329,7 @@ class FCModule(nn.Module):
         x = self.flatten(x)
         if p:
             print(x.size())
+        print(x.device)
 
         for layer in range(len(self.linear_layers) - 1):
             x = func.relu(self.linear_layers[layer](x))
