@@ -392,7 +392,7 @@ if __name__ == '__main__':
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
 
-    dir_path = os.path.join('results', 'multi_tissue_experiments')
+    dir_path = os.path.join('results', 'multi_tissues_experiments')
     os.makedirs(dir_path, exist_ok=True)
     if whole_dataset:
         filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced.json'

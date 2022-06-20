@@ -324,7 +324,7 @@ class FCModule(nn.Module):
 
     def forward(self, x):
         #print('Fully connected component:')
-        # x = x.type(torch.FloatTensor)
+        x = x.type(torch.cuda.FloatTensor)
         p = False
         x = self.flatten(x)
         if p:
