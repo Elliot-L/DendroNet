@@ -41,7 +41,9 @@ if __name__ == '__main__':
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
-    parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    # parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    parser.add_argument('--balanced', default=True, action='store_true')
+    parser.add_argument('--unbalanced', dest='balanced', action='store_false')
     parser.add_argument('--embedding-size', type=int, default=10)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
@@ -55,7 +57,7 @@ if __name__ == '__main__':
     L1 = args.L1
     BATCH_SIZE = args.BATCH_SIZE
     USE_CUDA = args.GPU
-    whole_dataset = args.whole_dataset
+    balanced = args.balanced
     embedding_size = args.embedding_size
     seeds = args.seeds
     early_stop = args.early_stopping
@@ -93,7 +95,7 @@ if __name__ == '__main__':
     delta_mat = np.zeros(shape=(embedding_size, num_edges))
     root_vector = np.zeros(shape=embedding_size)
 
-    if whole_dataset:  # if we want to use all the samples, usually leads to heavily unbalanced dataset
+    if not balanced:  # if we want to use all the samples, usually leads to heavily unbalanced dataset
         print('Using whole dataset')
         for enhancer in enhancers_list:
             X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
@@ -159,6 +161,14 @@ if __name__ == '__main__':
     print(len(X))
     print(len(y))
 
+    X = torch.tensor(X, dtype=torch.float, device=device)
+    X = X.permute(0, 2, 1)
+    y = torch.tensor(y, dtype=torch.float, device=device)
+
+    params = {'batch_size': BATCH_SIZE,
+              'shuffle': True,
+              'num_workers': 0}
+
     output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
 
     for seed in seeds:
@@ -178,17 +188,9 @@ if __name__ == '__main__':
         test_set = IndicesDataset(test_idx)
         val_set = IndicesDataset(test_idx)
 
-        params = {'batch_size': BATCH_SIZE,
-                  'shuffle': True,
-                  'num_workers': 0}
-
         train_batch_gen = DataLoader(train_set, **params)
         test_batch_gen = DataLoader(test_set, **params)
         val_batch_gen = DataLoader(val_set, **params)
-
-        X = torch.tensor(X, dtype=torch.float, device=device)
-        X = X.permute(0, 2, 1)
-        y = torch.tensor(y, dtype=torch.float, device=device)
 
         loss_function = nn.BCELoss()
         if torch.cuda.is_available() and USE_CUDA:
@@ -307,7 +309,7 @@ if __name__ == '__main__':
 
     dir_path = os.path.join('results', 'dendronet_embedding_experiments')
     os.makedirs(dir_path, exist_ok=True)
-    if whole_dataset:
+    if not balanced:
         filename = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
                    + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced.json'
     else:

@@ -14,7 +14,9 @@ if __name__ == '__main__':
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
-    parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    # parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    parser.add_argument('--balanced', default=True, action='store_true')
+    parser.add_argument('--unbalanced', dest='balanced', action='store_false')
     parser.add_argument('--force-train', type=bool, default=False, choices=[True, False],
                         help='train even if result file exists')
     parser.add_argument('--num-epochs', type=int, default=5)
@@ -31,7 +33,7 @@ if __name__ == '__main__':
     embedding_size = args.embedding_sizes
     early_stop = args.early_stopping
     epochs = args.num_epochs
-    whole_dataset = args.whole_dataset
+    balanced = args.balanced
     force_train = args.force_train
     models_to_train = args.models_to_train
     USE_CUDA =args.GPU
@@ -47,10 +49,10 @@ if __name__ == '__main__':
         seeds_str += ' '
         seeds_str += str(s)
 
-    if whole_dataset:
-        type_data = '_unbalanced'
-    else:
+    if balanced:
         type_data = '_balanced'
+    else:
+        type_data = '_unbalanced'
 
     if 's' in models_to_train:
         print('Baseline 1: Tissue Specific models')
@@ -69,7 +71,16 @@ if __name__ == '__main__':
                                   + ' --early-stopping ' + str(early_stop) \
                                   + ' --num-epochs ' + str(epochs) \
                                   + ' --seeds' + seeds_str \
-                                  + ' --whole-dataset ' + str(whole_dataset) \
+
+                        if USE_CUDA:
+                            command += ' --GPU'
+                        else:
+                            command += ' --CPU'
+
+                        if balanced:
+                            command += ' --balanced'
+                        else:
+                            command += ' --unbalanced'
 
                         os.system(command)
 
@@ -86,7 +97,16 @@ if __name__ == '__main__':
                           + ' --early-stopping ' + str(early_stop) \
                           + ' --num-epochs ' + str(epochs) \
                           + ' --seeds' + seeds_str \
-                          + ' --whole-dataset ' + str(whole_dataset) \
+
+                if USE_CUDA:
+                    command += ' --GPU'
+                else:
+                    command += ' --CPU'
+
+                if balanced:
+                    command += ' --balanced'
+                else:
+                    command += ' --unbalanced'
 
                 os.system(command)
 
@@ -109,8 +129,18 @@ if __name__ == '__main__':
                                       + ' --embedding-size ' + str(emb_size) \
                                       + ' --early-stopping ' + str(early_stop) \
                                       + ' --num-epochs ' + str(epochs) \
-                                      + ' --seeds' + seeds_str \
-                                      + ' --whole-dataset ' + str(whole_dataset) \
+                                      + ' --seeds' + seeds_str
+
+                            if USE_CUDA:
+                                command += ' --GPU'
+                            else:
+                                command += ' --CPU'
+
+                            if balanced:
+                                command += ' --balanced'
+                            else:
+                                command += ' --unbalanced'
+
 
                             os.system(command)
 

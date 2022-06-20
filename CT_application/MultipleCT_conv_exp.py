@@ -45,7 +45,9 @@ if __name__ == '__main__':
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
-    parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    # parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    parser.add_argument('--balanced', default=True, action='store_true')
+    parser.add_argument('--unbalanced', dest='balanced', action='store_false')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
@@ -56,7 +58,7 @@ if __name__ == '__main__':
     LR = args.LR
     BATCH_SIZE = args.BATCH_SIZE
     USE_CUDA = args.GPU
-    whole_dataset = args.whole_dataset
+    balanced = args.balanced
     cell_names = args.cts
     seeds = args.seeds
     early_stop = args.early_stopping
@@ -83,7 +85,7 @@ if __name__ == '__main__':
     print(len(enhancers_list))
     print(cell_names)
 
-    if whole_dataset:  # if we want to use all the samples, usually leads to unbalanced dataset
+    if not balanced:  # if we want to use all the samples, usually leads to unbalanced dataset
         print('Using whole dataset')
         for ct in cell_names:
             ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
@@ -260,6 +262,15 @@ if __name__ == '__main__':
         if y[i] == 0 and cell_encodings[i] == [0, 0, 0, 0, 1]:
             X[i] = X[i][0:76] + motif10 + X[i][96:501]
     """
+    X = torch.tensor(X, dtype=torch.float, device=device)
+    X = X.permute(0, 2, 1)
+    y = torch.tensor(y, dtype=torch.float, device=device)
+    cell_encodings = torch.tensor(cell_encodings, dtype=torch.float, device=device)
+
+    params = {'batch_size': BATCH_SIZE,
+              'shuffle': True,
+              'num_workers': 0}
+
     output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'tissues_used': cell_names}
 
     for seed in seeds:
@@ -278,18 +289,9 @@ if __name__ == '__main__':
         test_set = IndicesDataset(test_idx)
         val_set = IndicesDataset(val_idx)
 
-        params = {'batch_size': BATCH_SIZE,
-                  'shuffle': True,
-                  'num_workers': 0}
-
         train_batch_gen = DataLoader(train_set, **params)
         test_batch_gen = DataLoader(test_set, **params)
         val_batch_gen = DataLoader(val_set, **params)
-
-        X = torch.tensor(X, dtype=torch.float, device=device)
-        X = X.permute(0, 2, 1)
-        y = torch.tensor(y, dtype=torch.float, device=device)
-        cell_encodings = torch.tensor(cell_encodings, dtype=torch.float, device=device)
 
         loss_function = nn.BCELoss()
         if torch.cuda.is_available() and USE_CUDA:
@@ -394,7 +396,7 @@ if __name__ == '__main__':
 
     dir_path = os.path.join('results', 'multi_tissues_experiments')
     os.makedirs(dir_path, exist_ok=True)
-    if whole_dataset:
+    if not balanced:
         filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced.json'
     else:
         filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced.json'

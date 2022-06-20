@@ -37,11 +37,12 @@ if __name__ == '__main__':
     parser.add_argument('--ct', type=str, default='testis')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
-    # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
-    parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    # parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    parser.add_argument('--balanced', default=True, action='store_true')
+    parser.add_argument('--unbalanced', dest='balanced', action='store_false')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
@@ -51,7 +52,7 @@ if __name__ == '__main__':
     LR = args.LR
     USE_CUDA = args.GPU
     BATCH_SIZE = args.BATCH_SIZE
-    whole_dataset = args.whole_dataset
+    balanced = args.balanced
     feature = args.feature
     seeds = args.seeds
     early_stop = args.early_stopping
@@ -70,7 +71,6 @@ if __name__ == '__main__':
 
     samples_df.set_index('cCRE_id', inplace=True)
     samples_df = samples_df.loc[enhancer_list]
-    print(samples_df)
 
     y = []
     X = []
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         if samples_df.loc[enhancer, feature] == 1:
             pos_count += 1
 
-    if whole_dataset:
+    if not balanced:
         for enhancer in enhancer_list:
             if samples_df.loc[enhancer, feature] == 0:
                 y.append(0)
@@ -171,6 +171,14 @@ if __name__ == '__main__':
 
     output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
 
+    X = torch.tensor(X, dtype=torch.float, device=device)
+    X = X.permute(0, 2, 1)
+    y = torch.tensor(y, dtype=torch.float, device=device)
+
+    params = {'batch_size': BATCH_SIZE,
+              'shuffle': True,
+              'num_workers': 0}
+
     for seed in seeds:
         # CT_specific_conv = SimpleCTspecificConvNet(cell_type='test', device=device, seq_length=501, kernel_size=16,
         #                                num_of_kernels=128, polling_window=0, initial_channels=4)
@@ -190,17 +198,9 @@ if __name__ == '__main__':
         test_set = IndicesDataset(test_idx)
         val_set = IndicesDataset(val_idx)
 
-        params = {'batch_size': BATCH_SIZE,
-                  'shuffle': True,
-                  'num_workers': 0}
-
         train_batch_gen = DataLoader(train_set, **params)
         test_batch_gen = DataLoader(test_set, **params)
         val_batch_gen = DataLoader(val_set, **params)
-
-        X = torch.tensor(X, dtype=torch.float, device=device)
-        X = X.permute(0, 2, 1)
-        y = torch.tensor(y, dtype=torch.float, device=device)
 
         loss_function = nn.BCELoss()
         if torch.cuda.is_available() and USE_CUDA:
@@ -294,7 +294,7 @@ if __name__ == '__main__':
 
     dir_path = os.path.join('results', 'single_tissue_experiments', args.ct)
     os.makedirs(dir_path, exist_ok=True)
-    if whole_dataset:
+    if not balanced:
         filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced.json'
     else:
         filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced.json'
