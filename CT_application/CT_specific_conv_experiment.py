@@ -37,15 +37,16 @@ if __name__ == '__main__':
     parser.add_argument('--ct', type=str, default='testis')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
-    parser.add_argument('--USE-CUDA', type=bool, default=True)
+    parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
-    parser.add_argument('--whole-dataset', type=bool, default=False)
+    parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
 
     args = parser.parse_args()
 
+    print(args.USE_CUDA)
     LR = args.LR
     USE_CUDA = args.USE_CUDA
     BATCH_SIZE = args.BATCH_SIZE

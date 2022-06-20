@@ -11,10 +11,11 @@ if __name__ == '__main__':
     parser.add_argument('--DPFs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
     parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[10])  # [3, 5, 10])
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 2, 3, 4, 5])
-    parser.add_argument('--USE-CUDA', type=bool, default=True)
+    parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
-    parser.add_argument('--whole-dataset', type=bool, default=False)
-    parser.add_argument('--force-train', type=bool, default=False, help='train even if result file exists')
+    parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
+    parser.add_argument('--force-train', type=bool, default=False, choices=[True, False],
+                        help='train even if result file exists')
     parser.add_argument('--num-epochs', type=int, default=5)
     parser.add_argument('--models-to-train', type=str, default='smd', help='s: single, m:multiple, d:dendronet')
     parser.add_argument('--early-stopping', type=int, default=3, help='number of epoches after which, if no'
