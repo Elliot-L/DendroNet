@@ -11,7 +11,6 @@ if __name__ == '__main__':
     parser.add_argument('--DPFs', type=float, nargs='+', default=[0.001])  # [0.1, 0.01, 0.001])
     parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[10])  # [3, 5, 10])
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 2, 3, 4, 5])
-    # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
@@ -71,7 +70,6 @@ if __name__ == '__main__':
                                   + ' --num-epochs ' + str(epochs) \
                                   + ' --seeds' + seeds_str \
                                   + ' --whole-dataset ' + str(whole_dataset) \
-                                  + ' --USE-CUDA ' + str(USE_CUDA)
 
                         os.system(command)
 
@@ -89,7 +87,6 @@ if __name__ == '__main__':
                           + ' --num-epochs ' + str(epochs) \
                           + ' --seeds' + seeds_str \
                           + ' --whole-dataset ' + str(whole_dataset) \
-                          + ' --USE-CUDA ' + str(USE_CUDA)
 
                 os.system(command)
 
@@ -114,7 +111,6 @@ if __name__ == '__main__':
                                       + ' --num-epochs ' + str(epochs) \
                                       + ' --seeds' + seeds_str \
                                       + ' --whole-dataset ' + str(whole_dataset) \
-                                      + ' --USE-CUDA ' + str(USE_CUDA)
 
                             os.system(command)
 
