@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
         dendronet = DendronetModule(device=device, root_weights=root_vector, delta_mat=delta_mat, path_mat=parent_path_mat)
 
-        convolution = SeqConvModule(device=device, seq_lenght=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
+        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
 
         fully_connected = FCModule(device=device, layer_sizes=(embedding_size + 32, 32, 1))
