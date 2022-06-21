@@ -41,7 +41,8 @@ if __name__ == '__main__':
             single_tissue_data['average_test_AUC'].append(average_test_auc / len(auc_dict['test_auc']))
 
     single_tissues_df = pd.DataFrame(single_tissue_data)
-    print(single_tissues_df)
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+        print(single_tissues_df)
 
     print('Multi Tissue Experiments:')
     for exp_name in os.listdir(os.path.join('results', 'multi_tissues_experiments')):
@@ -69,7 +70,8 @@ if __name__ == '__main__':
         multi_tissues_data['average_test_AUC'].append(average_test_auc / len(auc_dict['test_auc']))
 
     multi_tissues_df = pd.DataFrame(multi_tissues_data)
-    print(multi_tissues_df)
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+        print(multi_tissues_df)
 
     print('Dendronet Embeddings experiments:')
     for exp_name in os.listdir(os.path.join('results', 'dendronet_embedding_experiments')):
@@ -100,4 +102,5 @@ if __name__ == '__main__':
         dendro_data['average_test_AUC'].append(average_test_auc / len(auc_dict['test_auc']))
 
     dendro_df = pd.DataFrame(dendro_data)
-    print(dendro_df)
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+        print(dendro_df)

@@ -95,10 +95,11 @@ if __name__ == '__main__':
     delta_mat = np.zeros(shape=(embedding_size, num_edges))
     root_vector = np.zeros(shape=embedding_size)
 
+    for enhancer in enhancers_list:
+        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+
     if not balanced:  # if we want to use all the samples, usually leads to heavily unbalanced dataset
         print('Using whole dataset')
-        for enhancer in enhancers_list:
-            X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type in the
@@ -120,9 +121,6 @@ if __name__ == '__main__':
     else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
            # is the same, which gives us a balanced dataset
         print('Using a balanced dataset')
-
-        for enhancer in enhancers_list:
-            X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
         pos_count = {}
         neg_counter = {}
@@ -150,11 +148,11 @@ if __name__ == '__main__':
             for j, enhancer in enumerate(enhancers_list):
                 if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
                     if ct_df.loc[enhancer, feature] == 1:
-                        samples.append((j, i, len(y)))
+                        samples.append((j, i + num_internal_nodes, len(y)))
                         y.append(1)
 
                     if ct_df.loc[enhancer, feature] == 0 and neg_counter[ct] < pos_count[ct]:
-                        samples.append((j, i, len(y)))
+                        samples.append((j, i + num_internal_nodes, len(y)))
                         y.append(0)
                         neg_counter[ct] += 1
         print(pos_count)
@@ -176,7 +174,8 @@ if __name__ == '__main__':
     for seed in seeds:
         # The three subparts of the model:
 
-        dendronet = DendronetModule(device=device, root_weights=root_vector, delta_mat=delta_mat, path_mat=parent_path_mat)
+        dendronet = DendronetModule(device=device, root_weights=root_vector, delta_mat=delta_mat,
+                                    path_mat=parent_path_mat)
 
         convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
@@ -279,8 +278,52 @@ if __name__ == '__main__':
                     print('Early Stopping!')
                     break
 
+        # dendronet =
+        # convolution =
+        # fully_connected =
+
         with torch.no_grad():
-            print("Test performance on test set for epoch " + str(epoch))
+            print("Test performance on train set on best model: ")
+            all_train_targets = []
+            all_train_predictions = []
+            train_error_loss = 0.0
+            for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                X_idx = idx_batch[0]
+                cell_idx = idx_batch[1]
+                y_idx = idx_batch[2]
+                seq_features = convolution(X[X_idx])
+                cell_embeddings = dendronet(cell_idx)
+                y_hat = fully_connected(torch.cat((seq_features, cell_embeddings), 1))
+                train_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
+                all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+            print("average error loss on train set : " + str(float(train_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
+            train_roc_auc = auc(fpr, tpr)
+            print('ROC AUC on train set : ' + str(train_roc_auc))
+
+            print("Test performance on validation set on best model:")
+            all_val_targets = []
+            all_val_predictions = []
+            val_error_loss = 0.0
+            for step, idx_batch in enumerate(tqdm(val_batch_gen)):
+                X_idx = idx_batch[0]
+                cell_idx = idx_batch[1]
+                y_idx = idx_batch[2]
+                seq_features = convolution(X[X_idx])
+                cell_embeddings = dendronet(cell_idx)
+                y_hat = fully_connected(torch.cat((seq_features, cell_embeddings), 1))
+                val_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
+                all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+            print("average error loss on validation set : " + str(float(val_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
+            val_roc_auc = auc(fpr, tpr)
+            print('ROC AUC on validation set : ' + str(val_roc_auc))
+
+            print("Test performance on test set on best model:")
             all_test_targets = []
             all_test_predictions = []
             test_error_loss = 0.0
