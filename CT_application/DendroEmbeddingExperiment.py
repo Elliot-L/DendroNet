@@ -300,9 +300,9 @@ if __name__ == '__main__':
             test_roc_auc = auc(fpr, tpr)
             print('ROC AUC on test set : ' + str(test_roc_auc))
 
-        output['train'].append(train_roc_auc)
-        output['val'].append(val_roc_auc)
-        output['test'].append(test_roc_auc)
+        output['train_auc'].append(train_roc_auc)
+        output['val_auc'].append(val_roc_auc)
+        output['test_auc'].append(test_roc_auc)
 
         print('All tissus encodings:')
         for i, tissue in enumerate(cell_names):
