@@ -9,8 +9,8 @@ if __name__ == '__main__':
                           'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': []}
     multi_tissues_data = {'feature': [], 'LR': [], 'early_stop': [], 'type_data': [],
                           'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': []}
-    dendro_data = {'LR': [], 'L1': [], 'DPF': [], 'embedding_size': [], 'early_stop': [], 'type_data': [],
-                   'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': []}
+    dendro_data = {'feature': [], 'LR': [], 'L1': [], 'DPF': [], 'embedding_size': [], 'early_stop': [],
+                   'type_data': [], 'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': []}
 
     print('Single tissue experiments:')
     for tissue_dir in os.listdir(os.path.join('results', 'single_tissue_experiments')):
