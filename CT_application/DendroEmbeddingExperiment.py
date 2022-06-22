@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import json
 from sklearn.metrics import roc_curve, auc
+import copy
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -170,6 +171,7 @@ if __name__ == '__main__':
               'num_workers': 0}
 
     output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
+    embeddings_output = {}
 
     for seed in seeds:
         # The three subparts of the model:
@@ -269,6 +271,10 @@ if __name__ == '__main__':
                     best_val_auc = val_roc_auc
                     print('New best AUC on validation set: ' + str(best_val_auc))
                     early_stop_count = 0
+                    best_convolution_state = copy.deepcopy(convolution.state_dict())
+                    best_fc_state = copy.deepcopy(fully_connected.state_dict())
+                    best_root_state = dendronet.root_weights.clone().detach().cpu()
+                    best_delta_state = dendronet.delta_mat.clone().detach().cpu()
                 else:
                     early_stop_count += 1
                     print('The performance hasn\'t improved for ' + str(early_stop_count) + ' epoches')
@@ -278,11 +284,14 @@ if __name__ == '__main__':
                     print('Early Stopping!')
                     break
 
-        # dendronet =
-        # convolution =
-        # fully_connected =
-
         with torch.no_grad():
+            # After training completed, we retrieve the model's components that led to the best performance on the
+            # validation set
+            dendronet = DendronetModule(device, best_root_state, parent_path_mat, best_delta_state,
+                                        init_root=False, init_deltas=False)
+            convolution.load_state_dict(best_convolution_state)
+            fully_connected.load_state_dict(best_fc_state)
+
             print("Test performance on train set on best model: ")
             all_train_targets = []
             all_train_predictions = []
@@ -347,19 +356,27 @@ if __name__ == '__main__':
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
 
-        print('All tissus encodings:')
-        for i, tissue in enumerate(cell_names):
-            print(tissue)
-            print(dendronet.get_embedding([i]))
-
-    dir_path = os.path.join('results', 'dendronet_embedding_experiments')
-    os.makedirs(dir_path, exist_ok=True)
     if not balanced:
-        filename = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
-                   + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced.json'
+        dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced'
     else:
-        filename = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
-                   + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced.json'
+        dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced'
 
-    with open(os.path.join(dir_path, filename), 'w') as outfile:
+    dir_path = os.path.join('results', 'dendronet_embedding_experiments', dir_name)
+    os.makedirs(dir_path, exist_ok=True)
+
+    with open(os.path.join(dir_path, 'auc_results.json'), 'w') as outfile:
         json.dump(output, outfile)
+
+    torch.save({'convolution': convolution.state_dict(),
+                'fully_connected': fully_connected.state_dict(),
+                'dendronet_delta_mat': dendronet.delta_mat.clone().detach().cpu(),
+                'dendronet_root': dendronet.root_weights.clone().detach().cpu()},
+               os.path.join(dir_path, 'model.pt'))
+
+    for i, tissue in enumerate(cell_names):
+        embeddings_output[tissue] = list(dendronet.get_embedding([i]))
+
+    with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
+        json.dump(embeddings_output, outfile)

@@ -5,7 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import json
 from sklearn.metrics import roc_curve, auc
-
+import copy
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -263,6 +263,8 @@ if __name__ == '__main__':
                     best_val_auc = val_roc_auc
                     print('New best AUC on validation set: ' + str(best_val_auc))
                     early_stop_count = 0
+                    best_convolution_state = copy.deepcopy(convolution.state_dict())
+                    best_fc_state = copy.deepcopy(fully_connected.state_dict())
                 else:
                     early_stop_count += 1
                     print('The performance hasn\'t improved for ' + str(early_stop_count) + ' epoches')
@@ -273,6 +275,40 @@ if __name__ == '__main__':
                     break
 
         with torch.no_grad():
+            print("Test performance on train set on best model:")
+            all_train_targets = []
+            all_train_predictions = []
+            train_error_loss = 0.0
+            for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                # y_hat = CT_specific_conv(X[idx_batch])
+                seq_features = convolution(X[idx_batch])
+                y_hat = fully_connected(seq_features)
+                train_error_loss += float(loss_function(y_hat, y[idx_batch]))
+                all_train_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+            print("average error loss on train set : " + str(float(train_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
+            train_roc_auc = auc(fpr, tpr)
+            print('ROC AUC on train set : ' + str(train_roc_auc))
+
+            print("Test performance on val set for epoch on best model")
+            all_val_targets = []
+            all_val_predictions = []
+            val_error_loss = 0.0
+            for step, idx_batch in enumerate(tqdm(val_batch_gen)):
+                # y_hat = CT_specific_conv(X[idx_batch])
+                seq_features = convolution(X[idx_batch])
+                y_hat = fully_connected(seq_features)
+                val_error_loss += float(loss_function(y_hat, y[idx_batch]))
+                all_val_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+            print("average error loss on val set : " + str(float(val_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
+            val_roc_auc = auc(fpr, tpr)
+            print('ROC AUC on validation set : ' + str(val_roc_auc))
+
             print("Test performance on test set on the trained model")
             all_test_targets = []
             all_test_predictions = []
@@ -294,13 +330,18 @@ if __name__ == '__main__':
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
 
-    dir_path = os.path.join('results', 'single_tissue_experiments', args.ct)
-    os.makedirs(dir_path, exist_ok=True)
     if not balanced:
-        filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced.json'
+        dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced'
     else:
-        filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced.json'
+        dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced'
 
-    with open(os.path.join(dir_path, filename), 'w') as outfile:
+    dir_path = os.path.join('results', 'single_tissue_experiments', args.ct, dir_name)
+    os.makedirs(dir_path, exist_ok=True)
+
+    with open(os.path.join(dir_path, 'auc_output.json'), 'w') as outfile:
         json.dump(output, outfile)
+
+    torch.save({'convolution': convolution.state_dict(),
+                'fully_connected': fully_connected.state_dict()},
+               os.path.join(dir_path, 'model.pt'))
 

@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import json
 from sklearn.metrics import roc_curve, auc
+import copy
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -356,6 +357,8 @@ if __name__ == '__main__':
                     best_val_auc = val_roc_auc
                     print('New best AUC on validation set: ' + str(best_val_auc))
                     early_stop_count = 0
+                    best_convolution_state = copy.deepcopy(convolution.state_dict())
+                    best_fc_state = copy.deepcopy(fully_connected.state_dict())
                 else:
                     early_stop_count += 1
                     print('The performance hasn\'t improved for ' + str(early_stop_count) + ' epoches')
@@ -366,7 +369,52 @@ if __name__ == '__main__':
                     break
 
         with torch.no_grad():
-            print("Test performance on test set for epoch " + str(epoch))
+            # After training completed, we retrieve the model's components that led to the best performance on the
+            # validation set
+            convolution.load_state_dict(best_convolution_state)
+            fully_connected.load_state_dict(best_fc_state)
+
+            print("Test performance on train set on best model")
+            train_error_loss = 0.0
+            all_train_targets = []
+            all_train_predictions = []
+            for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                X_idx = idx_batch[0]
+                cell_idx = idx_batch[1]
+                y_idx = idx_batch[2]
+                # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                train_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
+                all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+            print("average error loss on train set : " + str(float(train_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
+            train_roc_auc = auc(fpr, tpr)
+            print('ROC AUC on train set : ' + str(train_roc_auc))
+
+            print("Test performance on validation set on best model:")
+            val_error_loss = 0.0
+            all_val_targets = []
+            all_val_predictions = []
+            for step, idx_batch in enumerate(tqdm(val_batch_gen)):
+                X_idx = idx_batch[0]
+                cell_idx = idx_batch[1]
+                y_idx = idx_batch[2]
+                # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                val_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
+                all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+            print("average error loss on validation set : " + str(float(val_error_loss) / (step + 1)))
+            fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
+            val_roc_auc = auc(fpr, tpr)
+            print('ROC AUC on validation set : ' + str(val_roc_auc))
+
+            print("Test performance on test set on best model")
             test_error_loss = 0.0
             all_test_targets = []
             all_test_predictions = []
@@ -390,12 +438,23 @@ if __name__ == '__main__':
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
 
-    dir_path = os.path.join('results', 'multi_tissues_experiments')
-    os.makedirs(dir_path, exist_ok=True)
     if not balanced:
-        filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced.json'
+        dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced'
     else:
-        filename = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced.json'
+        dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced'
+    dir_path = os.path.join('results', 'multi_tissues_experiments', dir_name)
+    os.makedirs(dir_path, exist_ok=True)
 
-    with open(os.path.join(dir_path, filename), 'w') as outfile:
+    with open(os.path.join(dir_path, 'auc_results.json'), 'w') as outfile:
         json.dump(output, outfile)
+
+    torch.save({'convolution': convolution.state_dict(),
+                'fully_connected': fully_connected.state_dict()},
+               os.path.join(dir_path, 'model.pt'))
+
+    encodings_output = {}
+    for tissue, encoding in zip(cell_names, cell_encodings):
+        encodings_output[tissue] = list(cell_encodings)
+
+    with open(os.path.join(dir_path, 'encoding.json'), 'w') as outfile:
+        json.dump(encodings_output, outfile)
