@@ -86,6 +86,14 @@ if __name__ == '__main__':
     print(len(enhancers_list))
     print(cell_names)
 
+    tissue_dfs = {}
+
+    for ct_idx, ct in enumerate(cell_names):
+        ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
+                                         ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+        ct_df = ct_df.loc[enhancers_list]
+        tissue_dfs[ct] = ct_df
+
     for enhancer in enhancers_list:
         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
@@ -94,65 +102,63 @@ if __name__ == '__main__':
 
     if not balanced:  # if we want to use all the samples, usually leads to unbalanced dataset
         print('Using whole dataset')
-        samples = []
+
+        for ct in cell_names:
+            y.extend(list(tissue_dfs[ct].loc[:, feature]))
+
+        packed_samples = []
 
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type.
         # the third is the index of the target in the y vector.
 
-        for ct_idx, ct in enumerate(cell_names):
-            ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                             ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
-            ct_df = ct_df.loc[enhancers_list]
-            y.extend(list(ct_df.loc[:, feature]))
-
-            for enhancer_idx in range(len(enhancers_list)):
-                if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
-                    samples.append((enhancer_idx, ct_idx, ct_idx * len(enhancers_list) + enhancer_idx))
+        for enhancer_idx in range(len(enhancers_list)):
+            enhancer_samples = []
+            for ct_idx, ct in enumerate(cell_names):
+                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
+                    enhancer_samples.append((enhancer_idx, ct_idx,
+                                             ct_idx * len(enhancers_list) + enhancer_idx))
+            packed_samples.append(enhancer_samples)
 
     else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
            # is the same, which gives us a balanced dataset
         print('Using a balanced dataset')
 
-        pos_count = {}
-        neg_counter = {}
+        pos_ratios = {ct: 0 for ct in cell_names}
 
-        for ct in cell_names:
-            pos_count[ct] = 0
-            neg_counter[ct] = 0
-
-        samples = []
+        packed_samples = []
 
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type.
         # The third is the index of the target in the y vector.
 
-        for i, ct in enumerate(cell_names):
-            ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                             ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
-            ct_df = ct_df.loc[enhancers_list]
-
+        for ct in cell_names:
+            valid_samples = 0
             for enhancer in enhancers_list:
-                if ct_df.loc[enhancer, feature] == 1:
-                    pos_count[ct] += 1
+                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
+                    valid_samples += 1
+                    if tissue_dfs[ct].loc[enhancer, feature] == 1:
+                        pos_ratios[ct] += 1
+            pos_ratios[ct] = pos_ratios[ct] / valid_samples
 
-            for j, enhancer in enumerate(enhancers_list):
-                if ct_df.loc[enhancer, 'active'] == 1 or ct_df.loc[enhancer, 'repressed'] == 1:
-                    if ct_df.loc[enhancer, feature] == 1:
-                        samples.append((j, i, len(y)))
+        for j, enhancer in enumerate(enhancers_list):
+            enhancer_samples = []
+            for i, ct in enumerate(cell_names):
+                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
+                    if tissue_dfs[ct].loc[enhancer, feature] == 1:
+                        enhancer_samples.append((j, i, len(y)))
                         y.append(1)
-
-                    if ct_df.loc[enhancer, feature] == 0 and neg_counter[ct] < pos_count[ct]:
-                        samples.append((j, i, len(y)))
+                    rand = np.random.uniform(0.0, 1.0)
+                    if tissue_dfs[ct].loc[enhancer, feature] == 0 and rand <= pos_ratios[ct]:
+                        enhancer_samples.append((j, i, len(y)))
                         y.append(0)
-                        neg_counter[ct] += 1
-        print(pos_count)
-        print(neg_counter)
+                packed_samples.append(enhancer_samples)
+        print(pos_ratios)
 
     print(len(X))
     print(len(y))
     print(len(cell_encodings))
-    print(len(samples))
+    print(len(packed_samples))
 
     """
     # TEST 1 : Adding motifs to the positive and/or negative sequences for testing purposes
@@ -279,8 +285,25 @@ if __name__ == '__main__':
                                     polling_windows=(3, 4), input_channels=4)
         fully_connected = FCModule(device=device, layer_sizes=(len(cell_encodings[0]) + 32, 32, 1))
 
-        train_idx, test_idx = split_indices(samples, seed=0)
-        train_idx, val_idx = split_indices(train_idx, seed=seed)
+        packed_train_idx, packed_test_idx = split_indices(packed_samples, seed=0)
+        packed_train_idx, packed_val_idx = split_indices(packed_train_idx, seed=seed)
+
+        # unpacking
+        train_idx = []
+        val_idx = []
+        test_idx = []
+
+        for packet in packed_train_idx:
+            for sample in packet:
+                train_idx.append(sample)
+
+        for packet in packed_val_idx:
+            for sample in packet:
+                val_idx.append(sample)
+
+        for packet in packed_test_idx:
+            for sample in packet:
+                test_idx.append(sample)
 
         train_set = IndicesDataset(train_idx)
         test_set = IndicesDataset(test_idx)
