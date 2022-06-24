@@ -174,7 +174,7 @@ if __name__ == '__main__':
               'num_workers': 0}
 
     output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
-    embeddings_output = {}
+    embeddings_output = {ct: [] for ct in cell_names}
 
     for seed in seeds:
         # The three subparts of the model:
@@ -396,7 +396,7 @@ if __name__ == '__main__':
                os.path.join(dir_path, 'model.pt'))
 
     for i, tissue in enumerate(cell_names):
-        embeddings_output[tissue] = list(torch.squeeze(dendronet.get_embedding([i])))
+        embeddings_output[tissue].append(list(torch.squeeze(dendronet.get_embedding([i]))))
 
     with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
         json.dump(embeddings_output, outfile)
