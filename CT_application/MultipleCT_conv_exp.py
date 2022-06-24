@@ -477,7 +477,7 @@ if __name__ == '__main__':
 
     encodings_output = {}
     for tissue, encoding in zip(cell_names, cell_encodings):
-        encodings_output[tissue] = list(cell_encodings)
+        encodings_output[tissue] = list(encoding)
 
     with open(os.path.join(dir_path, 'encoding.json'), 'w') as outfile:
         json.dump(encodings_output, outfile)
