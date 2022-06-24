@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--unbalanced', dest='balanced', action='store_false')
     parser.add_argument('--force-train', type=bool, default=False, choices=[True, False],
                         help='train even if result file exists')
-    parser.add_argument('--num-epochs', type=int, default=5)
+    parser.add_argument('--num-epochs', type=int, default=100)
     parser.add_argument('--models-to-train', type=str, default='smd', help='s: single, m:multiple, d:dendronet')
     parser.add_argument('--early-stopping', type=int, default=3, help='number of epoches after which, if no'
                                                                       + 'improvement is observed on the AUC of '

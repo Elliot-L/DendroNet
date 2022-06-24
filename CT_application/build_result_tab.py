@@ -16,7 +16,7 @@ if __name__ == '__main__':
     for tissue_dir in os.listdir(os.path.join('results', 'single_tissue_experiments')):
         print(tissue_dir)
         for exp_name in os.listdir(os.path.join('results', 'single_tissue_experiments', tissue_dir)):
-            print(exp_name)
+            print(tissue_dir)
             exp = exp_name.split('_')
             single_tissue_data['tissue_name'].append(tissue_dir)
             single_tissue_data['feature'].append(exp[0])
@@ -24,7 +24,8 @@ if __name__ == '__main__':
             single_tissue_data['early_stop'].append(exp[2])
             single_tissue_data['type_data'].append(exp[3][0:-5])
 
-            with open(os.path.join('results', 'single_tissue_experiments', tissue_dir, exp_name), 'r') as dict_file:
+            with open(os.path.join('results', 'single_tissue_experiments', tissue_dir,
+                                   exp_name, 'auc_output.json'), 'r') as dict_file:
                 auc_dict = json.load(dict_file)
 
             average_train_auc = 0.0
@@ -53,7 +54,7 @@ if __name__ == '__main__':
         multi_tissues_data['early_stop'].append(exp[2])
         multi_tissues_data['type_data'].append(exp[3][0:-5])
 
-        with open(os.path.join('results', 'multi_tissues_experiments', exp_name), 'r') as dict_file:
+        with open(os.path.join('results', 'multi_tissues_experiments', exp_name, 'auc_output.json'), 'r') as dict_file:
             auc_dict = json.load(dict_file)
 
         average_train_auc = 0.0
@@ -85,7 +86,8 @@ if __name__ == '__main__':
         dendro_data['early_stop'].append(exp[5])
         dendro_data['type_data'].append(exp[6][0:-5])
 
-        with open(os.path.join('results', 'dendronet_embedding_experiments', exp_name), 'r') as dict_file:
+        with open(os.path.join('results', 'dendronet_embedding_experiments', exp_name,
+                               'auc_output.json'), 'r') as dict_file:
             auc_dict = json.load(dict_file)
 
         average_train_auc = 0.0
