@@ -152,7 +152,7 @@ if __name__ == '__main__':
                     if tissue_dfs[ct].loc[enhancer, feature] == 0 and rand <= pos_ratios[ct]:
                         enhancer_samples.append((j, i, len(y)))
                         y.append(0)
-                packed_samples.append(enhancer_samples)
+            packed_samples.append(enhancer_samples)
         print(pos_ratios)
 
     print(len(X))
