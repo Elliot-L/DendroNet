@@ -54,7 +54,7 @@ if __name__ == '__main__':
         multi_tissues_data['early_stop'].append(exp[2])
         multi_tissues_data['type_data'].append(exp[3][0:-5])
 
-        with open(os.path.join('results', 'multi_tissues_experiments', exp_name, 'auc_output.json'), 'r') as dict_file:
+        with open(os.path.join('results', 'multi_tissues_experiments', exp_name, 'auc_results.json'), 'r') as dict_file:
             auc_dict = json.load(dict_file)
 
         average_train_auc = 0.0
@@ -87,7 +87,7 @@ if __name__ == '__main__':
         dendro_data['type_data'].append(exp[6][0:-5])
 
         with open(os.path.join('results', 'dendronet_embedding_experiments', exp_name,
-                               'auc_output.json'), 'r') as dict_file:
+                               'auc_results.json'), 'r') as dict_file:
             auc_dict = json.load(dict_file)
 
         average_train_auc = 0.0

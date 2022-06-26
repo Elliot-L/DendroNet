@@ -376,6 +376,9 @@ if __name__ == '__main__':
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
 
+        for i, tissue in enumerate(cell_names):
+            embeddings_output[tissue].append(torch.squeeze(dendronet.get_embedding([i])).cpu().tolist)
+
     if not balanced:
         dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
                   + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced'
@@ -386,7 +389,7 @@ if __name__ == '__main__':
     dir_path = os.path.join('results', 'dendronet_embedding_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
-    with open(os.path.join(dir_path, 'auc_results.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'auc_output.json'), 'w') as outfile:
         json.dump(output, outfile)
 
     torch.save({'convolution': convolution.state_dict(),
@@ -394,9 +397,6 @@ if __name__ == '__main__':
                 'dendronet_delta_mat': dendronet.delta_mat.clone().detach().cpu(),
                 'dendronet_root': dendronet.root_weights.clone().detach().cpu()},
                os.path.join(dir_path, 'model.pt'))
-
-    for i, tissue in enumerate(cell_names):
-        embeddings_output[tissue].append(list(torch.squeeze(dendronet.get_embedding([i]))))
 
     with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
         json.dump(embeddings_output, outfile)

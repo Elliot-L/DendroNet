@@ -468,7 +468,7 @@ if __name__ == '__main__':
     dir_path = os.path.join('results', 'multi_tissues_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
-    with open(os.path.join(dir_path, 'auc_results.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'auc_output.json'), 'w') as outfile:
         json.dump(output, outfile)
 
     torch.save({'convolution': convolution.state_dict(),
@@ -478,7 +478,7 @@ if __name__ == '__main__':
     encodings_output = {}
     for tissue, encoding in zip(cell_names, cell_encodings):
         print(encoding)
-        encodings_output[tissue] = list(encoding)
+        encodings_output[tissue] = torch.squeeze(encoding).cpu().tolist()
 
     with open(os.path.join(dir_path, 'encoding.json'), 'w') as outfile:
         json.dump(encodings_output, outfile)
