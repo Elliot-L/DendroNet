@@ -14,9 +14,7 @@ if __name__ == '__main__':
 
     print('Single tissue experiments:')
     for tissue_dir in os.listdir(os.path.join('results', 'single_tissue_experiments')):
-        print(tissue_dir)
         for exp_name in os.listdir(os.path.join('results', 'single_tissue_experiments', tissue_dir)):
-            print(tissue_dir)
             exp = exp_name.split('_')
             single_tissue_data['tissue_name'].append(tissue_dir)
             single_tissue_data['feature'].append(exp[0])
@@ -47,7 +45,6 @@ if __name__ == '__main__':
 
     print('Multi Tissue Experiments:')
     for exp_name in os.listdir(os.path.join('results', 'multi_tissues_experiments')):
-        print(exp_name)
         exp = exp_name.split('_')
         multi_tissues_data['feature'].append(exp[0])
         multi_tissues_data['LR'].append(exp[1])
@@ -76,7 +73,6 @@ if __name__ == '__main__':
 
     print('Dendronet Embeddings experiments:')
     for exp_name in os.listdir(os.path.join('results', 'dendronet_embedding_experiments')):
-        print(exp_name)
         exp = exp_name.split('_')
         dendro_data['feature'].append(exp[0])
         dendro_data['LR'].append(exp[1])
