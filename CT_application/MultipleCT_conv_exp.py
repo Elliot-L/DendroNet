@@ -139,7 +139,7 @@ if __name__ == '__main__':
                     valid_samples += 1
                     if tissue_dfs[ct].loc[enhancer, feature] == 1:
                         pos_ratios[ct] += 1
-            pos_ratios[ct] = pos_ratios[ct] / valid_samples
+            pos_ratios[ct] = pos_ratios[ct] / (valid_samples - pos_ratios[ct])
 
         for j, enhancer in enumerate(enhancers_list):
             enhancer_samples = []
@@ -477,7 +477,6 @@ if __name__ == '__main__':
 
     encodings_output = {}
     for tissue, encoding in zip(cell_names, cell_encodings):
-        print(encoding)
         encodings_output[tissue] = torch.squeeze(encoding).cpu().tolist()
 
     with open(os.path.join(dir_path, 'encoding.json'), 'w') as outfile:

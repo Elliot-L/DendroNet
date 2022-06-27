@@ -74,12 +74,15 @@ if __name__ == '__main__':
 
     y = []
     X = []
-    pos_count = 0
-    neg_counter = 0
+    pos_ratio = 0
 
+    valid_samples = 0
     for enhancer in enhancer_list:
-        if samples_df.loc[enhancer, feature] == 1:
-            pos_count += 1
+        if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
+            valid_samples += 1
+            if samples_df.loc[enhancer, feature] == 1:
+                pos_ratio += 1
+    pos_ratio = pos_ratio / (valid_samples - pos_ratio)
 
     if not balanced:
         for enhancer in enhancer_list:
@@ -87,23 +90,21 @@ if __name__ == '__main__':
                 if samples_df.loc[enhancer, feature] == 0:
                     y.append(0)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                    neg_counter += 1
                 if samples_df.loc[enhancer, feature] == 1:
                     y.append(1)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
     else:
         for enhancer in enhancer_list:
             if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-                if samples_df.loc[enhancer, feature] == 0 and neg_counter < pos_count:
-                    y.append(0)
-                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                    neg_counter += 1
                 if samples_df.loc[enhancer, feature] == 1:
                     y.append(1)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                rand = np.random.uniform(0.0, 1.0)
+                if samples_df.loc[enhancer, feature] == 0 and rand <= pos_ratio:
+                    y.append(0)
+                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
-    print(pos_count)
-    print(neg_counter)
+    print(pos_ratio)
     print(len(X))
     print(len(X[0]))
     print(len(y))

@@ -144,7 +144,7 @@ if __name__ == '__main__':
                     valid_samples += 1
                     if tissue_dfs[ct].loc[enhancer, feature] == 1:
                         pos_ratios[ct] += 1
-            pos_ratios[ct] = pos_ratios[ct] / valid_samples
+            pos_ratios[ct] = pos_ratios[ct] / (valid_samples - pos_ratios[ct])
 
         for j, enhancer in enumerate(enhancers_list):
             enhancer_samples = []
