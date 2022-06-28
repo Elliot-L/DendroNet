@@ -24,9 +24,9 @@ if __name__ == '__main__':
 
         print('All enhancers:')
         tissue_dict = {'active': 0, 'repressed': 0, 'bivalent': 0, 'act_rep_biv': 0,
-                     'proximal': 0, 'distal': 0, 'both_positions': 0,
-                     'CTCF': 0, 'nonCTCF': 0, 'both_CTCF': 0,
-                     'AS': 0, 'nonAS': 0, 'both_AS': 0, 'no_act_no_rep': 0, 'unlabelled': 0}
+                       'proximal': 0, 'distal': 0, 'both_positions': 0,
+                       'CTCF': 0, 'nonCTCF': 0, 'both_CTCF': 0,
+                       'AS': 0, 'nonAS': 0, 'both_AS': 0, 'no_act_no_rep': 0, 'unlabelled': 0}
 
         data['tissue'].append(tissue_name + '_total')
 
@@ -50,16 +50,17 @@ if __name__ == '__main__':
                 tissue_dict['unlabelled'] += 1
 
         for feature in data.keys():
-            data[feature].append(tissue_dict[feature])
+            if feature != 'tissue':
+                data[feature].append(tissue_dict[feature])
 
         print('Enhancers for which we have sequence:')
         tissue_df.set_index('cCRE_id', inplace=True)
         tissue_df = tissue_df.loc[enhancers_list]
 
         tissue_dict = {'active': 0, 'repressed': 0, 'bivalent': 0, 'act_rep_biv': 0,
-                     'proximal': 0, 'distal': 0, 'both_positions': 0,
-                     'CTCF': 0, 'nonCTCF': 0, 'both_CTCF': 0,
-                     'AS': 0, 'nonAS': 0, 'both_AS': 0, 'no_act_no_rep': 0, 'unlabelled': 0}
+                       'proximal': 0, 'distal': 0, 'both_positions': 0,
+                       'CTCF': 0, 'nonCTCF': 0, 'both_CTCF': 0,
+                       'AS': 0, 'nonAS': 0, 'both_AS': 0, 'no_act_no_rep': 0, 'unlabelled': 0}
 
         for i, enhancer in enumerate(enhancers_list):
             if i % 10000 == 0:
@@ -81,7 +82,8 @@ if __name__ == '__main__':
                 tissue_dict['unlabelled'] += 1
 
         for feature in data.keys():
-            data[feature].append(tissue_dict[feature])
+            if feature != 'tissue':
+                data[feature].append(tissue_dict[feature])
 
     output_df = pd.DataFrame(data)
 
