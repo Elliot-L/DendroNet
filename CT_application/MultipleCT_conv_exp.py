@@ -112,7 +112,7 @@ if __name__ == '__main__':
                 valid_counts[t] += 1
                 if tissue_dfs[t].loc[enhancer, feature] == 1:
                     pos_counts[t] += 1
-    for t in pos_counts.keys()
+    for t in pos_counts.keys():
         neg_counts[t] = valid_counts[t] - pos_counts[t]
 
     print(pos_counts)
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
         convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
-        fully_connected = FCModule(device=device, layer_sizes=(len(cell_encodings[0]) + 32, 32, 1))
+        fully_connected = FCModule(device=device, layer_sizes=(len(tissue_encodings[0]) + 32, 32, 1))
 
         packed_train_idx, packed_test_idx = split_indices(packed_samples, seed=0)
         packed_train_idx, packed_val_idx = split_indices(packed_train_idx, seed=seed)
