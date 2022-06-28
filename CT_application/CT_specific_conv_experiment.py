@@ -196,7 +196,7 @@ if __name__ == '__main__':
     print(len(X))
     print(len(y))
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_ratio': (pos_count/total_valid)}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_ratio': (pos_count/total_valid), 'epochs': []}
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
@@ -354,6 +354,7 @@ if __name__ == '__main__':
         output['train_auc'].append(train_roc_auc)
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
+        output['epochs'].append(epoch + 1)
 
     if not balanced:
         dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced'

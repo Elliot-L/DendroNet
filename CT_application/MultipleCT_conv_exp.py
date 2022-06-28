@@ -90,8 +90,8 @@ if __name__ == '__main__':
 
     for t_idx, t in enumerate(tissue_names):
         t_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                         t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
-        tt_df = t_df.loc[enhancers_list]
+                                        t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+        t_df = t_df.loc[enhancers_list]
         tissue_dfs[t] = t_df
 
     for enhancer in enhancers_list:
@@ -135,8 +135,7 @@ if __name__ == '__main__':
             enhancer_samples = []
             for t_idx, t in enumerate(tissue_names):
                 if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                    enhancer_samples.append((enhancer_idx, t_idx,
-                                             t_idx * len(enhancers_list) + enhancer_idx))
+                    enhancer_samples.append((enhancer_idx, t_idx, t_idx * len(enhancers_list) + enhancer_idx))
                     if y[t_idx * len(enhancers_list) + enhancer_idx] == 1:
                         pos_counters[t] += 1
                     else:
@@ -300,7 +299,7 @@ if __name__ == '__main__':
               'num_workers': 0}
 
     output = {'train_auc': [], 'val_auc': [], 'test_auc': [],
-              'tissues_used': tissue_names, 'train_epochs': []}
+              'tissues_used': tissue_names, 'epochs': []}
 
     for seed in seeds:
 
@@ -486,6 +485,7 @@ if __name__ == '__main__':
         output['train_auc'].append(train_roc_auc)
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
+        output['epochs'].append(epoch + 1)
 
     if not balanced:
         dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced'

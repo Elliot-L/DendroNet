@@ -197,7 +197,7 @@ if __name__ == '__main__':
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'epochs': []}
     embeddings_output = {ct: [] for ct in tissue_names}
 
     for seed in seeds:
@@ -399,6 +399,7 @@ if __name__ == '__main__':
         output['train_auc'].append(train_roc_auc)
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
+        output['epochs'].append(epoch + 1)
 
         for i, tissue in enumerate(tissue_names):
             embeddings_output[tissue].append(torch.squeeze(dendronet.get_embedding([i])).cpu().tolist)
