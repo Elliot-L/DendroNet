@@ -400,7 +400,7 @@ if __name__ == '__main__':
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
 
-        for i, tissue in enumerate(cell_names):
+        for i, tissue in enumerate(tissue_names):
             embeddings_output[tissue].append(torch.squeeze(dendronet.get_embedding([i])).cpu().tolist)
 
     if not balanced:
