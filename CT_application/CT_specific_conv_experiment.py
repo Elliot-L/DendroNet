@@ -189,10 +189,10 @@ if __name__ == '__main__':
         #                                      kernel_size=(16, 3, 3), num_of_kernels=(64, 64, 32),
         #                                      polling_window=(3, 4))
 
+        fully_connected = FCModule(device=device, layer_sizes=(32, 32, 1))
+
         convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
-
-        fully_connected = FCModule(device=device, layer_sizes=(32, 32, 1))
 
         train_idx, test_idx = split_indices(range(len(X)), seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=seed)

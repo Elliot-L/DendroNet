@@ -6,7 +6,7 @@ import argparse
 import json
 import numpy as np
 from torch.utils.data.dataloader import DataLoader
-import tqdm
+from tqdm import tqdm
 from sklearn.metrics import roc_curve, auc
 
 from models.CT_conv_model import DendronetModule, SeqConvModule, FCModule
@@ -32,10 +32,10 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='multi', help='options are dendronet or multi')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--tissue', type=str)
-    parser.add_argument('--LR', type=float)
-    parser.add_argument('--DPF', type=float)
-    parser.add_argument('--L1', type=float)
-    parser.add_argument('--embedding-size', type=int)
+    parser.add_argument('--LR', type=float, default=0.0001)
+    parser.add_argument('--DPF', type=float, default=0.001)
+    parser.add_argument('--L1', type=float, default=0.001)
+    parser.add_argument('--embedding-size', type=int, default=28)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
@@ -128,6 +128,7 @@ if __name__ == '__main__':
         DPF = args.DPF
         L1 = args.L1
         embedding_size = args.embedding_size
+
         dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
                     + '_' + str(embedding_size) + '_' + str(early_stop) + data_type
         print('Using Dendronet from dir: ' + dir_name)
