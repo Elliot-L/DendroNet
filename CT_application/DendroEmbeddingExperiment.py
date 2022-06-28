@@ -76,7 +76,7 @@ if __name__ == '__main__':
     with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as enhancers_file:
         enhancers_dict = json.load(enhancers_file)
 
-    cell_names = []
+    tissue_names = []
     num_internal_nodes = 0
     X = []
     y = []
@@ -87,9 +87,9 @@ if __name__ == '__main__':
         if name == 'internal node':
             num_internal_nodes += 1
         else:
-            cell_names.append(name)
+            tissue_names.append(name)
 
-    print(cell_names)
+    print(tissue_names)
 
     parent_path_mat = build_parent_path_mat(pc_mat)
     num_edges = len(parent_path_mat)
@@ -107,70 +107,87 @@ if __name__ == '__main__':
     for enhancer in enhancers_list:
         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
-    pos_counter = 0
-    neg_counter = 0
+    pos_counts = {ct: 0 for ct in tissue_names}
+    neg_counts = {ct: 0 for ct in tissue_names}
+    valid_counts = {ct: 0 for ct in tissue_names}
+    pos_counters = {ct: 0 for ct in tissue_names}
+    neg_counters = {ct: 0 for ct in tissue_names}
+
+    for t in tissue_names:
+        for enhancer in enhancers_list:
+            if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
+                valid_counts[t] += 1
+                if tissue_dfs[t].loc[enhancer, feature] == 1:
+                    pos_counts[t] += 1
+    for t in pos_counts.keys():
+        neg_counts[t] = valid_counts[t] - pos_counts[t]
+
+    print(pos_counts)
+    print(neg_counts)
+    print(valid_counts)
 
     if not balanced:  # if we want to use all the samples, usually leads to heavily unbalanced dataset
         print('Using whole dataset')
-        for ct in cell_names:
-            y.extend(list(tissue_dfs[ct].loc[:, feature]))
+        for t in tissue_names:
+            y.extend(list(tissue_dfs[t].loc[:, feature]))
 
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type in the
         # parent path matrix and the third is the index of the target in the y vector.
 
         packed_samples = []
+
         for enhancer_idx in range(len(enhancers_list)):
             enhancer_samples = []
-            for ct_idx, ct in enumerate(cell_names):
-                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
-                    enhancer_samples.append((enhancer_idx, ct_idx + num_internal_nodes,
-                                             ct_idx * len(enhancers_list) + enhancer_idx))
-                    if y[ct_idx * len(enhancers_list) + enhancer_idx] == 1:
-                        pos_counter += 1
+            for t_idx, t in enumerate(tissue_names):
+                if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
+                    enhancer_samples.append((enhancer_idx, t_idx + num_internal_nodes,
+                                             t_idx * len(enhancers_list) + enhancer_idx))
+                    if y[t_idx * len(enhancers_list) + enhancer_idx] == 1:
+                        pos_counters[t] += 1
                     else:
-                        neg_counter += 1
+                        neg_counters[t] += 1
             packed_samples.append(enhancer_samples)
 
     else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
            # is the same, which gives us a balanced dataset
         print('Using a balanced dataset')
 
-        pos_counts = {ct: 0 for ct in cell_names}
-
         packed_samples = []
 
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type in the
         # parent path matrix and the third is the index of the target in the y vector.
 
-        for ct in cell_names:
-            valid_samples = 0
-            for enhancer in enhancers_list:
-                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
-                    valid_samples += 1
-                    if tissue_dfs[ct].loc[enhancer, feature] == 1:
-                        pos_ratios[ct] += 1
-
         for j, enhancer in enumerate(enhancers_list):
             enhancer_samples = []
-            for i, ct in enumerate(cell_names):
+            for i, ct in enumerate(tissue_names):
                 if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
-                    if tissue_dfs[ct].loc[enhancer, feature] == 1:
-                        enhancer_samples.append((j, i + num_internal_nodes, len(y)))
-                        y.append(1)
-                        pos_counter += 1
-                    if tissue_dfs[ct].loc[enhancer, feature] == 0 and  <= pos_ratios[ct]:
-                        enhancer_samples.append((j, i + num_internal_nodes, len(y)))
-                        y.append(0)
-                        neg_counter += 1
+                    if (pos_counts[t] / valid_counts[t]) <= 0.5:
+                        if tissue_dfs[ct].loc[enhancer, feature] == 1:
+                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
+                            y.append(1)
+                            pos_counters[t] += 1
+                        if tissue_dfs[ct].loc[enhancer, feature] == 0 and neg_counters[t] < pos_counts[t]:
+                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
+                            y.append(0)
+                            neg_counters[t] += 1
+                    else:
+                        if tissue_dfs[ct].loc[enhancer, feature] == 1 and pos_counters[t] <= neg_counts[t]:
+                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
+                            y.append(1)
+                            pos_counters[t] += 1
+                        if tissue_dfs[ct].loc[enhancer, feature] == 0:
+                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
+                            y.append(0)
+                            neg_counters[t] += 1
             packed_samples.append(enhancer_samples)
 
-        print(pos_ratios)
-
+    print(pos_counters)
+    print(neg_counters)
     print(len(X))
+    print(len(X[0]))
     print(len(y))
-    print(len(packed_samples))
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
@@ -180,8 +197,8 @@ if __name__ == '__main__':
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_counter, 'neg_count': neg_counter}
-    embeddings_output = {ct: [] for ct in cell_names}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
+    embeddings_output = {ct: [] for ct in tissue_names}
 
     for seed in seeds:
         # The three subparts of the model:
