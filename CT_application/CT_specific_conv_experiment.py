@@ -34,7 +34,7 @@ def get_one_hot_encoding(seq):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ct', type=str, default='testis')
+    parser.add_argument('--tissue', type=str, default='testis')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
     parser.add_argument('--GPU', default=True, action='store_true')
@@ -49,6 +49,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    tissue = args.tissue
     LR = args.LR
     USE_CUDA = args.GPU
     BATCH_SIZE = args.BATCH_SIZE
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
     samples_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                          args.ct + '_enhancer_features_matrix.csv'))
+                                          tissue + '_enhancer_features_matrix.csv'))
 
     with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as e_file:
         enhancers_dict = json.load(e_file)
@@ -85,7 +86,11 @@ if __name__ == '__main__':
             if samples_df.loc[enhancer, feature] == 1:
                 pos_count += 1
 
+    print(pos_count)
+    print(total_valid)
+
     if not balanced:
+        print('Unbalanced dataset')
         for enhancer in enhancer_list:
             if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
                 if samples_df.loc[enhancer, feature] == 0:
@@ -97,6 +102,7 @@ if __name__ == '__main__':
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
                     pos_counter += 1
     else:
+        print('Balanced dataset')
         if (pos_count / total_valid) <= 0.5:
             for enhancer in enhancer_list:
                 if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
@@ -105,17 +111,17 @@ if __name__ == '__main__':
                         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
                         pos_counter += 1
                     if samples_df.loc[enhancer, feature] == 0 and neg_counter < pos_count:
+                        neg_counter += 1
                         y.append(0)
                         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                        neg_counter += 1
         else:
             neg_count = total_valid - pos_count
             for enhancer in enhancer_list:
                 if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
                     if samples_df.loc[enhancer, feature] == 1 and pos_counter < neg_count:
+                        pos_counter += 1
                         y.append(1)
                         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                        pos_counter += 1
                     if samples_df.loc[enhancer, feature] == 0:
                         y.append(0)
                         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
@@ -190,7 +196,7 @@ if __name__ == '__main__':
     print(len(X))
     print(len(y))
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_counter, 'neg_count': neg_counter}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_ratio': (pos_count/total_valid)}
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
