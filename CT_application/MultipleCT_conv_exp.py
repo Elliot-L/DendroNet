@@ -101,6 +101,7 @@ if __name__ == '__main__':
         tissue_encodings.append([1 if j == t else 0 for j in range(len(tissue_names))])
 
     pos_counts = {ct: 0 for ct in tissue_names}
+    neg_counts = {ct: 0 for ct in tissue_names}
     valid_counts = {ct: 0 for ct in tissue_names}
     pos_counters = {ct: 0 for ct in tissue_names}
     neg_counters = {ct: 0 for ct in tissue_names}
@@ -111,7 +112,11 @@ if __name__ == '__main__':
                 valid_counts[t] += 1
                 if tissue_dfs[t].loc[enhancer, feature] == 1:
                     pos_counts[t] += 1
+    for t in pos_counts.keys()
+        neg_counts[t] = valid_counts[t] - pos_counts[t]
+
     print(pos_counts)
+    print(neg_counts)
     print(valid_counts)
 
     if not balanced:  # if we want to use all the samples, usually leads to unbalanced dataset
@@ -152,19 +157,32 @@ if __name__ == '__main__':
             enhancer_samples = []
             for i, t in enumerate(tissue_names):
                 if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                    if tissue_dfs[t].loc[enhancer, feature] == 1:
-                        enhancer_samples.append((j, i, len(y)))
-                        y.append(1)
-                    rand = np.random.uniform(0.0, 1.0)
-                    if tissue_dfs[ct].loc[enhancer, feature] == 0 and rand <= pos_ratios[ct]:
-                        enhancer_samples.append((j, i, len(y)))
-                        y.append(0)
+                    if (pos_counts[t] / valid_counts[t]) <= 0.5:
+                        if tissue_dfs[t].loc[enhancer, feature] == 1:
+                            enhancer_samples.append((j, i, len(y)))
+                            y.append(1)
+                            pos_counters[t] += 1
+                        if tissue_dfs[t].loc[enhancer, feature] == 0 and neg_counters[t] < pos_counts[t]:
+                            enhancer_samples.append((j, i, len(y)))
+                            y.append(0)
+                            neg_counters[t] += 1
+                    else:
+                        if tissue_dfs[t].loc[enhancer, feature] == 1 and pos_counters[t] < neg_counts[t]:
+                            enhancer_samples.append((j, i, len(y)))
+                            y.append(1)
+                            pos_counters[t] += 1
+                        if tissue_dfs[t].loc[enhancer, feature] == 0:
+                            enhancer_samples.append((j, i, len(y)))
+                            y.append(0)
+                            neg_counters[t] += 1
             packed_samples.append(enhancer_samples)
-        print(pos_ratios)
+
+    print(pos_counters)
+    print(neg_counters)
 
     print(len(X))
     print(len(y))
-    print(len(cell_encodings))
+    print(len(tissue_encodings))
     print(len(packed_samples))
 
     """
