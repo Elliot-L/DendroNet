@@ -98,11 +98,11 @@ if __name__ == '__main__':
 
     tissue_dfs = {}
 
-    for ct in cell_names:
-        ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                         ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
-        ct_df = ct_df.loc[enhancers_list]
-        tissue_dfs[ct] = ct_df
+    for t in tissue_names:
+        t_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
+                                         t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+        t_df = t_df.loc[enhancers_list]
+        tissue_dfs[t] = t_df
 
     for enhancer in enhancers_list:
         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))

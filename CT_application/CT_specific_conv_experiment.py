@@ -360,7 +360,7 @@ if __name__ == '__main__':
     else:
         dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced'
 
-    dir_path = os.path.join('results', 'single_tissue_experiments', args.ct, dir_name)
+    dir_path = os.path.join('results', 'single_tissue_experiments', args.tissue, dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
     with open(os.path.join(dir_path, 'auc_output.json'), 'w') as outfile:

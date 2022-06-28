@@ -39,7 +39,7 @@ if __name__ == '__main__':
                                                                'uterus', 'tibial_nerve', 'spleen'],
                         help='if empty, we take all available datasets')
     """
-    parser.add_argument('--cts', type=str, nargs='+', default=[], help='if empty, we take all available datasets')
+    parser.add_argument('--tissues', type=str, nargs='+', default=[], help='if empty, we take all available datasets')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.001)
     parser.add_argument('--GPU', default=True, action='store_true')
@@ -59,17 +59,17 @@ if __name__ == '__main__':
     BATCH_SIZE = args.BATCH_SIZE
     USE_CUDA = args.GPU
     balanced = args.balanced
-    cell_names = args.cts
+    tissue_names = args.tissues
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
 
-    if not cell_names:
+    if not tissue_names:
         print('using all cell types')
-        cell_names = []
+        tissue_names = []
         for ct_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
-            ct_name = ct_file[0:-29]
-            cell_names.append(ct_name)
+            t_name = ct_file[0:-29]
+            tissue_names.append(t_name)
 
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
@@ -79,32 +79,46 @@ if __name__ == '__main__':
 
     X = []
     y = []
-    cell_encodings = []
+    tissue_encodings = []
 
     enhancers_list = list(enhancers_dict.keys())
     num_enhancers = len(enhancers_list)
     print(len(enhancers_list))
-    print(cell_names)
+    print(tissue_names)
 
     tissue_dfs = {}
 
-    for ct_idx, ct in enumerate(cell_names):
-        ct_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                         ct + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
-        ct_df = ct_df.loc[enhancers_list]
-        tissue_dfs[ct] = ct_df
+    for t_idx, t in enumerate(tissue_names):
+        t_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
+                                         t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+        tt_df = t_df.loc[enhancers_list]
+        tissue_dfs[t] = t_df
 
     for enhancer in enhancers_list:
         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
-    for ct in range(len(cell_names)):
-        cell_encodings.append([1 if j == ct else 0 for j in range(len(cell_names))])
+    for t in range(len(tissue_names)):
+        tissue_encodings.append([1 if j == t else 0 for j in range(len(tissue_names))])
+
+    pos_counts = {ct: 0 for ct in tissue_names}
+    valid_counts = {ct: 0 for ct in tissue_names}
+    pos_counters = {ct: 0 for ct in tissue_names}
+    neg_counters = {ct: 0 for ct in tissue_names}
+
+    for t in tissue_names:
+        for enhancer in enhancers_list:
+            if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
+                valid_counts[t] += 1
+                if tissue_dfs[t].loc[enhancer, feature] == 1:
+                    pos_counts[t] += 1
+    print(pos_counts)
+    print(valid_counts)
 
     if not balanced:  # if we want to use all the samples, usually leads to unbalanced dataset
         print('Using whole dataset')
 
-        for ct in cell_names:
-            y.extend(list(tissue_dfs[ct].loc[:, feature]))
+        for t in tissue_names:
+            y.extend(list(tissue_dfs[t].loc[:, feature]))
 
         packed_samples = []
 
@@ -114,17 +128,19 @@ if __name__ == '__main__':
 
         for enhancer_idx in range(len(enhancers_list)):
             enhancer_samples = []
-            for ct_idx, ct in enumerate(cell_names):
-                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
-                    enhancer_samples.append((enhancer_idx, ct_idx,
-                                             ct_idx * len(enhancers_list) + enhancer_idx))
+            for t_idx, t in enumerate(tissue_names):
+                if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
+                    enhancer_samples.append((enhancer_idx, t_idx,
+                                             t_idx * len(enhancers_list) + enhancer_idx))
+                    if y[t_idx * len(enhancers_list) + enhancer_idx] == 1:
+                        pos_counters[t] += 1
+                    else:
+                        neg_counters[t] += 1
             packed_samples.append(enhancer_samples)
 
     else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
            # is the same, which gives us a balanced dataset
         print('Using a balanced dataset')
-
-        pos_ratios = {ct: 0 for ct in cell_names}
 
         packed_samples = []
 
@@ -132,20 +148,11 @@ if __name__ == '__main__':
         # entry is the row of the X matrix. The second is the index of the cell type.
         # The third is the index of the target in the y vector.
 
-        for ct in cell_names:
-            valid_samples = 0
-            for enhancer in enhancers_list:
-                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
-                    valid_samples += 1
-                    if tissue_dfs[ct].loc[enhancer, feature] == 1:
-                        pos_ratios[ct] += 1
-            pos_ratios[ct] = pos_ratios[ct] / (valid_samples - pos_ratios[ct])
-
         for j, enhancer in enumerate(enhancers_list):
             enhancer_samples = []
-            for i, ct in enumerate(cell_names):
-                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
-                    if tissue_dfs[ct].loc[enhancer, feature] == 1:
+            for i, t in enumerate(tissue_names):
+                if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
+                    if tissue_dfs[t].loc[enhancer, feature] == 1:
                         enhancer_samples.append((j, i, len(y)))
                         y.append(1)
                     rand = np.random.uniform(0.0, 1.0)
@@ -274,8 +281,8 @@ if __name__ == '__main__':
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_counter, 'neg_count': neg_counter
-              'tissues_used': cell_names}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_count,
+              'tissues_used': cell_names, 'train_epochs': []}
 
     for seed in seeds:
 
