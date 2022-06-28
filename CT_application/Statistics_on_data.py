@@ -46,7 +46,7 @@ if __name__ == '__main__':
                 tissue_dict['both_AS'] += 1
             if tissue_df.loc[row, 'active'] == '0' and tissue_df.loc[row, 'repressed'] == '0':
                 tissue_dict['no_act_no_rep'] += 1
-            if tissue_df.loc[row, 'active'] == '0' and tissue_df.loc[row, 'repressed'] == '0' and tissue_df.loc[row, 'bivalent'] == '0' and tissue_df.loc[row, 'proximal'] == '0' and tissue_df.loc[row, 'distal'] == '0' and tissue_df.loc[row, 'CTCF'] == '0' and tissue_df.loc[row, 'nonCTCT'] == '0' and tissue_df.loc[row, 'AS'] == '0' and tissue_df.loc[row, 'nonAS'] == '0':
+            if tissue_df.loc[row, 'active'] == '0' and tissue_df.loc[row, 'repressed'] == '0' and tissue_df.loc[row, 'bivalent'] == '0' and tissue_df.loc[row, 'proximal'] == '0' and tissue_df.loc[row, 'distal'] == '0' and tissue_df.loc[row, 'CTCF'] == '0' and tissue_df.loc[row, 'nonCTCF'] == '0' and tissue_df.loc[row, 'AS'] == '0' and tissue_df.loc[row, 'nonAS'] == '0':
                 tissue_dict['unlabelled'] += 1
 
         for feature in data.keys():
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 tissue_dict['both_AS'] += 1
             if tissue_df.loc[enhancer, 'active'] == '0' and tissue_df.loc[enhancer, 'repressed'] == '0':
                 tissue_dict['no_act_no_rep'] += 1
-            if tissue_df.loc[enhancer, 'active'] == '0' and tissue_df.loc[enhancer, 'repressed'] == '0' and tissue_df.loc[enhancer, 'bivalent'] == '0' and tissue_df.loc[enhancer, 'proximal'] == '0' and tissue_df.loc[enhancer, 'distal'] == '0' and tissue_df.loc[enhancer, 'CTCF'] == '0' and tissue_df.loc[enhancer, 'nonCTCT'] == '0' and tissue_df.loc[enhancer, 'AS'] == '0' and tissue_df.loc[enhancer, 'nonAS'] == '0':
+            if tissue_df.loc[enhancer, 'active'] == '0' and tissue_df.loc[enhancer, 'repressed'] == '0' and tissue_df.loc[enhancer, 'bivalent'] == '0' and tissue_df.loc[enhancer, 'proximal'] == '0' and tissue_df.loc[enhancer, 'distal'] == '0' and tissue_df.loc[enhancer, 'CTCF'] == '0' and tissue_df.loc[enhancer, 'nonCTCF'] == '0' and tissue_df.loc[enhancer, 'AS'] == '0' and tissue_df.loc[enhancer, 'nonAS'] == '0':
                 tissue_dict['unlabelled'] += 1
 
         for feature in data.keys():
