@@ -18,6 +18,7 @@ if __name__ == '__main__':
 
     for t_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
         tissue_name = t_file[0:-29]
+        data['tissue'].append(tissue_name + '_total')
         data['tissue'].append(tissue_name)
         print(tissue_name)
         tissue_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices', t_file), dtype=str)
@@ -27,8 +28,6 @@ if __name__ == '__main__':
                        'proximal': 0, 'distal': 0, 'both_positions': 0,
                        'CTCF': 0, 'nonCTCF': 0, 'both_CTCF': 0,
                        'AS': 0, 'nonAS': 0, 'both_AS': 0, 'no_act_no_rep': 0, 'unlabelled': 0}
-
-        data['tissue'].append(tissue_name + '_total')
 
         for row in range(tissue_df.shape[0]):
             if row % 10000 == 0:
