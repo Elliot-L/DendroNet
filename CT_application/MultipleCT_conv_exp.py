@@ -293,14 +293,14 @@ if __name__ == '__main__':
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
     y = torch.tensor(y, dtype=torch.float, device=device)
-    cell_encodings = torch.tensor(cell_encodings, dtype=torch.float, device=device)
+    tissue_encodings = torch.tensor(tissue_encodings, dtype=torch.float, device=device)
 
     params = {'batch_size': BATCH_SIZE,
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_count,
-              'tissues_used': cell_names, 'train_epochs': []}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [],
+              'tissues_used': tissue_names, 'train_epochs': []}
 
     for seed in seeds:
 
@@ -357,7 +357,7 @@ if __name__ == '__main__':
                 y_idx = idx_batch[2]
                 #y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
                 error_loss = loss_function(y_hat, y[y_idx])
                 error_loss.backward(retain_graph=True)
                 optimizer.step()
@@ -372,7 +372,7 @@ if __name__ == '__main__':
                     y_idx = idx_batch[2]
                     # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                     seq_features = convolution(X[X_idx])
-                    y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                    y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
                     train_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -392,7 +392,7 @@ if __name__ == '__main__':
                     y_idx = idx_batch[2]
                     # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                     seq_features = convolution(X[X_idx])
-                    y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                    y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
                     val_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -433,7 +433,7 @@ if __name__ == '__main__':
                 y_idx = idx_batch[2]
                 # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
                 train_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -453,7 +453,7 @@ if __name__ == '__main__':
                 y_idx = idx_batch[2]
                 # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
                 val_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -473,7 +473,7 @@ if __name__ == '__main__':
                 y_idx = idx_batch[2]
                 # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, cell_encodings[cell_idx]), 1))
+                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
                 test_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_test_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -502,7 +502,7 @@ if __name__ == '__main__':
                os.path.join(dir_path, 'model.pt'))
 
     encodings_output = {}
-    for tissue, encoding in zip(cell_names, cell_encodings):
+    for tissue, encoding in zip(tissue_names, tissue_encodings):
         encodings_output[tissue] = torch.squeeze(encoding).cpu().tolist()
 
     with open(os.path.join(dir_path, 'encoding.json'), 'w') as outfile:
