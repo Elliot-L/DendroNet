@@ -100,18 +100,18 @@ if __name__ == '__main__':
 
     for t in tissue_names:
         t_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                         t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+                                        t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
         t_df = t_df.loc[enhancers_list]
         tissue_dfs[t] = t_df
 
     for enhancer in enhancers_list:
         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
-    pos_counts = {ct: 0 for ct in tissue_names}
-    neg_counts = {ct: 0 for ct in tissue_names}
-    valid_counts = {ct: 0 for ct in tissue_names}
-    pos_counters = {ct: 0 for ct in tissue_names}
-    neg_counters = {ct: 0 for ct in tissue_names}
+    pos_counts = {t: 0 for t in tissue_names}
+    neg_counts = {t: 0 for t in tissue_names}
+    valid_counts = {t: 0 for t in tissue_names}
+    pos_counters = {t: 0 for t in tissue_names}
+    neg_counters = {t: 0 for t in tissue_names}
 
     for t in tissue_names:
         for enhancer in enhancers_list:
@@ -119,6 +119,7 @@ if __name__ == '__main__':
                 valid_counts[t] += 1
                 if tissue_dfs[t].loc[enhancer, feature] == 1:
                     pos_counts[t] += 1
+
     for t in pos_counts.keys():
         neg_counts[t] = valid_counts[t] - pos_counts[t]
 
@@ -130,7 +131,7 @@ if __name__ == '__main__':
         print('Using whole dataset')
         for t in tissue_names:
             y.extend(list(tissue_dfs[t].loc[:, feature]))
-
+            print(len(y))
         # the list "samples" is a list of tuples each representing a sample. The first
         # entry is the row of the X matrix. The second is the index of the cell type in the
         # parent path matrix and the third is the index of the target in the y vector.
@@ -141,9 +142,9 @@ if __name__ == '__main__':
             enhancer_samples = []
             for t_idx, t in enumerate(tissue_names):
                 if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                    enhancer_samples.append((enhancer_idx, t_idx + num_internal_nodes,
-                                             t_idx * len(enhancers_list) + enhancer_idx))
-                    if y[t_idx * len(enhancers_list) + enhancer_idx] == 1:
+                    y_idx = t_idx * len(enhancers_list) + enhancer_idx
+                    enhancer_samples.append((enhancer_idx, t_idx + num_internal_nodes, y_idx))
+                    if y[y_idx] == 1:
                         pos_counters[t] += 1
                     else:
                         neg_counters[t] += 1
@@ -161,23 +162,23 @@ if __name__ == '__main__':
 
         for j, enhancer in enumerate(enhancers_list):
             enhancer_samples = []
-            for i, ct in enumerate(tissue_names):
-                if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
+            for i, t in enumerate(tissue_names):
+                if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
                     if (pos_counts[t] / valid_counts[t]) <= 0.5:
-                        if tissue_dfs[ct].loc[enhancer, feature] == 1:
+                        if tissue_dfs[t].loc[enhancer, feature] == 1:
                             enhancer_samples.append((j, i + num_internal_nodes, len(y)))
                             y.append(1)
                             pos_counters[t] += 1
-                        if tissue_dfs[ct].loc[enhancer, feature] == 0 and neg_counters[t] < pos_counts[t]:
+                        if tissue_dfs[t].loc[enhancer, feature] == 0 and neg_counters[t] < pos_counts[t]:
                             enhancer_samples.append((j, i + num_internal_nodes, len(y)))
                             y.append(0)
                             neg_counters[t] += 1
                     else:
-                        if tissue_dfs[ct].loc[enhancer, feature] == 1 and pos_counters[t] <= neg_counts[t]:
+                        if tissue_dfs[t].loc[enhancer, feature] == 1 and pos_counters[t] < neg_counts[t]:
                             enhancer_samples.append((j, i + num_internal_nodes, len(y)))
                             y.append(1)
                             pos_counters[t] += 1
-                        if tissue_dfs[ct].loc[enhancer, feature] == 0:
+                        if tissue_dfs[t].loc[enhancer, feature] == 0:
                             enhancer_samples.append((j, i + num_internal_nodes, len(y)))
                             y.append(0)
                             neg_counters[t] += 1

@@ -135,8 +135,9 @@ if __name__ == '__main__':
             enhancer_samples = []
             for t_idx, t in enumerate(tissue_names):
                 if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                    enhancer_samples.append((enhancer_idx, t_idx, t_idx * len(enhancers_list) + enhancer_idx))
-                    if y[t_idx * len(enhancers_list) + enhancer_idx] == 1:
+                    y_idx = t_idx * len(enhancers_list) + enhancer_idx
+                    enhancer_samples.append((enhancer_idx, t_idx, y_idx))
+                    if y[y_idx] == 1:
                         pos_counters[t] += 1
                     else:
                         neg_counters[t] += 1
@@ -178,7 +179,6 @@ if __name__ == '__main__':
 
     print(pos_counters)
     print(neg_counters)
-
     print(len(X))
     print(len(y))
     print(len(tissue_encodings))
