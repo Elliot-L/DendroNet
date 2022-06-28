@@ -274,7 +274,8 @@ if __name__ == '__main__':
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'tissues_used': cell_names}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_counter, 'neg_count': neg_counter
+              'tissues_used': cell_names}
 
     for seed in seeds:
 

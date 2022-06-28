@@ -74,15 +74,16 @@ if __name__ == '__main__':
 
     y = []
     X = []
-    pos_ratio = 0
+    pos_count = 0
+    pos_counter = 0
+    neg_counter = 0
 
-    valid_samples = 0
+    total_valid = 0
     for enhancer in enhancer_list:
         if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-            valid_samples += 1
+            total_valid += 1
             if samples_df.loc[enhancer, feature] == 1:
-                pos_ratio += 1
-    pos_ratio = pos_ratio / (valid_samples - pos_ratio)
+                pos_count += 1
 
     if not balanced:
         for enhancer in enhancer_list:
@@ -90,21 +91,38 @@ if __name__ == '__main__':
                 if samples_df.loc[enhancer, feature] == 0:
                     y.append(0)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                    neg_counter += 1
                 if samples_df.loc[enhancer, feature] == 1:
                     y.append(1)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                    pos_counter += 1
     else:
-        for enhancer in enhancer_list:
-            if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-                if samples_df.loc[enhancer, feature] == 1:
-                    y.append(1)
-                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                rand = np.random.uniform(0.0, 1.0)
-                if samples_df.loc[enhancer, feature] == 0 and rand <= pos_ratio:
-                    y.append(0)
-                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+        if (pos_count / total_valid) <= 0.5:
+            for enhancer in enhancer_list:
+                if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
+                    if samples_df.loc[enhancer, feature] == 1:
+                        y.append(1)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                        pos_counter += 1
+                    if samples_df.loc[enhancer, feature] == 0 and neg_counter < pos_count:
+                        y.append(0)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                        neg_counter += 1
+        else:
+            neg_count = total_valid - pos_count
+            for enhancer in enhancer_list:
+                if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
+                    if samples_df.loc[enhancer, feature] == 1 and pos_counter < neg_count:
+                        y.append(1)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                        pos_counter += 1
+                    if samples_df.loc[enhancer, feature] == 0:
+                        y.append(0)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                        neg_counter += 1
 
-    print(pos_ratio)
+    print(pos_counter)
+    print(neg_counter)
     print(len(X))
     print(len(X[0]))
     print(len(y))
@@ -172,7 +190,7 @@ if __name__ == '__main__':
     print(len(X))
     print(len(y))
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_counter, 'neg_count': neg_counter}
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)

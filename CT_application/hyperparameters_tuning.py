@@ -6,7 +6,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--single_tissues', type=str, nargs='+', default=[])
-    parser.add_argument('--LRs', type=float, nargs='+', default=[0.01, 0.001, 0.0001])
+    parser.add_argument('--LRs', type=float, nargs='+', default=[0.0001])
     parser.add_argument('--L1s', type=float, nargs='+', default=[0.1, 0.01, 0.001])
     parser.add_argument('--DPFs', type=float, nargs='+', default=[0.1, 0.01, 0.001])
     parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[5, 10, 28])

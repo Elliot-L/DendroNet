@@ -63,6 +63,7 @@ if __name__ == '__main__':
         data_type = '_unbalanced'
 
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
+    print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
 
     samples_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
                                           tissue + '_enhancer_features_matrix.csv'))
@@ -139,13 +140,46 @@ if __name__ == '__main__':
 
         convolution_state = model_dist['convolution']
         fully_connected_state = model_dist['fully_connected']
-        delta_state = model_dist['dendronet_delta_mat']
-        root_state = model_dist['dendronet_root']
+        delta_mat = model_dist['dendronet_delta_mat']
+        root_vector = model_dist['dendronet_root']
+
+        pc_mat, nodes = create_pc_mat()
+        num_internal = 0
+        tissue_names = []
+        for node in nodes:
+            if node == 'internal node':
+                num_internal += 1
+            else:
+                tissue_names.append(node)
+        tissue_idx = tissue_names.index(tissue) + num_internal
+
+        parent_path_mat = build_parent_path_mat(pc_mat)
 
         convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
-        #dendronet = DendronetModule()
+        dendronet = DendronetModule(device=device, root_weights=root_vector, delta_mat=delta_mat,
+                                    path_mat=parent_path_mat)
         fully_connected = FCModule(device=device, layer_sizes=(embedding_size + 32, 32, 1))
+
+        fully_connected.load_state_dict(fully_connected_state)
+        convolution.load_state_dict(convolution_state)
+
+        all_test_targets = []
+        all_test_predictions = []
+        # test_error_loss = 0.0
+        for step, idx_batch in enumerate(tqdm(test_batch_gen)):
+            # y_hat = CT_specific_conv(X[idx_batch])
+            seq_features = convolution(X[idx_batch])
+            tissue_embeddings = dendronet([tissue_idx for i in range(seq_features.size()[0])])
+            y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings), 1))
+            # test_error_loss += float(loss_function(y_hat, y[idx_batch]))
+            all_test_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+            all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
+
+        # print("average error loss on test set : " + str(float(test_error_loss) / (step + 1)))
+        fpr, tpr, _ = roc_curve(all_test_targets, all_test_predictions)
+        test_roc_auc = auc(fpr, tpr)
+        print('ROC AUC on test set : ' + str(test_roc_auc))
 
     elif model == 'multi':
         dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + data_type
@@ -169,6 +203,9 @@ if __name__ == '__main__':
         convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
         fully_connected = FCModule(device=device, layer_sizes=(len(tissue_names) + 32, 32, 1))
+
+        convolution.load_state_dict(convolution_state)
+        fully_connected.load_state_dict(fully_connected_state)
 
         all_test_targets = []
         all_test_predictions = []

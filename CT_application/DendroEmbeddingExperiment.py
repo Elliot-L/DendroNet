@@ -107,6 +107,9 @@ if __name__ == '__main__':
     for enhancer in enhancers_list:
         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
+    pos_counter = 0
+    neg_counter = 0
+
     if not balanced:  # if we want to use all the samples, usually leads to heavily unbalanced dataset
         print('Using whole dataset')
         for ct in cell_names:
@@ -123,13 +126,17 @@ if __name__ == '__main__':
                 if tissue_dfs[ct].loc[enhancer, 'active'] == 1 or tissue_dfs[ct].loc[enhancer, 'repressed'] == 1:
                     enhancer_samples.append((enhancer_idx, ct_idx + num_internal_nodes,
                                              ct_idx * len(enhancers_list) + enhancer_idx))
+                    if y[ct_idx * len(enhancers_list) + enhancer_idx] == 1:
+                        pos_counter += 1
+                    else:
+                        neg_counter += 1
             packed_samples.append(enhancer_samples)
 
     else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
            # is the same, which gives us a balanced dataset
         print('Using a balanced dataset')
 
-        pos_ratios = {ct: 0 for ct in cell_names}
+        pos_counts = {ct: 0 for ct in cell_names}
 
         packed_samples = []
 
@@ -144,7 +151,6 @@ if __name__ == '__main__':
                     valid_samples += 1
                     if tissue_dfs[ct].loc[enhancer, feature] == 1:
                         pos_ratios[ct] += 1
-            pos_ratios[ct] = pos_ratios[ct] / (valid_samples - pos_ratios[ct])
 
         for j, enhancer in enumerate(enhancers_list):
             enhancer_samples = []
@@ -153,10 +159,11 @@ if __name__ == '__main__':
                     if tissue_dfs[ct].loc[enhancer, feature] == 1:
                         enhancer_samples.append((j, i + num_internal_nodes, len(y)))
                         y.append(1)
-                    rand = np.random.uniform(0.0, 1.0)
-                    if tissue_dfs[ct].loc[enhancer, feature] == 0 and rand <= pos_ratios[ct]:
+                        pos_counter += 1
+                    if tissue_dfs[ct].loc[enhancer, feature] == 0 and  <= pos_ratios[ct]:
                         enhancer_samples.append((j, i + num_internal_nodes, len(y)))
                         y.append(0)
+                        neg_counter += 1
             packed_samples.append(enhancer_samples)
 
         print(pos_ratios)
@@ -173,7 +180,7 @@ if __name__ == '__main__':
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': []}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_count': pos_counter, 'neg_count': neg_counter}
     embeddings_output = {ct: [] for ct in cell_names}
 
     for seed in seeds:
