@@ -364,7 +364,7 @@ if __name__ == '__main__':
     dir_path = os.path.join('results', 'single_tissue_experiments', args.tissue, dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
-    with open(os.path.join(dir_path, 'auc_output.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'output.json'), 'w') as outfile:
         json.dump(output, outfile)
 
     torch.save({'convolution': convolution.state_dict(),
