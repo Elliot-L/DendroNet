@@ -316,6 +316,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
             train_roc_auc = auc(fpr, tpr)
             print('ROC AUC on train set : ' + str(train_roc_auc))
+            train_steps = step + 1
 
             print("Test performance on val set for epoch on best model")
             all_val_targets = []
@@ -333,6 +334,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
             val_roc_auc = auc(fpr, tpr)
             print('ROC AUC on validation set : ' + str(val_roc_auc))
+            val_steps = step + 1
 
             print("Test performance on test set on the trained model")
             all_test_targets = []
@@ -350,10 +352,14 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_test_targets, all_test_predictions)
             test_roc_auc = auc(fpr, tpr)
             print('ROC AUC on test set : ' + str(test_roc_auc))
+            test_steps = step + 1
 
         output['train_auc'].append(train_roc_auc)
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
+        output['train_loss'].append(train_error_loss / train_steps)
+        output['val_loss'].append(val_error_loss / val_steps)
+        output['test_loss'].append(test_error_loss / test_steps)
         output['epochs'].append(epoch + 1)
 
     if not balanced:
