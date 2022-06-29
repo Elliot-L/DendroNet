@@ -65,7 +65,7 @@ if __name__ == '__main__':
                     print(tissue_file)
                     if not os.path.isfile(tissue_file or force_train):
                         command = 'python CT_specific_conv_experiment.py' \
-                                  + ' --ct ' + tissue_name \
+                                  + ' --tissue ' + tissue_name \
                                   + ' --feature ' + feature \
                                   + ' --LR ' + str(LR) \
                                   + ' --early-stopping ' + str(early_stop) \
