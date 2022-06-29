@@ -299,10 +299,10 @@ if __name__ == '__main__':
               'num_workers': 0}
 
     output = {'train_auc': [], 'val_auc': [], 'test_auc': [],
-              'tissues_used': tissue_names, 'epochs': []}
+              'tissues_used': tissue_names, 'epochs': [],
+              'train_loss': [], 'val_loss': [], 'test_loss': []}
 
     for seed in seeds:
-
         # Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(cell_names), seq_length=501,
         #                                 kernel_size=26, number_of_kernels=64, polling_window=7)
 
@@ -441,6 +441,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
             train_roc_auc = auc(fpr, tpr)
             print('ROC AUC on train set : ' + str(train_roc_auc))
+            train_steps = step + 1
 
             print("Test performance on validation set on best model:")
             val_error_loss = 0.0
@@ -461,6 +462,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
             val_roc_auc = auc(fpr, tpr)
             print('ROC AUC on validation set : ' + str(val_roc_auc))
+            val_steps = step + 1
 
             print("Test performance on test set on best model")
             test_error_loss = 0.0
@@ -481,10 +483,14 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_test_targets, all_test_predictions)
             test_roc_auc = auc(fpr, tpr)
             print('ROC AUC on test set : ' + str(test_roc_auc))
+            test_steps = step + 1
 
         output['train_auc'].append(train_roc_auc)
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
+        output['train_loss'].append(train_error_loss / train_steps)
+        output['val_loss'].append(val_error_loss / val_steps)
+        output['test_loss'].append(test_error_loss / test_steps)
         output['epochs'].append(epoch + 1)
 
     if not balanced:
@@ -494,16 +500,12 @@ if __name__ == '__main__':
     dir_path = os.path.join('results', 'multi_tissues_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
-    with open(os.path.join(dir_path, 'auc_output.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'output.json'), 'w') as outfile:
         json.dump(output, outfile)
 
     torch.save({'convolution': convolution.state_dict(),
                 'fully_connected': fully_connected.state_dict()},
                os.path.join(dir_path, 'model.pt'))
-
-    encodings_output = {}
-    for tissue, encoding in zip(tissue_names, tissue_encodings):
-        encodings_output[tissue] = torch.squeeze(encoding).cpu().tolist()
-
+    
     with open(os.path.join(dir_path, 'encoding.json'), 'w') as outfile:
-        json.dump(encodings_output, outfile)
+        json.dump(tissue_names, outfile)

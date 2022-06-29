@@ -198,7 +198,8 @@ if __name__ == '__main__':
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'epochs': []}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'epochs': [],
+              'train_loss': [], 'val_loss': [], 'test_loss': []}
     embeddings_output = {ct: [] for ct in tissue_names}
 
     for seed in seeds:
@@ -356,6 +357,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_train_targets, all_train_predictions)
             train_roc_auc = auc(fpr, tpr)
             print('ROC AUC on train set : ' + str(train_roc_auc))
+            train_steps = step + 1
 
             print("Test performance on validation set on best model:")
             all_val_targets = []
@@ -376,6 +378,7 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
             val_roc_auc = auc(fpr, tpr)
             print('ROC AUC on validation set : ' + str(val_roc_auc))
+            val_steps = step + 1
 
             print("Test performance on test set on best model:")
             all_test_targets = []
@@ -396,15 +399,19 @@ if __name__ == '__main__':
             fpr, tpr, _ = roc_curve(all_test_targets, all_test_predictions)
             test_roc_auc = auc(fpr, tpr)
             print('ROC AUC on test set : ' + str(test_roc_auc))
+            test_steps = step + 1
 
         output['train_auc'].append(train_roc_auc)
         output['val_auc'].append(val_roc_auc)
         output['test_auc'].append(test_roc_auc)
+        output['train_loss'].append(train_error_loss / train_steps)
+        output['val_loss'].append(val_error_loss / val_steps)
+        output['test_loss'].append(test_error_loss / test_steps)
         output['epochs'].append(epoch + 1)
-
+        """
         for i, tissue in enumerate(tissue_names):
-            embeddings_output[tissue].append(torch.squeeze(dendronet.get_embedding([i])).cpu().tolist)
-
+            embeddings_output[tissue].append((torch.squeeze(dendronet.get_embedding([i]))).cpu().tolist)
+        """
     if not balanced:
         dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
                   + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced'
@@ -415,7 +422,7 @@ if __name__ == '__main__':
     dir_path = os.path.join('results', 'dendronet_embedding_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
-    with open(os.path.join(dir_path, 'auc_output.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'output.json'), 'w') as outfile:
         json.dump(output, outfile)
 
     torch.save({'convolution': convolution.state_dict(),
@@ -424,5 +431,7 @@ if __name__ == '__main__':
                 'dendronet_root': dendronet.root_weights.clone().detach().cpu()},
                os.path.join(dir_path, 'model.pt'))
 
+"""
     with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
         json.dump(embeddings_output, outfile)
+"""
