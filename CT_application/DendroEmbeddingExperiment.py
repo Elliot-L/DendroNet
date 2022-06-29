@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
         train_set = IndicesDataset(train_idx)
         test_set = IndicesDataset(test_idx)
-        val_set = IndicesDataset(test_idx)
+        val_set = IndicesDataset(val_idx)
 
         train_batch_gen = DataLoader(train_set, **params)
         test_batch_gen = DataLoader(test_set, **params)
