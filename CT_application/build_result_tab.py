@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     single_tissue_data = {'tissue_name': [], 'feature': [], 'LR': [], 'early_stop': [], 'type_data': [],
                           'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': [],
-                          'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [],
+                          #'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [],
                           'average_epochs': []}
     multi_tissues_data = {'feature': [], 'LR': [], 'early_stop': [], 'type_data': [],
                           'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': [],
@@ -34,9 +34,9 @@ if __name__ == '__main__':
             average_train_auc = 0.0
             average_val_auc = 0.0
             average_test_auc = 0.0
-            average_train_loss = 0.0
-            average_val_loss = 0.0
-            average_test_loss = 0.0
+            #average_train_loss = 0.0
+            #average_val_loss = 0.0
+            #average_test_loss = 0.0
             average_epochs = 0.0
 
             for train, val, test in zip(auc_dict['train_auc'], auc_dict['val_auc'], auc_dict['test_auc']):
@@ -44,10 +44,10 @@ if __name__ == '__main__':
                 average_val_auc += val
                 average_test_auc += test
 
-            for train, val, test in zip(auc_dict['train_loss'], auc_dict['val_loss'], auc_dict['test_loss']):
-                average_train_loss += train
-                average_val_loss += val
-                average_test_loss += test
+            #for train, val, test in zip(auc_dict['train_loss'], auc_dict['val_loss'], auc_dict['test_loss']):
+             #   average_train_loss += train
+            #    average_val_loss += val
+            #    average_test_loss += test
 
             for epoch in auc_dict['epochs']:
                 average_epochs += epoch
@@ -55,9 +55,9 @@ if __name__ == '__main__':
             single_tissue_data['average_train_AUC'].append(average_train_auc / len(auc_dict['train_auc']))
             single_tissue_data['average_val_AUC'].append(average_val_auc / len(auc_dict['val_auc']))
             single_tissue_data['average_test_AUC'].append(average_test_auc / len(auc_dict['test_auc']))
-            single_tissue_data['average_train_loss'].append(average_train_loss / len(auc_dict['train_loss']))
-            single_tissue_data['average_val_loss'].append(average_val_loss / len(auc_dict['val_loss']))
-            single_tissue_data['average_test_loss'].append(average_test_loss / len(auc_dict['test_loss']))
+            #single_tissue_data['average_train_loss'].append(average_train_loss / len(auc_dict['train_loss']))
+            #single_tissue_data['average_val_loss'].append(average_val_loss / len(auc_dict['val_loss']))
+            #single_tissue_data['average_test_loss'].append(average_test_loss / len(auc_dict['test_loss']))
             single_tissue_data['average_epochs'].append(average_epochs / len(auc_dict['epochs']))
 
     single_tissues_df = pd.DataFrame(single_tissue_data)
