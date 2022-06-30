@@ -78,15 +78,16 @@ if __name__ == '__main__':
 
     y = []
     X = []
-    pos_ratio = 0
-
+    pos_count = 0
+    pos_counter = 0
+    neg_counter = 0
     valid_samples = 0
+
     for enhancer in enhancer_list:
         if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
             valid_samples += 1
             if samples_df.loc[enhancer, feature] == 1:
-                pos_ratio += 1
-    pos_ratio = pos_ratio / (valid_samples - pos_ratio)
+                pos_count += 1
 
     if not balanced:
         for enhancer in enhancer_list:
@@ -103,12 +104,14 @@ if __name__ == '__main__':
                 if samples_df.loc[enhancer, feature] == 1:
                     y.append(1)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                rand = np.random.uniform(0.0, 1.0)
-                if samples_df.loc[enhancer, feature] == 0 and rand <= pos_ratio:
+                    pos_counter += 1
+                if samples_df.loc[enhancer, feature] == 0 and neg_counter < pos_count:
                     y.append(0)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                    neg_counter += 1
 
-    print(pos_ratio)
+    print(pos_counter)
+    print(neg_counter)
     print(len(X))
     print(len(X[0]))
     print(len(y))
@@ -131,17 +134,17 @@ if __name__ == '__main__':
         embedding_size = args.embedding_size
 
         dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
-                    + '_' + str(embedding_size) + '_' + str(early_stop) + data_type
+                   + '_' + str(embedding_size) + '_' + str(early_stop) + data_type
         print('Using Dendronet from dir: ' + dir_name)
 
         model_file = os.path.join('results', 'dendronet_embedding_experiments', dir_name, 'model.pt')
 
-        model_dist = torch.load(model_file)
+        model_dict = torch.load(model_file)
 
-        convolution_state = model_dist['convolution']
-        fully_connected_state = model_dist['fully_connected']
-        delta_mat = model_dist['dendronet_delta_mat']
-        root_vector = model_dist['dendronet_root']
+        convolution_state = model_dict['convolution']
+        fully_connected_state = model_dict['fully_connected']
+        delta_mat = model_dict['dendronet_delta_mat']
+        root_vector = model_dict['dendronet_root']
 
         pc_mat, nodes = create_pc_mat()
         num_internal = 0

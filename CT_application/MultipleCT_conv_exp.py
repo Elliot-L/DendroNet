@@ -41,7 +41,7 @@ if __name__ == '__main__':
     """
     parser.add_argument('--tissues', type=str, nargs='+', default=[], help='if empty, we take all available datasets')
     parser.add_argument('--feature', type=str, default='active')
-    parser.add_argument('--LR', type=float, default=0.001)
+    parser.add_argument('--LR', type=float, default=0.0001)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
@@ -306,7 +306,7 @@ if __name__ == '__main__':
         # Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(cell_names), seq_length=501,
         #                                 kernel_size=26, number_of_kernels=64, polling_window=7)
 
-        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
+        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(128, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
         fully_connected = FCModule(device=device, layer_sizes=(len(tissue_encodings[0]) + 32, 32, 1))
 
