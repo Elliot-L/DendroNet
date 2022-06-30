@@ -1,46 +1,32 @@
 import os
 import pandas as pd
+import json
 import argparse
 from tqdm import tqdm
-import numpy as np
-import json
-from sklearn.metrics import roc_curve, auc
-import copy
-
-import torch
-from torch.utils.data.dataloader import DataLoader
-import torch.optim
 import torch.nn as nn
+import torch
+from sklearn.metrics import roc_curve, auc
+import torch.optim
+from torch.utils.data.dataloader import DataLoader
 
-# Local imports
-from models.CT_conv_model import SeqConvModule, FCModule, CTspecificConvNet, SimpleCTspecificConvNet
+from models.CT_conv_model import SeqConvModule, FCModule
 from utils.model_utils import split_indices, IndicesDataset
 
 
-def get_one_hot_encoding(seq):
-    # (A,G,T,C), ex: A = (1, 0, 0, 0), T = (0, 0, 1, 0)
-    encoding = []
-    for c in seq:
-        if c == 'A':
-            encoding.append([1, 0, 0, 0])
-        elif c == 'G':
-            encoding.append([0, 1, 0, 0])
-        elif c == 'T':
-            encoding.append([0, 0, 1, 0])
-        elif c == 'C':
-            encoding.append([0, 0, 0, 1])
-    return encoding
+def amino_acid_encoding(order, seq):
+    new_seq = []
+    for aa in seq:
+        new_seq.append([1 if aa == aa_opt else 0 for aa_opt in order])
+    return new_seq
+
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tissue', type=str, default='ovary')
-    parser.add_argument('--feature', type=str, default='active')
-    parser.add_argument('--LR', type=float, default=0.0001)
+    parser.add_argument('--species', type=str, default='Escherichia coli')
+    parser.add_argument('--LR', type=float, default=0.001)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
-    # parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
     parser.add_argument('--balanced', default=True, action='store_true')
     parser.add_argument('--unbalanced', dest='balanced', action='store_false')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
@@ -49,12 +35,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    tissue = args.tissue
+    species = args.species
     LR = args.LR
-    USE_CUDA = args.GPU
     BATCH_SIZE = args.BATCH_SIZE
+    USE_CUDA = args.GPU
     balanced = args.balanced
-    feature = args.feature
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
@@ -62,141 +47,35 @@ if __name__ == '__main__':
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
-    samples_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                          tissue + '_enhancer_features_matrix.csv'))
+    with open(os.path.join('data_files', 'amino_acids.json'), 'r') as aa_file:
+        aa_list = json.load(aa_file)
+    print(aa_list)
 
-    with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as e_file:
-        enhancers_dict = json.load(e_file)
+    with open(os.path.join('data_files', 'peptide_seqs.json'), 'r') as p_file:
+        peptide_dict = json.load(p_file)
 
-    enhancer_list = enhancers_dict.keys()
+    species_file = os.path.join('data_files', 'species_datasets',
+                                species.split(' ')[0] + '_' + species.split(' ')[1] + '_dataset.csv')
+    species_df = pd.read_csv(species_file)
+    print(species_df)
 
-    samples_df.set_index('cCRE_id', inplace=True)
-    samples_df = samples_df.loc[enhancer_list]
-
-    y = []
     X = []
+    y = []
     pos_count = 0
-    pos_counter = 0
-    neg_counter = 0
+    total_count = 0
 
-    total_valid = 0
-    for enhancer in enhancer_list:
-        if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-            total_valid += 1
-            if samples_df.loc[enhancer, feature] == 1:
-                pos_count += 1
-
-    print(pos_count)
-    print(total_valid)
-
-    if not balanced:
-        print('Unbalanced dataset')
-        for enhancer in enhancer_list:
-            if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-                if samples_df.loc[enhancer, feature] == 0:
-                    y.append(0)
-                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                    neg_counter += 1
-                if samples_df.loc[enhancer, feature] == 1:
-                    y.append(1)
-                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                    pos_counter += 1
-    else:
-        print('Balanced dataset')
-        if (pos_count / total_valid) <= 0.5:
-            for enhancer in enhancer_list:
-                if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-                    if samples_df.loc[enhancer, feature] == 1:
-                        y.append(1)
-                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                        pos_counter += 1
-                    if samples_df.loc[enhancer, feature] == 0 and neg_counter < pos_count:
-                        neg_counter += 1
-                        y.append(0)
-                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-        else:
-            neg_count = total_valid - pos_count
-            for enhancer in enhancer_list:
-                if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-                    if samples_df.loc[enhancer, feature] == 1 and pos_counter < neg_count:
-                        pos_counter += 1
-                        y.append(1)
-                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                    if samples_df.loc[enhancer, feature] == 0:
-                        y.append(0)
-                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                        neg_counter += 1
-
-    print(pos_counter)
-    print(neg_counter)
+    for row in range(species_df.shape[0]):
+        X.append(amino_acid_encoding(aa_list, peptide_dict[species_df.loc[row, 'IDs']]))
+        y.append(species_df.loc[row, 'label'])
+        if species_df.loc[row, 'label'] == 1:
+            pos_count += 1
+        total_count += 1
+        
     print(len(X))
-    print(len(X[0]))
-    print(len(y))
-    """
-    # TEST 1 : Adding motifs to the positive and/or negative sequences for testing purposes
-    
-    for i in range(len(X)):
-        motif_pos = get_one_hot_encoding('AGAGAGAGAGAGAGAGAGAG')
-        motif_neg = get_one_hot_encoding('TCTCTCTCTCTCTCTCTCTC')
-        if y[i] == 1:
-            X[i] = X[i][0:120] + motif_pos + X[i][140:501]
-        if y[i] == 0:
-            X[i] = X[i][0:347] + motif_neg + X[i][367:501]
-    """
-    """
-    # TEST 2 : Adding motifs to the positive and/or negative sequences for testing purposes.
-    # This time though, two different sequences, at random, are associated with each class
-
-    motif_pos1 = get_one_hot_encoding('AGTCGCTAGATCGATCGGCA')
-    motif_pos2 = get_one_hot_encoding('AGTCGCTAGATCGATCGGCA')
-    motif_neg1 = get_one_hot_encoding('GATAGCTAGATGCTGGATGC')
-    motif_neg2 = get_one_hot_encoding('TATATGATAGACTAGCTCAA')
-    for i in range(len(X)):
-        rand = np.random.uniform(0.0, 1.0)
-        if y[i] == 1 and rand >= 0.5:
-            X[i] = X[i][0:120] + motif_pos1 + X[i][140:501]
-        if y[i] == 1 and rand < 0.5:
-            X[i] = X[i][0:420] + motif_pos2 + X[i][440:501]
-        if y[i] == 0 and rand >= 0.5:
-            X[i] = X[i][0:247] + motif_neg1 + X[i][267:501]
-        if y[i] == 0 and rand < 0.5:
-            X[i] = X[i][0:347] + motif_neg2 + X[i][367:501]
-    """
-    """
-    # Test 3 : Adding motifs, but also a specific syntax that determines the class of the sequence
-
-    motif1 = get_one_hot_encoding('AGTTTGCTAG')  # len = 10
-    motif2 = get_one_hot_encoding('AGTCGCCCTAGCA')  # len = 13
-    motif3 = get_one_hot_encoding('GCTAG')  # len = 5
-    motif4 = get_one_hot_encoding('AGGCATAAAGTGC')  # len = 13
-    motif5 = get_one_hot_encoding('TATCCAG')  # len = 7
-    motif6 = get_one_hot_encoding('ACCTACGCTAAA')  # len = 12
-    
-    for i in range(len(X)):
-        rand = np.random.uniform(0.0, 1.0)
-        if y[i] == 1 and rand >= 0.5:
-            X[i] = X[i][0:30] + motif1 + X[i][40:501]
-            X[i] = X[i][0:165] + motif2 + X[i][178:501]
-            X[i] = X[i][0:250] + motif3 + X[i][255:501]
-        if y[i] == 1 and rand < 0.5:
-            X[i] = X[i][0:100] + motif3 + X[i][105:501]
-            X[i] = X[i][0:130] + motif4 + X[i][143:501]
-            X[i] = X[i][0:160] + motif5 + X[i][167:501]
-            X[i] = X[i][0:190] + motif6 + X[i][202:501]
-        if y[i] == 0 and rand >= 0.5:
-            X[i] = X[i][0:30] + motif1 + X[i][40:501]
-            X[i] = X[i][0:165] + motif3 + X[i][170:501]
-            X[i] = X[i][0:250] + motif2 + X[i][263:501]
-        if y[i] == 0 and rand < 0.5:
-            X[i] = X[i][0:100] + motif3 + X[i][105:501]
-            X[i] = X[i][0:130] + motif2 + X[i][143:501]
-            X[i] = X[i][0:160] + motif5 + X[i][167:501]
-            X[i] = X[i][0:190] + motif6 + X[i][202:501]
-    """
-    print(len(X))
+    print(X[0])
     print(len(y))
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_ratio': (pos_count/total_valid), 'epochs': []}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_ratio': (pos_count / total_count), 'epochs': []}
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
@@ -215,8 +94,8 @@ if __name__ == '__main__':
 
         fully_connected = FCModule(device=device, layer_sizes=(32, 32, 1))
 
-        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
-                                    polling_windows=(3, 4), input_channels=4)
+        convolution = SeqConvModule(device=device, seq_length=101, kernel_sizes=(5,), num_of_kernels=(128,),
+                                    polling_windows=(), input_channels=len(aa_list))
 
         train_idx, test_idx = split_indices(range(len(X)), seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=seed)
@@ -232,8 +111,8 @@ if __name__ == '__main__':
         loss_function = nn.BCELoss()
         if torch.cuda.is_available() and USE_CUDA:
             loss_function = loss_function.cuda()
-        optimizer = torch.optim.Adam(list(convolution.parameters()) + list(fully_connected.parameters())
-                                     , lr=LR)
+        optimizer = torch.optim.Adam(list(convolution.parameters()) + list(fully_connected.parameters()),
+                                     lr=LR)
 
         best_val_auc = 0
         early_stop_count = 0
@@ -376,4 +255,5 @@ if __name__ == '__main__':
     torch.save({'convolution': convolution.state_dict(),
                 'fully_connected': fully_connected.state_dict()},
                os.path.join(dir_path, 'model.pt'))
+
 
