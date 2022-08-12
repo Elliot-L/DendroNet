@@ -242,10 +242,10 @@ class SeqConvModule(nn.Module):
         for layer in range(self.num_of_layers):
             if layer == 0:
                 conv_layer = nn.Conv1d(self.input_channels, self.num_of_kernels[layer],
-                                       self.kernel_sizes[layer]) #, device=device)
+                                       self.kernel_sizes[layer], device=device)
             else:
                 conv_layer = nn.Conv1d(self.num_of_kernels[layer-1], self.num_of_kernels[layer],
-                                       self.kernel_sizes[layer]) #, device=device)
+                                       self.kernel_sizes[layer], device=device)
             poll_layer = nn.MaxPool1d(self.polling_windows[layer])
 
             self.conv_layer_list.append(conv_layer)
@@ -317,7 +317,7 @@ class FCModule(nn.Module):
         self.linear_layers = nn.ModuleList()
 
         for layer in range(len(layer_sizes) - 1):
-            lin_layer = self.fc1 = nn.Linear(layer_sizes[layer], layer_sizes[layer + 1]) #, device=device)
+            lin_layer = self.fc1 = nn.Linear(layer_sizes[layer], layer_sizes[layer + 1], device=device)
             self.linear_layers.append(lin_layer)
 
     def forward(self, x):
