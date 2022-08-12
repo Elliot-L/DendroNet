@@ -16,7 +16,7 @@ if __name__ == '__main__':
         for col in ct_df.columns[1:]:
             ct_array.extend(list(ct_df.loc[:, col]))
         """
-        data_array.append((list(ct_df.loc[:, 'nonCTCF']))[0:4000])
+        data_array.append((list(ct_df.loc[:, 'active']))[4000:8000])
 
     data_array = np.array(data_array)
     print(data_array)

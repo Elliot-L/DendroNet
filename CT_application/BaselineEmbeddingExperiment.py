@@ -4,6 +4,7 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 import json
+import jsonpickle
 from sklearn.metrics import roc_curve, auc
 import copy
 
@@ -13,12 +14,13 @@ import torch.optim
 import torch.nn as nn
 
 # Local imports
-from models.CT_conv_model import SeqConvModule, FCModule, MultiCTConvNet
-from utils.model_utils import split_indices, IndicesDataset
+from models.CT_conv_model import EmbeddingBaselineModule, SeqConvModule, FCModule
+from utils.model_utils import split_indices, IndicesDataset, build_parent_path_mat
+from Create_Tree_image import create_pc_mat
 
 
 def get_one_hot_encoding(seq):
-    #  (A,G,T,C), ex: A = (1, 0, 0, 0), T = (0, 0, 1, 0)
+    # (A,G,T,C), ex: A = (1, 0, 0, 0), T = (0, 0, 1, 0)
     encoding = []
     for c in seq:
         if c == 'A':
@@ -31,24 +33,21 @@ def get_one_hot_encoding(seq):
             encoding.append([0, 0, 0, 1])
     return encoding
 
+
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
-    """
-    parser.add_argument('--cts', type=str, nargs='+', default=['vagina', 'adrenal_gland', 'prostate_gland',
-                                                               'sigmoid_colon', 'testis', 'stomach',
-                                                               'uterus', 'tibial_nerve', 'spleen'],
-                        help='if empty, we take all available datasets')
-    """
-    parser.add_argument('--tissues', type=str, nargs='+', default=['vagina', 'adrenal_gland', 'prostate_gland'], help='if empty, we take all available datasets')
-    #parser.add_argument('--tissues', type=str, nargs='+', default=[], help='if empty, we take all available datasets')
     parser.add_argument('--feature', type=str, default='active')
-    parser.add_argument('--LR', type=float, default=0.0001)
+    parser.add_argument('--LR', type=float, default=0.001)
+    parser.add_argument('--EL', type=float, default=0.0)
+    # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
     parser.add_argument('--BATCH-SIZE', type=int, default=128)
     # parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
     parser.add_argument('--balanced', default=True, action='store_true')
     parser.add_argument('--unbalanced', dest='balanced', action='store_false')
+    parser.add_argument('--embedding-size', type=int, default=2)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
@@ -57,10 +56,11 @@ if __name__ == '__main__':
 
     feature = args.feature
     LR = args.LR
+    EL = args.EL
     BATCH_SIZE = args.BATCH_SIZE
     USE_CUDA = args.GPU
     balanced = args.balanced
-    tissue_names = args.tissues
+    embedding_size = args.embedding_size
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
@@ -68,23 +68,18 @@ if __name__ == '__main__':
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
-    if not tissue_names:
-        print('using all cell types')
-        tissue_names = []
-        for ct_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
-            t_name = ct_file[0:-29]
-            tissue_names.append(t_name)
-
     with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as enhancers_file:
         enhancers_dict = json.load(enhancers_file)
 
+    tissue_names = []
     X = []
     y = []
-    tissue_encodings = []
+
+    for tissue_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
+        tissue_names.append(tissue_file[0:-29])
 
     enhancers_list = list(enhancers_dict.keys())
-    num_enhancers = len(enhancers_list)
-    print(len(enhancers_list))
+
     print(tissue_names)
 
     tissue_dfs = {}
@@ -98,14 +93,11 @@ if __name__ == '__main__':
     for enhancer in enhancers_list:
         X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
 
-    for t in range(len(tissue_names)):
-        tissue_encodings.append([1 if j == t else 0 for j in range(len(tissue_names))])
-
-    pos_counts = {ct: 0 for ct in tissue_names}
-    neg_counts = {ct: 0 for ct in tissue_names}
-    valid_counts = {ct: 0 for ct in tissue_names}
-    pos_counters = {ct: 0 for ct in tissue_names}
-    neg_counters = {ct: 0 for ct in tissue_names}
+    pos_counts = {t: 0 for t in tissue_names}
+    neg_counts = {t: 0 for t in tissue_names}
+    valid_counts = {t: 0 for t in tissue_names}
+    pos_counters = {t: 0 for t in tissue_names}
+    neg_counters = {t: 0 for t in tissue_names}
 
     for t in tissue_names:
         for enhancer in enhancers_list:
@@ -113,28 +105,26 @@ if __name__ == '__main__':
                 valid_counts[t] += 1
                 if tissue_dfs[t].loc[enhancer, feature] == 1:
                     pos_counts[t] += 1
+
     for t in tissue_names:
         neg_counts[t] = valid_counts[t] - pos_counts[t]
 
     print(pos_counts)
     print(neg_counts)
     print(valid_counts)
+    pos_ratios = {t: pos_counts[t]/valid_counts[t] for t in tissue_names}
+    print(pos_ratios)
 
-    if not balanced:  # if we want to use all the samples, usually leads to unbalanced dataset
+    if not balanced:  # if we want to use all the samples, usually leads to heavily unbalanced dataset
         print('Using whole dataset')
-
         for t in tissue_names:
             y.extend(list(tissue_dfs[t].loc[:, feature]))
+            print(len(y))
+        # the list "samples" is a list of tuples each representing a sample. The first
+        # entry is the row of the X matrix. The second is the index of the cell type in the
+        # parent path matrix and the third is the index of the target in the y vector.
 
         packed_samples = []
-
-        # Samples are stored as tuples with 3 entries here. The first
-        # entry is the row of the X matrix. The second is the index of the cell type.
-        # the third is the index of the target in the y vector.
-        # The list packed samples allows us to put samples associated with the same enhancer sequences
-        # in the same dataset (train, val, test). This is necessary as the the label of enhancers is highly correlated
-        # across tissue types (if enhancer i is labelled as active, it is very likely that it is labelled as active in
-        # most other tissue types as well)
 
         for enhancer_idx in range(len(enhancers_list)):
             enhancer_samples = []
@@ -155,16 +145,14 @@ if __name__ == '__main__':
         packed_samples = []
 
         # the list "samples" is a list of tuples each representing a sample. The first
-        # entry is the row of the X matrix. The second is the index of the cell type.
-        # The third is the index of the target in the y vector.
-
-        pos_ratios = {t: (pos_counts[t]/valid_counts[t]) for t in tissue_names}
+        # entry is the row of the X matrix. The second is the index of the cell type in the
+        # parent path matrix and the third is the index of the target in the y vector.
 
         for j, enhancer in enumerate(enhancers_list):
             enhancer_samples = []
             for i, t in enumerate(tissue_names):
                 if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                    if (pos_ratios[t]) <= 0.5:
+                    if pos_ratios[t] <= 0.5:
                         if tissue_dfs[t].loc[enhancer, feature] == 1:
                             enhancer_samples.append((j, i, len(y)))
                             y.append(1)
@@ -187,135 +175,32 @@ if __name__ == '__main__':
     print(pos_counters)
     print(neg_counters)
     print(len(X))
+    print(len(X[0]))
     print(len(y))
-    print(len(tissue_encodings))
-    print(len(packed_samples))
 
-    """
-    # TEST 1 : Adding motifs to the positive and/or negative sequences for testing purposes
-    motif_pos = get_one_hot_encoding('AGTCGCTAGATCGATCGGCA')
-    motif_neg = get_one_hot_encoding('AGCGTGCTAGATGGCTGCTG')
-    for i in range(len(X)):
-        # if y[i] == 1:
-        #    X[i] = X[i][0:120] + motif_pos + X[i][140:501]
-        if y[i] == 0:
-            X[i] = X[i][0:347] + motif_neg + X[i][367:501]
-    """
-    """
-    # TEST 2 : Adding motifs to the positive and/or negative sequences for testing purposes.
-    # This time though, two different sequences, at random, are associated with each class
-
-    motif_pos1 = get_one_hot_encoding('AGTCGCTAGATCGATCGGCA')
-    motif_pos2 = get_one_hot_encoding('AGTCGCTAGATCGATCGGCA')
-    motif_neg1 = get_one_hot_encoding('GATAGCTAGATGCTGGATGC')
-    motif_neg2 = get_one_hot_encoding('TATATGATAGACTAGCTCAA')
-    for i in range(len(X)):
-        rand = np.random.uniform(0.0, 1.0)
-        if y[i] == 1 and rand >= 0.5:
-            X[i] = X[i][0:120] + motif_pos1 + X[i][140:501]
-        if y[i] == 1 and rand < 0.5:
-            X[i] = X[i][0:420] + motif_pos2 + X[i][440:501]
-        if y[i] == 0 and rand >= 0.5:
-            X[i] = X[i][0:247] + motif_neg1 + X[i][267:501]
-        if y[i] == 0 and rand < 0.5:
-            X[i] = X[i][0:347] + motif_neg2 + X[i][367:501]
-    """
-    """
-    # TEST 3 : Adding motifs to the positive and/or negative sequences for testing purposes
-    # In this case, the motifs are cell specific to test the capacity of the model
-    # to detect such motifs.
-    
-    motif1 = get_one_hot_encoding('AGAGAGAGAGAGAGAGAGAG')
-    motif2 = get_one_hot_encoding('TCTCTCTCTCTCTCTCTCTC')
-    motif3 = get_one_hot_encoding('AAAAAAAAGGGAAAAAAAAA')
-    motif4 = get_one_hot_encoding('GGGGGGGGTCTGGGGGGGGG')
-    motif5 = get_one_hot_encoding('CCCCCCCCCCTTTTTTTTTT')
-    motif6 = get_one_hot_encoding('AAGGAAGGAAGGAAGGTTTT')
-    motif7 = get_one_hot_encoding('ACTGACTGACTGACTGACTG')
-    motif8 = get_one_hot_encoding('ACGTGATAGCTAGCTACGTA')
-    motif9 = get_one_hot_encoding('AGTACTCATAAACTGCTAGA')
-    motif10 = get_one_hot_encoding('ACCCCCCCTCCCCCCCCCGC')
-    for i in range(len(X)):
-        if y[i] == 1 and cell_encodings[i] == [1, 0, 0, 0, 0]:
-            X[i] = X[i][0:120] + motif1 + X[i][140:501]
-        if y[i] == 0 and cell_encodings[i] == [1, 0, 0, 0, 0]:
-            X[i] = X[i][0:347] + motif2 + X[i][367:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 1, 0, 0, 0]:
-            X[i] = X[i][0:113] + motif3 + X[i][133:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 1, 0, 0, 0]:
-            X[i] = X[i][0:453] + motif4 + X[i][473:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 0, 1, 0, 0]:
-            X[i] = X[i][0:1] + motif5 + X[i][21:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 0, 1, 0, 0]:
-            X[i] = X[i][0:233] + motif6 + X[i][253:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 0, 0, 1, 0]:
-            X[i] = X[i][0:411] + motif7 + X[i][431:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 0, 0, 1, 0]:
-            X[i] = X[i][0:17] + motif8 + X[i][37:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 0, 0, 0, 1]:
-            X[i] = X[i][0:403] + motif9 + X[i][423:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 0, 0, 0, 1]:
-            X[i] = X[i][0:76] + motif10 + X[i][96:501]
-    """
-    """
-     # TEST 4 (THE ULTIMATE TEST!!!) : Adding motifs to the positive and/or negative sequences for testing purposes
-    # In this case, the motifs are cell specific to test the capacity of the model
-    # to detect such motifs. However, differently than in Test 3, the same motif can have different
-    # meaning in different cell types. A motif that indicates a positive sequence in cell type 1 
-    # could be an indicator that the sequence is negative in cell type 2.
-    
-    motif1 = get_one_hot_encoding('GATAGCTAGCTCGATAGCGT')  # same as motif 3 and 10
-    motif2 = get_one_hot_encoding('ATGATAGCTAGATCGATAGA')  # same as motif 8 and 9
-    motif3 = get_one_hot_encoding('GATAGCTAGCTCGATAGCGT')
-    motif4 = get_one_hot_encoding('CTCCGATGACTCGGATGCAC')  # same as motif 7
-    motif5 = get_one_hot_encoding('TTCGATCGCTGATCGATCGA')  # unique
-    motif6 = get_one_hot_encoding('TAGCTGGCTCGGAAACGCTG')  # unique
-    motif7 = get_one_hot_encoding('CTCCGATGACTCGGATGCAC')
-    motif8 = get_one_hot_encoding('ATGATAGCTAGATCGATAGA')
-    motif9 = get_one_hot_encoding('ATGATAGCTAGATCGATAGA')
-    motif10 = get_one_hot_encoding('GATAGCTAGCTCGATAGCGT')
-    for i in range(len(X)):
-        if y[i] == 1 and cell_encodings[i] == [1, 0, 0, 0, 0]:
-            X[i] = X[i][0:120] + motif1 + X[i][140:501]
-        if y[i] == 0 and cell_encodings[i] == [1, 0, 0, 0, 0]:
-            X[i] = X[i][0:347] + motif2 + X[i][367:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 1, 0, 0, 0]:
-            X[i] = X[i][0:113] + motif3 + X[i][133:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 1, 0, 0, 0]:
-            X[i] = X[i][0:453] + motif4 + X[i][473:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 0, 1, 0, 0]:
-            X[i] = X[i][0:1] + motif5 + X[i][21:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 0, 1, 0, 0]:
-            X[i] = X[i][0:233] + motif6 + X[i][253:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 0, 0, 1, 0]:
-            X[i] = X[i][0:411] + motif7 + X[i][431:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 0, 0, 1, 0]:
-            X[i] = X[i][0:17] + motif8 + X[i][37:501]
-        if y[i] == 1 and cell_encodings[i] == [0, 0, 0, 0, 1]:
-            X[i] = X[i][0:403] + motif9 + X[i][423:501]
-        if y[i] == 0 and cell_encodings[i] == [0, 0, 0, 0, 1]:
-            X[i] = X[i][0:76] + motif10 + X[i][96:501]
-    """
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
     y = torch.tensor(y, dtype=torch.float, device=device)
-    tissue_encodings = torch.tensor(tissue_encodings, dtype=torch.float, device=device)
 
     params = {'batch_size': BATCH_SIZE,
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [],
-              'tissues_used': tissue_names, 'epochs': [],
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'epochs': [],
               'train_loss': [], 'val_loss': [], 'test_loss': []}
+    embeddings_output = {t: [] for t in tissue_names}
 
     for seed in seeds:
-        # Multi_CT_conv = MultiCTConvNet(device=device, num_cell_types=len(cell_names), seq_length=501,
-        #                                 kernel_size=26, number_of_kernels=64, polling_window=7)
+        # The three subparts of the model:
 
-        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(128, 64, 32),
+        embeddings_mat = np.zeros(shape=(len(tissue_names), embedding_size))
+
+        embedding_model = EmbeddingBaselineModule(device=device, embeddings_mat=embeddings_mat)
+
+        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
-        fully_connected = FCModule(device=device, layer_sizes=(len(tissue_encodings) + 32, 32, 1))
+
+        fully_connected = FCModule(device=device, layer_sizes=(embedding_size + 32, 32, 1))
 
         packed_train_idx, packed_test_idx = split_indices(packed_samples, seed=0)
         packed_train_idx, packed_val_idx = split_indices(packed_train_idx, seed=seed)
@@ -348,37 +233,45 @@ if __name__ == '__main__':
         loss_function = nn.BCELoss()
         if torch.cuda.is_available() and USE_CUDA:
             loss_function = loss_function.cuda()
-        optimizer = torch.optim.Adam(list(convolution.parameters()) + list(fully_connected.parameters())
-                                     , lr=LR)
+        optimizer = torch.optim.Adam(list(embedding_model.parameters()) + list(convolution.parameters())
+                                     + list(fully_connected.parameters()), lr=LR)
 
         best_val_auc = 0
         early_stop_count = 0
 
-        for epoch in range(epochs):
+        for epoch in range(3):
             print("Epoch " + str(epoch))
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
+                # print(y[idx_batch])
                 X_idx = idx_batch[0]
-                cell_idx = idx_batch[1]
+                tissue_idx = idx_batch[1]
                 y_idx = idx_batch[2]
-                #y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
+                tissue_embeddings = embedding_model(tissue_idx)
+                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
+                # print(y_hat)
+                # error_loss = loss_function(y_hat, y[idx_batch])
                 error_loss = loss_function(y_hat, y[y_idx])
-                error_loss.backward(retain_graph=True)
+                embedding_loss = embedding_model.embedding_loss(tissue_idx)
+                train_loss = error_loss + EL*embedding_loss
+                # print("error loss on batch: " + str(float(error_loss)))
+                train_loss.backward(retain_graph=True)
                 optimizer.step()
+                # print(CT_specific_conv.convLayer.weight)
+                # print(torch.max(CT_specific_conv.convLayer.weight.grad))
             with torch.no_grad():
                 print("Test performance on train set for epoch " + str(epoch))
-                train_error_loss = 0.0
                 all_train_targets = []
                 all_train_predictions = []
+                train_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                     X_idx = idx_batch[0]
-                    cell_idx = idx_batch[1]
+                    tissue_idx = idx_batch[1]
                     y_idx = idx_batch[2]
-                    # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                     seq_features = convolution(X[X_idx])
-                    y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
+                    tissue_embeddings = embedding_model(tissue_idx)
+                    y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
                     train_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -389,16 +282,16 @@ if __name__ == '__main__':
                 print('ROC AUC on train set : ' + str(train_roc_auc))
 
                 print("Test performance on validation set for epoch " + str(epoch))
-                val_error_loss = 0.0
                 all_val_targets = []
                 all_val_predictions = []
+                val_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(val_batch_gen)):
                     X_idx = idx_batch[0]
-                    cell_idx = idx_batch[1]
+                    tissue_idx = idx_batch[1]
                     y_idx = idx_batch[2]
-                    # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                     seq_features = convolution(X[X_idx])
-                    y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
+                    tissue_embeddings = embedding_model(tissue_idx)
+                    y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
                     val_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -414,6 +307,8 @@ if __name__ == '__main__':
                     early_stop_count = 0
                     best_convolution_state = copy.deepcopy(convolution.state_dict())
                     best_fc_state = copy.deepcopy(fully_connected.state_dict())
+                    best_embeddings_mat = embedding_model.embeddings_mat.clone().detach().cpu()
+
                 else:
                     early_stop_count += 1
                     print('The performance hasn\'t improved for ' + str(early_stop_count) + ' epoches')
@@ -426,20 +321,21 @@ if __name__ == '__main__':
         with torch.no_grad():
             # After training completed, we retrieve the model's components that led to the best performance on the
             # validation set
+            embedding_model = EmbeddingBaselineModule(device, best_embeddings_mat)
             convolution.load_state_dict(best_convolution_state)
             fully_connected.load_state_dict(best_fc_state)
 
-            print("Test performance on train set on best model")
-            train_error_loss = 0.0
+            print("Test performance on train set on best model: ")
             all_train_targets = []
             all_train_predictions = []
+            train_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 X_idx = idx_batch[0]
-                cell_idx = idx_batch[1]
+                tissue_idx = idx_batch[1]
                 y_idx = idx_batch[2]
-                # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
+                tissue_embeddings = embedding_model(tissue_idx)
+                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
                 train_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -451,16 +347,16 @@ if __name__ == '__main__':
             train_steps = step + 1
 
             print("Test performance on validation set on best model:")
-            val_error_loss = 0.0
             all_val_targets = []
             all_val_predictions = []
+            val_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(val_batch_gen)):
                 X_idx = idx_batch[0]
-                cell_idx = idx_batch[1]
+                tissue_idx = idx_batch[1]
                 y_idx = idx_batch[2]
-                # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
+                tissue_embeddings = embedding_model(tissue_idx)
+                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
                 val_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -471,17 +367,17 @@ if __name__ == '__main__':
             print('ROC AUC on validation set : ' + str(val_roc_auc))
             val_steps = step + 1
 
-            print("Test performance on test set on best model")
-            test_error_loss = 0.0
+            print("Test performance on test set on best model:")
             all_test_targets = []
             all_test_predictions = []
+            test_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(test_batch_gen)):
                 X_idx = idx_batch[0]
-                cell_idx = idx_batch[1]
+                tissue_idx = idx_batch[1]
                 y_idx = idx_batch[2]
-                # y_hat = Multi_CT_conv(X[X_idx], cell_encodings[cell_idx])
                 seq_features = convolution(X[X_idx])
-                y_hat = fully_connected(torch.cat((seq_features, tissue_encodings[cell_idx]), 1))
+                tissue_embeddings = embedding_model(tissue_idx)
+                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
                 test_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_test_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -500,17 +396,27 @@ if __name__ == '__main__':
         output['test_loss'].append(test_error_loss / test_steps)
         output['epochs'].append(epoch + 1)
 
+        for i, tissue in enumerate(tissue_names):
+            embedding = (torch.squeeze(embedding_model.forward([i]))).cpu().tolist()
+            embeddings_output[tissue].append(embedding)
+
     if not balanced:
-        dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_unbalanced'
+        dir_name = feature + '_' + str(LR) + '_' + str(EL) \
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced'
     else:
-        dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced'
-    dir_path = os.path.join('results', 'multi_tissues_experiments', dir_name)
+        dir_name = feature + '_' + str(LR) + '_' + str(EL) \
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced'
+
+    dir_path = os.path.join('results', 'baseline_embedding_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
     with open(os.path.join(dir_path, 'output.json'), 'w') as outfile:
         json.dump(output, outfile)
 
     torch.save({'convolution': convolution.state_dict(),
-                'fully_connected': fully_connected.state_dict()},
-               os.path.join(dir_path, 'model.pt'))
+                'fully_connected': fully_connected.state_dict(),
+                'embeddings_mat': embedding_model.embeddings_mat.clone().detach().cpu()},
+                os.path.join(dir_path, 'model.pt'))
 
+    with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
+        json.dump(embeddings_output, outfile)

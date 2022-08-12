@@ -143,9 +143,6 @@ if __name__ == '__main__':
     num_nodes = len(parent_child[0])
     num_edges = len(parent_path_tensor)
 
-    root_weights = np.zeros(shape=num_features)
-    edge_tensor_matrix = np.zeros(shape=(num_features, num_edges))
-
     train_auc_output = []
     test_auc_output = []
     val_auc_output = []
@@ -159,6 +156,8 @@ if __name__ == '__main__':
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
         """
+        root_weights = np.zeros(shape=num_features)
+        edge_tensor_matrix = np.zeros(shape=(num_features, num_edges))
 
         dendronet = DendroMatrixLinReg(device, root_weights, parent_path_tensor, edge_tensor_matrix)
         best_root_weights = dendronet.root_weights

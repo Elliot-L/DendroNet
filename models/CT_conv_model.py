@@ -23,7 +23,7 @@ class SimpleCTspecificConvNet(nn.Module):
         self.initial_channels = initial_channels
 
         # We take in an input of length L, with 4 channels (input shape is (n,4,L), where n is batch size)
-        self.convLayer1 = nn.Conv1d(self.initial_channels, self.num_of_kernels, self.kernel_size, device=device)
+        self.convLayer1 = nn.Conv1d(self.initial_channels, self.num_of_kernels, self.kernel_size) #, device=device)
         # we get an output of length L - k1 + 1, with m1 channels(number of kernels), output shape is (n,m,L - k + 1)
 
         # we perform max polling for each convolution
@@ -37,8 +37,8 @@ class SimpleCTspecificConvNet(nn.Module):
         fully connected part
         """
         self.fc1 = nn.Linear(self.num_of_kernels*(int((self.seq_length - self.kernel_size + 1)/self.polling_window)),
-                             32, device=device)
-        self.fc2 = nn.Linear(32, 1, device=device)
+                             32,) # device=device)
+        self.fc2 = nn.Linear(32, 1,) # device=device)
 
     def forward(self, x):
         p = False
@@ -84,7 +84,7 @@ class CTspecificConvNet(nn.Module):
 
         # We take in an input of length L, with 4 channels (input shape is (n,4,L), where n is batch size)
         self.convLayer1 = nn.Conv1d(self.initial_channels, self.num_of_kernels[0],
-                                    self.kernel_size[0], device=device)
+                                    self.kernel_size[0]) #, device=device)
         # we get an output of length L - k1 + 1, with m1 channels(number of kernels), output shape is (n,m1,L - k1 + 1)
 
         # we perform local max polling for each convolution
@@ -93,7 +93,7 @@ class CTspecificConvNet(nn.Module):
 
         # we perform a second convolutional operation
         self.convLayer2 = nn.Conv1d(self.num_of_kernels[0], self.num_of_kernels[1],
-                                    self.kernel_size[1], device=device)
+                                    self.kernel_size[1]) #, device=device)
         # output here has shape (n, m2, ((L - k1 + 1)/p1) - k2 + 1)
 
         # we perform a second local max polling on the second convolution result
@@ -102,7 +102,7 @@ class CTspecificConvNet(nn.Module):
 
         # we perform a final convolutional operation
         self.convLayer3 = nn.Conv1d(self.num_of_kernels[1], self.num_of_kernels[2],
-                                    self.kernel_size[2], device=device)
+                                    self.kernel_size[2]) #, device=device)
         # output here has shape (n, m3, ((((L - k1 + 1)/p1) - k2 + 1)/p2) - k3 + 1)
 
         # we perform a global max pooling to
@@ -117,8 +117,8 @@ class CTspecificConvNet(nn.Module):
         fully connected part
         """
 
-        self.fc1 = nn.Linear(self.num_of_kernels[2], 32, device=device)
-        self.fc2 = nn.Linear(32, 1, device=device)
+        self.fc1 = nn.Linear(self.num_of_kernels[2], 32) #, device=device)
+        self.fc2 = nn.Linear(32, 1) #, device=device)
 
     def forward(self, x):
         p = False
@@ -173,7 +173,7 @@ class MultiCTConvNet(nn.Module):
 
 
         # We take in an input of length L, with 4 channels (input shape is (n,4, L), where n is batch size)
-        self.convLayer = nn.Conv1d(4, self.num_of_kernels, self.kernel_size, device=device)
+        self.convLayer = nn.Conv1d(4, self.num_of_kernels, self.kernel_size) #, device=device)
         # we get an output of length L - k + 1, with m channels (number of kernels) (output shape is (n,m , L - k + 1))
 
         # we perform max pooling for each convolution without overlap (stride is size of polling window)
@@ -187,8 +187,8 @@ class MultiCTConvNet(nn.Module):
         # fully connected part
         # We add the size of the cell type vector (one hot encoding, to the inputted feature vector)
         self.fc1 = nn.Linear(self.num_of_kernels*(int((self.seq_length - self.kernel_size + 1)/self.polling_window))
-                             + self.num_cell_types, 32, device=device)
-        self.fc2 = nn.Linear(32, 1, device=device)
+                             + self.num_cell_types, 32) #, device=device)
+        self.fc2 = nn.Linear(32, 1) #, device=device)
 
     def forward(self, x, cell_types):
         p = False
@@ -229,8 +229,11 @@ class SeqConvModule(nn.Module):
         self.num_of_kernels = num_of_kernels
         self.num_of_layers = len(kernel_sizes)
         self.polling_windows = list(polling_windows[0: self.num_of_layers])
-        self.polling_windows.append((int(((int((self.seq_length - self.kernel_sizes[0] + 1)/polling_windows[0]))
-                                     - self.kernel_sizes[1] + 1)/polling_windows[1])) - self.kernel_sizes[2] + 1)
+        new_seq_length = self.seq_length
+        for i in range(len(self.polling_windows)):
+            new_seq_length = int((new_seq_length - self.kernel_sizes[i] + 1)/polling_windows[i])
+        self.polling_windows.append(new_seq_length - self.kernel_sizes[-1] + 1)
+
         self.input_channels = input_channels
 
         self.conv_layer_list = nn.ModuleList()
@@ -239,10 +242,10 @@ class SeqConvModule(nn.Module):
         for layer in range(self.num_of_layers):
             if layer == 0:
                 conv_layer = nn.Conv1d(self.input_channels, self.num_of_kernels[layer],
-                                       self.kernel_sizes[layer], device=device)
+                                       self.kernel_sizes[layer]) #, device=device)
             else:
                 conv_layer = nn.Conv1d(self.num_of_kernels[layer-1], self.num_of_kernels[layer],
-                                       self.kernel_sizes[layer], device=device)
+                                       self.kernel_sizes[layer]) #, device=device)
             poll_layer = nn.MaxPool1d(self.polling_windows[layer])
 
             self.conv_layer_list.append(conv_layer)
@@ -305,11 +308,6 @@ class DendronetModule(nn.Module):
             print(embeddings.size())
         return embeddings
 
-    def get_embedding(self, node_idx):
-        embeddings = torch.add(self.root_weights, torch.matmul(self.delta_mat, self.path_mat[:, node_idx]).T)
-        return embeddings
-
-
 class FCModule(nn.Module):
     def __init__(self, device, layer_sizes=(32, 32, 1)):
         super().__init__()
@@ -319,12 +317,12 @@ class FCModule(nn.Module):
         self.linear_layers = nn.ModuleList()
 
         for layer in range(len(layer_sizes) - 1):
-            lin_layer = self.fc1 = nn.Linear(layer_sizes[layer], layer_sizes[layer + 1], device=device)
+            lin_layer = self.fc1 = nn.Linear(layer_sizes[layer], layer_sizes[layer + 1]) #, device=device)
             self.linear_layers.append(lin_layer)
 
     def forward(self, x):
         #print('Fully connected component:')
-        x = x.type(torch.cuda.FloatTensor)
+        #x = x.type(torch.cuda.FloatTensor)
         p = False
         if len(x.size()) == 1:
             x = torch.unsqueeze(x, 0)
@@ -344,6 +342,34 @@ class FCModule(nn.Module):
         return torch.squeeze(x)
 
 
+class EmbeddingBaselineModule(nn.Module):
+    def __init__(self, device, embeddings_mat, p=1, init_embeddings=False):
+        """
+        #param p: type of norm to take for dendronet loss
+        """
+        super().__init__()
+        self.device = device
+        self.p = p
+
+        self.embeddings_mat = nn.Parameter(torch.tensor(embeddings_mat, device=device, dtype=torch.double,
+                                           requires_grad=True))
+        if init_embeddings:
+            torch.nn.init.normal_(self.embeddings_mat, mean=0.0, std=0.01)
+
+    def embedding_loss(self, idx=None):
+        if idx is not None:
+            used_embeddings = self.embeddings_mat[idx, :]
+            return torch.norm(used_embeddings, p=self.p)
+
+        return torch.norm(self.embeddings_mat, p=self.p)
+
+    def forward(self, idx):
+        #print('Dendronet component:')
+        p = False
+        embeddings = self.embeddings_mat[idx, :]
+        if p:
+            print(embeddings.size())
+        return embeddings
 
 
 

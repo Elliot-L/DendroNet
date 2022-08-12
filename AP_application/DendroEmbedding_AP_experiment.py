@@ -4,7 +4,6 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 import json
-import jsonpickle
 from sklearn.metrics import roc_curve, auc
 import copy
 
@@ -16,28 +15,22 @@ import torch.nn as nn
 # Local imports
 from models.CT_conv_model import DendronetModule, SeqConvModule, FCModule
 from utils.model_utils import split_indices, IndicesDataset, build_parent_path_mat
-from Create_Tree_image import create_pc_mat
+from build_pc_mat import build_pc_mat
 
-def get_one_hot_encoding(seq):
-    # (A,G,T,C), ex: A = (1, 0, 0, 0), T = (0, 0, 1, 0)
-    encoding = []
-    for c in seq:
-        if c == 'A':
-            encoding.append([1, 0, 0, 0])
-        elif c == 'G':
-            encoding.append([0, 1, 0, 0])
-        elif c == 'T':
-            encoding.append([0, 0, 1, 0])
-        elif c == 'C':
-            encoding.append([0, 0, 0, 1])
-    return encoding
+
+def amino_acid_encoding(order, seq):
+    new_seq = []
+    for aa in seq:
+        new_seq.append([1 if aa == aa_opt else 0 for aa_opt in order])
+    return new_seq
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature', type=str, default='active')
+    parser.add_argument('--species-list', type=str, nargs='+', default=[],
+                        help='if empty, take all species')
     parser.add_argument('--LR', type=float, default=0.001)
-    parser.add_argument('--DPF', type=float, default=0.0)
+    parser.add_argument('--DPF', type=float, default=0.00001)
     parser.add_argument('--L1', type=float, default=0.01)
     # parser.add_argument('--USE-CUDA', type=bool, choices=[True, False], default=True)
     parser.add_argument('--GPU', default=True, action='store_true')
@@ -50,11 +43,10 @@ if __name__ == '__main__':
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
-    parser.add_argument('--pc-file', type=str, default='custom_pc_matrix')
 
     args = parser.parse_args()
 
-    feature = args.feature
+    species_list = args.species_list
     LR = args.LR
     DPF = args.DPF
     L1 = args.L1
@@ -65,139 +57,149 @@ if __name__ == '__main__':
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
-    pc_file = args.pc_file + '.json'
 
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
-    with open(os.path.join('data_files', 'parent_child_matrices', pc_file), 'r') as dict_file:
-        pickle = json.load(dict_file)
-        pc_dict = jsonpickle.decode(pickle)
+    species_dfs = {}
 
-    pc_mat, nodes = pc_dict['parent_child_matrix'], pc_dict['nodes_names']
-    print(pc_mat.shape)
-    print(pc_mat)
-    print(nodes)
+    if not species_list:
+        for species_file in os.listdir(os.path.join('data_files', 'species_datasets')):
+            species_name = species_file[0:-12]
+            species_name = species_name.split('_')[0] + ' ' + species_name.split('_')[1]
+            species_list.append(species_name)
+            df = pd.read_csv(os.path.join('data_files', 'species_datasets', species_file))
+            species_dfs[species_name] = df
+    else:
+        for species_name in species_list:
+            # species_name = species_name.split(' ')[0] + '_' + species_name.split(' ')[1]
+            df = pd.read_csv(os.path.join('data_files', 'species_datasets',
+                                          species_name.split(' ')[0] + '_' + species_name.split(' ')[1]
+                                          + '_dataset.csv'))
+            species_dfs[species_name] = df
+    print(species_list)
 
-    with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as enhancers_file:
-        enhancers_dict = json.load(enhancers_file)
+    pc_mat, nodes = build_pc_mat(species_list)
+    old_species_list = species_list
+    species_list = []
+    not_used_species = []
 
-    tissue_names = []
     num_internal_nodes = 0
-    X = []
-    y = []
 
-    for tissue_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
-        tissue_names.append(tissue_file[0:-29])
-
-    for node in nodes:
-        if node not in tissue_names:
+    for species in nodes:
+        if species in old_species_list:
+            species_list.append(species)
+        else:
             num_internal_nodes += 1
 
-    print(tissue_names)
+    for species in old_species_list:
+        if species not in species_list:
+            not_used_species.append(species)
+    print('Species not used: ')
+    print(not_used_species)
+    print('Species used: ')
+    print(species_list)
 
-    enhancers_list = list(enhancers_dict.keys())
+    print(nodes)
+    print(pc_mat.shape)
+    print(pc_mat)
+
+    with open(os.path.join('data_files', 'amino_acids.json'), 'r') as aa_file:
+        aa_list = json.load(aa_file)
+    print(aa_list)
+
+    with open(os.path.join('data_files', 'peptide_seqs.json'), 'r') as p_file:
+        peptide_dict = json.load(p_file)
+
+    X = []
+    y = []
 
     parent_path_mat = build_parent_path_mat(pc_mat)
     print(parent_path_mat)
     print(parent_path_mat.shape)
     num_edges = len(parent_path_mat)
+    delta_mat = np.zeros(shape=(embedding_size, num_edges))
+    root_vector = np.zeros(shape=embedding_size)
 
-    tissue_dfs = {}
+    pos_count = {s: 0 for s in species_list}
+    neg_count = {s: 0 for s in species_list}
+    pos_counter = {s: 0 for s in species_list}
+    neg_counter = {s: 0 for s in species_list}
 
-    for t in tissue_names:
-        t_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
-                                        t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
-        t_df = t_df.loc[enhancers_list]
-        tissue_dfs[t] = t_df
+    total_count = species_dfs[species_list[0]].shape[0]
 
-    for enhancer in enhancers_list:
-        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+    for species in species_list:
+        for row in range(total_count):
+            if species_dfs[species].loc[row, 'label'] == 1:
+                pos_count[species] += 1
+            else:
+                neg_count[species] += 1
 
-    pos_counts = {t: 0 for t in tissue_names}
-    neg_counts = {t: 0 for t in tissue_names}
-    valid_counts = {t: 0 for t in tissue_names}
-    pos_counters = {t: 0 for t in tissue_names}
-    neg_counters = {t: 0 for t in tissue_names}
+    print(pos_count)
+    print(neg_count)
+    print(total_count)
 
-    for t in tissue_names:
-        for enhancer in enhancers_list:
-            if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                valid_counts[t] += 1
-                if tissue_dfs[t].loc[enhancer, feature] == 1:
-                    pos_counts[t] += 1
+    for ID in list(species_dfs[species_list[0]].loc[:, 'IDs']):
+        X.append(amino_acid_encoding(aa_list, peptide_dict[ID]))
 
-    for t in tissue_names:
-        neg_counts[t] = valid_counts[t] - pos_counts[t]
+    if not balanced:
+        print('Unbalanced dataset')
 
-    print(pos_counts)
-    print(neg_counts)
-    print(valid_counts)
-    pos_ratios = {t: pos_counts[t] / valid_counts[t] for t in tissue_names}
-    print(pos_ratios)
+        for s in species_list:
+            y.extend(list(species_dfs[s].loc[:, 'label']))
 
-    if not balanced:  # if we want to use all the samples, usually leads to heavily unbalanced dataset
-        print('Using whole dataset')
-        for t in tissue_names:
-            y.extend(list(tissue_dfs[t].loc[:, feature]))
-            print(len(y))
-        # the list "samples" is a list of tuples each representing a sample. The first
-        # entry is the row of the X matrix. The second is the index of the cell type in the
-        # parent path matrix and the third is the index of the target in the y vector.
+        samples = []
 
-        packed_samples = []
+        # the samples are typles of (row in X, row in y, encoding position)
 
-        for enhancer_idx in range(len(enhancers_list)):
-            enhancer_samples = []
-            for t_idx, t in enumerate(tissue_names):
-                if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                    y_idx = t_idx * len(enhancers_list) + enhancer_idx
-                    enhancer_samples.append((enhancer_idx, t_idx + num_internal_nodes, y_idx))
-                    if y[y_idx] == 1:
-                        pos_counters[t] += 1
-                    else:
-                        neg_counters[t] += 1
-            packed_samples.append(enhancer_samples)
+        for i, species in enumerate(species_list):
+            df = species_dfs[species]
+            for row in range(total_count):
+                samples.append((row, i + num_internal_nodes, i*total_count + row))
 
-    else:  # In this case, we make sure that for each tissue type, the number of positive and negative examples
-           # is the same, which gives us a balanced dataset
-        print('Using a balanced dataset')
+        neg_counter = neg_count
+        pos_counter = pos_count
 
-        packed_samples = []
+    else:
+        print('Balanced dataset')
 
-        # the list "samples" is a list of tuples each representing a sample. The first
-        # entry is the row of the X matrix. The second is the index of the cell type in the
-        # parent path matrix and the third is the index of the target in the y vector.
+        samples = []
 
-        for j, enhancer in enumerate(enhancers_list):
-            enhancer_samples = []
-            for i, t in enumerate(tissue_names):
-                if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
-                    if pos_ratios[t] <= 0.5:
-                        if tissue_dfs[t].loc[enhancer, feature] == 1:
-                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
-                            y.append(1)
-                            pos_counters[t] += 1
-                        if tissue_dfs[t].loc[enhancer, feature] == 0 and neg_counters[t] < pos_counts[t]:
-                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
-                            y.append(0)
-                            neg_counters[t] += 1
-                    else:
-                        if tissue_dfs[t].loc[enhancer, feature] == 1 and pos_counters[t] < neg_counts[t]:
-                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
-                            y.append(1)
-                            pos_counters[t] += 1
-                        if tissue_dfs[t].loc[enhancer, feature] == 0:
-                            enhancer_samples.append((j, i + num_internal_nodes, len(y)))
-                            y.append(0)
-                            neg_counters[t] += 1
-            packed_samples.append(enhancer_samples)
+        # the samples are typles of (row in X, encoding position, row in y)
 
-    print(pos_counters)
-    print(neg_counters)
+        for i, species in enumerate(species_list):
+            if pos_count[species]/total_count <= 0.5:
+                for row in range(total_count):
+                    if species_dfs[species].loc[row, 'label'] == 1:
+                        samples.append((row, i + num_internal_nodes, len(y)))
+                        y.append(1)
+                        pos_counter[species] += 1
+                    if species_dfs[species].loc[row, 'label'] == 0 and neg_counter[species] < pos_count[species]:
+                        samples.append((row, i + num_internal_nodes, len(y)))
+                        y.append(0)
+                        neg_counter[species] += 1
+            else:
+                for row in range(total_count):
+                    if species_dfs[species].loc[row, 'label'] == 1 and pos_counter[species] < neg_count[species]:
+                        samples.append((row, i + num_internal_nodes, len(y)))
+                        y.append(1)
+                        pos_counter[species] += 1
+                    if species_dfs[species].loc[row, 'label'] == 0:
+                        samples.append((row, i + num_internal_nodes, len(y)))
+                        y.append(0)
+                        neg_counter[species] += 1
+
+    print(pos_counter)
+    print(neg_counter)
     print(len(X))
     print(len(X[0]))
     print(len(y))
+    print(len(samples))
+
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [],
+              'train_loss': [], 'val_loss': [], 'test_loss': [],
+              'epochs': []}
+    embeddings_output = {species: [] for species in species_list}
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
@@ -207,43 +209,19 @@ if __name__ == '__main__':
               'shuffle': True,
               'num_workers': 0}
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'epochs': [],
-              'train_loss': [], 'val_loss': [], 'test_loss': []}
-    embeddings_output = {t: [] for t in tissue_names}
-
     for seed in seeds:
         # The three subparts of the model:
-
-        delta_mat = np.zeros(shape=(embedding_size, num_edges))
-        root_vector = np.zeros(shape=embedding_size)
 
         dendronet = DendronetModule(device=device, root_weights=root_vector, delta_mat=delta_mat,
                                     path_mat=parent_path_mat)
 
-        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
-                                    polling_windows=(3, 4), input_channels=4)
+        convolution = SeqConvModule(device=device, seq_length=101, kernel_sizes=(5,), num_of_kernels=(64,),
+                                    polling_windows=(), input_channels=len(aa_list))
 
-        fully_connected = FCModule(device=device, layer_sizes=(embedding_size + 32, 32, 1))
+        fully_connected = FCModule(device=device, layer_sizes=(embedding_size + 64, 32, 1))
 
-        packed_train_idx, packed_test_idx = split_indices(packed_samples, seed=0)
-        packed_train_idx, packed_val_idx = split_indices(packed_train_idx, seed=seed)
-
-        # unpacking
-        train_idx = []
-        val_idx = []
-        test_idx = []
-
-        for packet in packed_train_idx:
-            for sample in packet:
-                train_idx.append(sample)
-
-        for packet in packed_val_idx:
-            for sample in packet:
-                val_idx.append(sample)
-
-        for packet in packed_test_idx:
-            for sample in packet:
-                test_idx.append(sample)
+        train_idx, test_idx = split_indices(samples, seed=0)
+        train_idx, val_idx = split_indices(train_idx, seed=seed)
 
         train_set = IndicesDataset(train_idx)
         test_set = IndicesDataset(test_idx)
@@ -262,21 +240,21 @@ if __name__ == '__main__':
         best_val_auc = 0
         early_stop_count = 0
 
-        for epoch in range(3):
+        for epoch in range(epochs):
             print("Epoch " + str(epoch))
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
                 # print(y[idx_batch])
                 X_idx = idx_batch[0]
-                tissue_idx = idx_batch[1]
+                species_idx = idx_batch[1]
                 y_idx = idx_batch[2]
                 seq_features = convolution(X[X_idx])
-                tissue_embeddings = dendronet(tissue_idx)
-                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
+                species_embeddings = dendronet(species_idx)
+                y_hat = fully_connected(torch.cat((seq_features, species_embeddings.float()), 1))
                 # print(y_hat)
                 # error_loss = loss_function(y_hat, y[idx_batch])
                 error_loss = loss_function(y_hat, y[y_idx])
-                delta_loss = dendronet.delta_loss(tissue_idx)
+                delta_loss = dendronet.delta_loss(species_idx)
                 root_loss = dendronet.root_loss()
                 train_loss = error_loss + DPF*delta_loss + L1*root_loss
                 # print("error loss on batch: " + str(float(error_loss)))
@@ -291,11 +269,11 @@ if __name__ == '__main__':
                 train_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                     X_idx = idx_batch[0]
-                    tissue_idx = idx_batch[1]
+                    species_idx = idx_batch[1]
                     y_idx = idx_batch[2]
                     seq_features = convolution(X[X_idx])
-                    tissue_embeddings = dendronet(tissue_idx)
-                    y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
+                    species_embeddings = dendronet(species_idx)
+                    y_hat = fully_connected(torch.cat((seq_features, species_embeddings.float()), 1))
                     train_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -311,11 +289,11 @@ if __name__ == '__main__':
                 val_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(val_batch_gen)):
                     X_idx = idx_batch[0]
-                    tissue_idx = idx_batch[1]
+                    species_idx = idx_batch[1]
                     y_idx = idx_batch[2]
                     seq_features = convolution(X[X_idx])
-                    tissue_embeddings = dendronet(tissue_idx)
-                    y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
+                    species_embeddings = dendronet(species_idx)
+                    y_hat = fully_connected(torch.cat((seq_features, species_embeddings.float()), 1))
                     val_error_loss += float(loss_function(y_hat, y[y_idx]))
                     all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -356,11 +334,11 @@ if __name__ == '__main__':
             train_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 X_idx = idx_batch[0]
-                tissue_idx = idx_batch[1]
+                species_idx = idx_batch[1]
                 y_idx = idx_batch[2]
                 seq_features = convolution(X[X_idx])
-                tissue_embeddings = dendronet(tissue_idx)
-                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
+                species_embeddings = dendronet(species_idx)
+                y_hat = fully_connected(torch.cat((seq_features, species_embeddings.float()), 1))
                 train_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -377,11 +355,11 @@ if __name__ == '__main__':
             val_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(val_batch_gen)):
                 X_idx = idx_batch[0]
-                tissue_idx = idx_batch[1]
+                species_idx = idx_batch[1]
                 y_idx = idx_batch[2]
                 seq_features = convolution(X[X_idx])
-                tissue_embeddings = dendronet(tissue_idx)
-                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
+                species_embeddings = dendronet(species_idx)
+                y_hat = fully_connected(torch.cat((seq_features, species_embeddings.float()), 1))
                 val_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -398,11 +376,11 @@ if __name__ == '__main__':
             test_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(test_batch_gen)):
                 X_idx = idx_batch[0]
-                tissue_idx = idx_batch[1]
+                species_idx = idx_batch[1]
                 y_idx = idx_batch[2]
                 seq_features = convolution(X[X_idx])
-                tissue_embeddings = dendronet(tissue_idx)
-                y_hat = fully_connected(torch.cat((seq_features, tissue_embeddings.float()), 1))
+                species_embeddings = dendronet(species_idx)
+                y_hat = fully_connected(torch.cat((seq_features, species_embeddings.float()), 1))
                 test_error_loss += float(loss_function(y_hat, y[y_idx]))
                 all_test_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
@@ -421,16 +399,16 @@ if __name__ == '__main__':
         output['test_loss'].append(test_error_loss / test_steps)
         output['epochs'].append(epoch + 1)
 
-        for i, tissue in enumerate(tissue_names):
+        for i, species in enumerate(species_list):
             embedding = (torch.squeeze(dendronet.forward([i + num_internal_nodes]))).cpu().tolist()
-            embeddings_output[tissue].append(embedding)
+            embeddings_output[species].append(embedding)
 
     if not balanced:
-        dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
-                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced_' + pc_file
+        dir_name = str(LR) + '_' + str(DPF) + '_' + str(L1) \
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced'
     else:
-        dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
-                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced_' + pc_file
+        dir_name = str(LR) + '_' + str(DPF) + '_' + str(L1) \
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced'
 
     dir_path = os.path.join('results', 'dendronet_embedding_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)

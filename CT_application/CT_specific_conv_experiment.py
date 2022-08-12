@@ -34,7 +34,7 @@ def get_one_hot_encoding(seq):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tissue', type=str, default='ovary')
+    parser.add_argument('--tissue', type=str, default='vagina')
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--LR', type=float, default=0.0001)
     parser.add_argument('--GPU', default=True, action='store_true')
@@ -50,17 +50,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     tissue = args.tissue
+    feature = args.feature
     LR = args.LR
-    USE_CUDA = args.GPU
+    USE_CUDA = torch.cuda.is_available() and args.GPU
     BATCH_SIZE = args.BATCH_SIZE
     balanced = args.balanced
-    feature = args.feature
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
 
-    print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
-    device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
+    print('Using CUDA: ' + str(USE_CUDA))
+    device = torch.device("cuda:0" if USE_CUDA else "cpu")
 
     samples_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
                                           tissue + '_enhancer_features_matrix.csv'))
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as e_file:
         enhancers_dict = json.load(e_file)
 
-    enhancer_list = enhancers_dict.keys()
+    enhancer_list = list(enhancers_dict.keys())
 
     samples_df.set_index('cCRE_id', inplace=True)
     samples_df = samples_df.loc[enhancer_list]
@@ -78,8 +78,8 @@ if __name__ == '__main__':
     pos_count = 0
     pos_counter = 0
     neg_counter = 0
-
     total_valid = 0
+
     for enhancer in enhancer_list:
         if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
             total_valid += 1
@@ -196,7 +196,8 @@ if __name__ == '__main__':
     print(len(X))
     print(len(y))
 
-    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_ratio': (pos_count/total_valid), 'epochs': []}
+    output = {'train_auc': [], 'val_auc': [], 'test_auc': [], 'pos_ratio': (pos_count/total_valid), 'epochs': [],
+              'train_loss': [], 'val_loss': [], 'test_loss': []}
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
@@ -230,7 +231,7 @@ if __name__ == '__main__':
         val_batch_gen = DataLoader(val_set, **params)
 
         loss_function = nn.BCELoss()
-        if torch.cuda.is_available() and USE_CUDA:
+        if USE_CUDA:
             loss_function = loss_function.cuda()
         optimizer = torch.optim.Adam(list(convolution.parameters()) + list(fully_connected.parameters())
                                      , lr=LR)
@@ -301,6 +302,10 @@ if __name__ == '__main__':
 
         with torch.no_grad():
             print("Test performance on train set on best model:")
+
+            convolution.load_state_dict(best_convolution_state)
+            fully_connected.load_state_dict(best_fc_state)
+
             all_train_targets = []
             all_train_predictions = []
             train_error_loss = 0.0
@@ -367,7 +372,7 @@ if __name__ == '__main__':
     else:
         dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + '_balanced'
 
-    dir_path = os.path.join('results', 'single_tissue_experiments', args.tissue, dir_name)
+    dir_path = os.path.join('results', 'single_tissue_experiments', tissue, dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
     with open(os.path.join(dir_path, 'output.json'), 'w') as outfile:

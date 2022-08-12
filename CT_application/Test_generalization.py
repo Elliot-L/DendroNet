@@ -31,7 +31,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='multi', help='options are dendronet or multi')
     parser.add_argument('--feature', type=str, default='active')
-    parser.add_argument('--tissue', type=str)
+    parser.add_argument('--tissue', type=str, default='prostate_gland')
     parser.add_argument('--LR', type=float, default=0.0001)
     parser.add_argument('--DPF', type=float, default=0.001)
     parser.add_argument('--L1', type=float, default=0.001)
@@ -81,15 +81,19 @@ if __name__ == '__main__':
     pos_count = 0
     pos_counter = 0
     neg_counter = 0
-    valid_samples = 0
+    total_valid = 0
 
     for enhancer in enhancer_list:
         if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-            valid_samples += 1
+            total_valid += 1
             if samples_df.loc[enhancer, feature] == 1:
                 pos_count += 1
 
+    print(total_valid)
+    print(pos_count)
+
     if not balanced:
+        print('Using unbalanced dataset')
         for enhancer in enhancer_list:
             if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
                 if samples_df.loc[enhancer, feature] == 0:
@@ -99,16 +103,30 @@ if __name__ == '__main__':
                     y.append(1)
                     X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
     else:
-        for enhancer in enhancer_list:
-            if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
-                if samples_df.loc[enhancer, feature] == 1:
-                    y.append(1)
-                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                    pos_counter += 1
-                if samples_df.loc[enhancer, feature] == 0 and neg_counter < pos_count:
-                    y.append(0)
-                    X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
-                    neg_counter += 1
+        print('Using balanced dataset')
+        if (pos_count / total_valid) <= 0.5:
+            for enhancer in enhancer_list:
+                if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
+                    if samples_df.loc[enhancer, feature] == 1:
+                        y.append(1)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                        pos_counter += 1
+                    if samples_df.loc[enhancer, feature] == 0 and neg_counter < pos_count:
+                        neg_counter += 1
+                        y.append(0)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+        else:
+            neg_count = total_valid - pos_count
+            for enhancer in enhancer_list:
+                if samples_df.loc[enhancer, 'active'] == 1 or samples_df.loc[enhancer, 'repressed'] == 1:
+                    if samples_df.loc[enhancer, feature] == 1 and pos_counter < neg_count:
+                        pos_counter += 1
+                        y.append(1)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                    if samples_df.loc[enhancer, feature] == 0:
+                        y.append(0)
+                        X.append(get_one_hot_encoding(enhancers_dict[enhancer]))
+                        neg_counter += 1
 
     print(pos_counter)
     print(neg_counter)
@@ -116,17 +134,17 @@ if __name__ == '__main__':
     print(len(X[0]))
     print(len(y))
 
-    X = torch.tensor(X, dtype=torch.float, device=device)
-    X = X.permute(0, 2, 1)
-    y = torch.tensor(y, dtype=torch.float, device=device)
-
     params = {'batch_size': BATCH_SIZE,
               'shuffle': True,
               'num_workers': 0}
 
-    test_idx = range(len(y))
+    _, test_idx = split_indices(len(y), 1)
     test_set = IndicesDataset(test_idx)
     test_batch_gen = DataLoader(test_set, **params)
+
+    X = torch.tensor(X, dtype=torch.float, device=device)
+    X = X.permute(0, 2, 1)
+    y = torch.tensor(y, dtype=torch.float, device=device)
 
     if model == 'dendronet':
         DPF = args.DPF
@@ -188,22 +206,25 @@ if __name__ == '__main__':
         dir_name = feature + '_' + str(LR) + '_' + str(early_stop) + data_type
         print('Using MultiTissue model from dir: ' + dir_name)
 
-        tissue_names = []
-        for t_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
-            t_name = t_file[0:-29]
-            tissue_names.append(t_name)
+        with open(os.path.join('results', 'multi_tissues_experiments', dir_name, 'output.json'), 'r') as outfile:
+            output_dict = json.load(outfile)
+
+        tissue_names = output_dict['tissues_used']
+
+        if tissue not in tissue_names:
+            print('THE MODEL WAS NOT TRAINED ON THAT TISSUE!!!')
 
         tissue_encoding = [[1 if t == tissue else 0 for t in tissue_names]]
         tissue_encoding = torch.tensor(tissue_encoding, dtype=torch.float, device=device)
 
         model_file = os.path.join('results', 'multi_tissues_experiments', dir_name, 'model.pt')
 
-        model_dist = torch.load(model_file)
+        model_dict = torch.load(model_file)
 
-        convolution_state = model_dist['convolution']
-        fully_connected_state = model_dist['fully_connected']
+        convolution_state = model_dict['convolution']
+        fully_connected_state = model_dict['fully_connected']
 
-        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(64, 64, 32),
+        convolution = SeqConvModule(device=device, seq_length=501, kernel_sizes=(16, 3, 3), num_of_kernels=(128, 64, 32),
                                     polling_windows=(3, 4), input_channels=4)
         fully_connected = FCModule(device=device, layer_sizes=(len(tissue_names) + 32, 32, 1))
 

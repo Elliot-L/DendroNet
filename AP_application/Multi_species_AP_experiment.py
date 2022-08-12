@@ -12,7 +12,7 @@ import copy
 
 from models.CT_conv_model import SeqConvModule, FCModule
 from utils.model_utils import split_indices, IndicesDataset
-
+from build_pc_mat import build_pc_mat
 
 def amino_acid_encoding(order, seq):
     new_seq = []
@@ -23,7 +23,8 @@ def amino_acid_encoding(order, seq):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--species', type=str, default='Bacillus subtilis')
+    parser.add_argument('--species-list', type=str, nargs='+', default=[],
+                        help='if empty, take all species')
     parser.add_argument('--LR', type=float, default=0.001)
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
@@ -36,7 +37,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    species = args.species
+    species_list = args.species_list
     LR = args.LR
     BATCH_SIZE = args.BATCH_SIZE
     USE_CUDA = args.GPU
@@ -55,67 +56,132 @@ if __name__ == '__main__':
     with open(os.path.join('data_files', 'peptide_seqs.json'), 'r') as p_file:
         peptide_dict = json.load(p_file)
 
-    species_file = os.path.join('data_files', 'species_datasets',
-                                species.split(' ')[0] + '_' + species.split(' ')[1] + '_dataset.csv')
-    species_df = pd.read_csv(species_file)
-    print(species_df)
+    species_dfs = {}
+
+    if not species_list:
+        for species_file in os.listdir(os.path.join('data_files', 'species_datasets')):
+            species_name = species_file[0:-12]
+            species_name = species_name.split('_')[0] + ' ' + species_name.split('_')[1]
+            species_list.append(species_name)
+            df = pd.read_csv(os.path.join('data_files', 'species_datasets', species_file))
+            species_dfs[species_name] = df
+    else:
+        for species_name in species_list:
+            # species_name = species_name.split(' ')[0] + '_' + species_name.split(' ')[1]
+            df = pd.read_csv(os.path.join('data_files', 'species_datasets',
+                                          species_name.split(' ')[0] + '_' + species_name.split(' ')[1]
+                                          + '_dataset.csv'))
+            species_dfs[species_name] = df
+
+    print(species_list)
+
+    pc_mat, nodes = build_pc_mat(species_list)
+    old_species_list = species_list
+    species_list = []
+    not_used_species = []
+
+    num_internal_nodes = 0
+
+    for species in nodes:
+        if species in old_species_list:
+            species_list.append(species)
+
+    for species in old_species_list:
+        if species not in species_list:
+            not_used_species.append(species)
+    print('Species not used: ')
+    print(not_used_species)
+    print('Species used: ')
+    print(species_list)
+
 
     X = []
     y = []
-    pos_count = 0
-    total_count = species_df.shape[0]
+    species_encodings = [[1 if species == s else 0 for s in species_list] for species in species_list]
 
-    for row in range(species_df.shape[0]):
-        if species_df.loc[row, 'label'] == 1:
-            pos_count += 1
-    neg_count = total_count - pos_count
-    pos_counter = 0
-    neg_counter = 0
+    pos_count = {s: 0 for s in species_list}
+    neg_count = {s: 0 for s in species_list}
+    pos_counter = {s: 0 for s in species_list}
+    neg_counter = {s: 0 for s in species_list}
+
+    total_count = species_dfs[species_list[0]].shape[0]
+
+    for species in species_list:
+        for row in range(total_count):
+            if species_dfs[species].loc[row, 'label'] == 1:
+                pos_count[species] += 1
+            else:
+                neg_count[species] += 1
 
     print(pos_count)
+    print(neg_count)
     print(total_count)
+
+    for ID in list(species_dfs[species_list[0]].loc[:, 'IDs']):
+        X.append(amino_acid_encoding(aa_list, peptide_dict[ID]))
 
     if not balanced:
         print('Unbalanced dataset')
-        for row in range(species_df.shape[0]):
-            X.append(amino_acid_encoding(aa_list, peptide_dict[species_df.loc[row, 'IDs']]))
-            y.append(species_df.loc[row, 'label'])
+
+        for s in species_list:
+            y.extend(list(species_dfs[s].loc[:, 'label']))
+
+        samples = []
+
+        # the samples are typles of (row in X, row in y, encoding position)
+
+        for i, species in enumerate(species_list):
+            df = species_dfs[species]
+            for row in range(total_count):
+                samples.append((row, i, i*total_count + row))
+
+        neg_counter = neg_count
+        pos_counter = pos_count
+
     else:
         print('Balanced dataset')
-        if pos_count/total_count <= 0.5:
-            for row in range(species_df.shape[0]):
-                if species_df.loc[row, 'label'] == 1:
-                    X.append(amino_acid_encoding(aa_list, peptide_dict[species_df.loc[row, 'IDs']]))
-                    y.append(1)
-                    pos_counter += 1
-                if species_df.loc[row, 'label'] == 0 and neg_counter < pos_count:
-                    X.append(amino_acid_encoding(aa_list, peptide_dict[species_df.loc[row, 'IDs']]))
-                    y.append(0)
-                    neg_counter += 1
-        else:
-            for row in range(species_df.shape[0]):
-                if species_df.loc[row, 'label'] == 1 and pos_counter < neg_count:
-                    X.append(amino_acid_encoding(aa_list, peptide_dict[species_df.loc[row, 'IDs']]))
-                    y.append(1)
-                    pos_counter += 1
-                if species_df.loc[row, 'label'] == 0:
-                    X.append(amino_acid_encoding(aa_list, peptide_dict[species_df.loc[row, 'IDs']]))
-                    y.append(0)
-                    neg_counter += 1
+
+        samples = []
+
+        # the samples are typles of (row in X, encoding position, row in y)
+
+        for i, species in enumerate(species_list):
+            if pos_count[species]/total_count <= 0.5:
+                for row in range(total_count):
+                    if species_dfs[species].loc[row, 'label'] == 1:
+                        samples.append((row, i, len(y)))
+                        y.append(1)
+                        pos_counter[species] += 1
+                    if species_dfs[species].loc[row, 'label'] == 0 and neg_counter[species] < pos_count[species]:
+                        samples.append((row, i, len(y)))
+                        y.append(0)
+                        neg_counter[species] += 1
+            else:
+                for row in range(total_count):
+                    if species_dfs[species].loc[row, 'label'] == 1 and pos_counter[species] < neg_count[species]:
+                        samples.append((row, i, len(y)))
+                        y.append(1)
+                        pos_counter[species] += 1
+                    if species_dfs[species].loc[row, 'label'] == 0:
+                        samples.append((row, i, len(y)))
+                        y.append(0)
+                        neg_counter[species] += 1
 
     print(pos_counter)
     print(neg_counter)
     print(len(X))
     print(len(X[0]))
     print(len(y))
+    print(len(samples))
 
     output = {'train_auc': [], 'val_auc': [], 'test_auc': [],
               'train_loss': [], 'val_loss': [], 'test_loss': [],
-              'pos_ratio': (pos_count / total_count), 'epochs': []}
+              'epochs': [], 'species_used': species_list}
 
     X = torch.tensor(X, dtype=torch.float, device=device)
     X = X.permute(0, 2, 1)
     y = torch.tensor(y, dtype=torch.float, device=device)
+    species_encodings = torch.tensor(species_encodings, dtype=torch.float, device=device)
 
     params = {'batch_size': BATCH_SIZE,
               'shuffle': True,
@@ -128,12 +194,12 @@ if __name__ == '__main__':
         #                                      kernel_size=(16, 3, 3), num_of_kernels=(64, 64, 32),
         #                                      polling_window=(3, 4))
 
-        fully_connected = FCModule(device=device, layer_sizes=(64, 32, 1))
+        fully_connected = FCModule(device=device, layer_sizes=(64 + len(species_list), 32, 1))
 
         convolution = SeqConvModule(device=device, seq_length=101, kernel_sizes=(5,), num_of_kernels=(64,),
                                     polling_windows=(), input_channels=len(aa_list))
 
-        train_idx, test_idx = split_indices(range(len(X)), seed=0)
+        train_idx, test_idx = split_indices(samples, seed=0)
         train_idx, val_idx = split_indices(train_idx, seed=seed)
 
         train_set = IndicesDataset(train_idx)
@@ -157,11 +223,14 @@ if __name__ == '__main__':
             print("Epoch " + str(epoch))
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
+                X_idx = idx_batch[0]
+                species_idx = idx_batch[1]
+                y_idx = idx_batch[2]
                 # print(y[idx_batch])
                 # y_hat = CT_specific_conv(X[idx_batch])
-                seq_features = convolution(X[idx_batch])
-                y_hat = fully_connected(seq_features)
-                error_loss = loss_function(y_hat, y[idx_batch])
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, species_encodings[species_idx]), 1))
+                error_loss = loss_function(y_hat, y[y_idx])
                 error_loss.backward(retain_graph=True)
                 optimizer.step()
             with torch.no_grad():
@@ -171,10 +240,13 @@ if __name__ == '__main__':
                 train_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                     # y_hat = CT_specific_conv(X[idx_batch])
-                    seq_features = convolution(X[idx_batch])
-                    y_hat = fully_connected(seq_features)
-                    train_error_loss += float(loss_function(y_hat, y[idx_batch]))
-                    all_train_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                    X_idx = idx_batch[0]
+                    species_idx = idx_batch[1]
+                    y_idx = idx_batch[2]
+                    seq_features = convolution(X[X_idx])
+                    y_hat = fully_connected(torch.cat((seq_features, species_encodings[species_idx]), 1))
+                    train_error_loss += float(loss_function(y_hat, y[y_idx]))
+                    all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
                 print("average error loss on train set : " + str(float(train_error_loss) / (step + 1)))
@@ -187,14 +259,17 @@ if __name__ == '__main__':
                 all_val_predictions = []
                 val_error_loss = 0.0
                 for step, idx_batch in enumerate(tqdm(val_batch_gen)):
-                    # y_hat = CT_specific_conv(X[idx_batch])
-                    seq_features = convolution(X[idx_batch])
-                    y_hat = fully_connected(seq_features)
-                    val_error_loss += float(loss_function(y_hat, y[idx_batch]))
-                    all_val_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                    X_idx = idx_batch[0]
+                    species_idx = idx_batch[1]
+                    y_idx = idx_batch[2]
+                    seq_features = convolution(X[X_idx])
+                    y_hat = fully_connected(torch.cat((seq_features, species_encodings[species_idx]), 1))
+                    val_error_loss += float(loss_function(y_hat, y[y_idx]))
+                    all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                     all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
                 print("average error loss on val set : " + str(float(val_error_loss) / (step + 1)))
+                print(len(all_val_predictions))
                 fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
                 val_roc_auc = auc(fpr, tpr)
                 print('ROC AUC on validation set : ' + str(val_roc_auc))
@@ -224,11 +299,14 @@ if __name__ == '__main__':
             all_train_predictions = []
             train_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
+                X_idx = idx_batch[0]
+                species_idx = idx_batch[1]
+                y_idx = idx_batch[2]
                 # y_hat = CT_specific_conv(X[idx_batch])
-                seq_features = convolution(X[idx_batch])
-                y_hat = fully_connected(seq_features)
-                train_error_loss += float(loss_function(y_hat, y[idx_batch]))
-                all_train_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, species_encodings[species_idx]), 1))
+                train_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_train_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_train_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
             print("average error loss on train set : " + str(float(train_error_loss) / (step + 1)))
@@ -242,14 +320,18 @@ if __name__ == '__main__':
             all_val_predictions = []
             val_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(val_batch_gen)):
+                X_idx = idx_batch[0]
+                species_idx = idx_batch[1]
+                y_idx = idx_batch[2]
                 # y_hat = CT_specific_conv(X[idx_batch])
-                seq_features = convolution(X[idx_batch])
-                y_hat = fully_connected(seq_features)
-                val_error_loss += float(loss_function(y_hat, y[idx_batch]))
-                all_val_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, species_encodings[species_idx]), 1))
+                val_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_val_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_val_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
             print("average error loss on val set : " + str(float(val_error_loss) / (step + 1)))
+            print(len(all_val_predictions))
             fpr, tpr, _ = roc_curve(all_val_targets, all_val_predictions)
             val_roc_auc = auc(fpr, tpr)
             print('ROC AUC on validation set : ' + str(val_roc_auc))
@@ -260,11 +342,14 @@ if __name__ == '__main__':
             all_test_predictions = []
             test_error_loss = 0.0
             for step, idx_batch in enumerate(tqdm(test_batch_gen)):
+                X_idx = idx_batch[0]
+                species_idx = idx_batch[1]
+                y_idx = idx_batch[2]
                 # y_hat = CT_specific_conv(X[idx_batch])
-                seq_features = convolution(X[idx_batch])
-                y_hat = fully_connected(seq_features)
-                test_error_loss += float(loss_function(y_hat, y[idx_batch]))
-                all_test_targets.extend(list(y[idx_batch].detach().cpu().numpy()))
+                seq_features = convolution(X[X_idx])
+                y_hat = fully_connected(torch.cat((seq_features, species_encodings[species_idx]), 1))
+                test_error_loss += float(loss_function(y_hat, y[y_idx]))
+                all_test_targets.extend(list(y[y_idx].detach().cpu().numpy()))
                 all_test_predictions.extend(list(y_hat.detach().cpu().numpy()))
 
             print("average error loss on test set : " + str(float(test_error_loss) / (step + 1)))
@@ -286,8 +371,7 @@ if __name__ == '__main__':
     else:
         dir_name = str(LR) + '_' + str(early_stop) + '_balanced'
 
-    dir_path = os.path.join('results', 'single_species_experiments',
-                            species.split(' ')[0] + '_' + species.split(' ')[0], dir_name)
+    dir_path = os.path.join('results', 'multi_species_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)
 
     with open(os.path.join(dir_path, 'output.json'), 'w') as outfile:

@@ -32,7 +32,7 @@ def build_pc_mat(genome_file=os.path.join('data_files', 'genome_lineage.csv'), s
 
     genome_df = pd.read_csv(genome_file, delimiter='\t', dtype=str)
     genome_df = genome_df.rename(columns={'class': 'safeClass'}) #class is a keyword in python
-    genome_df = genome_df.rename(columns={'genome_id': 'genomeID'}) #class is a keyword in python
+    genome_df = genome_df.rename(columns={'genome_id': 'genomeID'})
     genome_df = genome_df[genome_df['kingdom'] == 'Bacteria']
     genome_df = genome_df[(genome_df['kingdom'].notnull()) & (genome_df['phylum'].notnull()) & (genome_df['safeClass'].notnull())
                           & (genome_df['order'].notnull()) & (genome_df['family'].notnull()) & (genome_df['genus'].notnull())
