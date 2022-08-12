@@ -239,7 +239,7 @@ if __name__ == '__main__':
         best_val_auc = 0
         early_stop_count = 0
 
-        for epoch in range(3):
+        for epoch in range(epochs):
             print("Epoch " + str(epoch))
             for step, idx_batch in enumerate(tqdm(train_batch_gen)):
                 optimizer.zero_grad()
