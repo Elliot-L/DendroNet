@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
-    parser.add_argument('--pc-file', type=str, default='custom_pc_matrix')
+    parser.add_argument('--pc-file', type=str, default='custom')
 
     args = parser.parse_args()
 
@@ -65,10 +65,16 @@ if __name__ == '__main__':
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
-    pc_file = args.pc_file + '.json'
+    if args.pc_file == 'random':
+        pc_file = 'random_pc_matrix_7.json'
+    else:
+        pc_file = args.pc_file + '_pc_matrix.json'
 
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
+
+    if args.pc_file == 'random':
+        pc_file = pc_file.split('.')[0] + '_7.' + pc_file.split('.')[1]
 
     with open(os.path.join('data_files', 'parent_child_matrices', pc_file), 'r') as dict_file:
         pickle = json.load(dict_file)
