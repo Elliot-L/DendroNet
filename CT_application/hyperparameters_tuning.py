@@ -152,7 +152,7 @@ if __name__ == '__main__':
                         for tree in trees_to_use:
                             dendro_file = os.path.join('results', 'dendronet_embedding_experiments',
                                                        feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1)
-                                                       + '_' + str(emb_size) + '_' + str(early_stop) + type_data
+                                                       + '_' + str(emb_size) + '_' + str(early_stop) + type_data + '_'
                                                        + tree)
                             print(dendro_file)
                             if not os.path.isfile(dendro_file) or force_train:
@@ -164,7 +164,7 @@ if __name__ == '__main__':
                                           + ' --embedding-size ' + str(emb_size) \
                                           + ' --early-stopping ' + str(early_stop) \
                                           + ' --num-epochs ' + str(epochs) \
-                                          + ' --tree ' + tree \
+                                          + ' --pc-file ' + tree \
                                           + ' --seeds' + seeds_str
 
                                 if USE_CUDA:
