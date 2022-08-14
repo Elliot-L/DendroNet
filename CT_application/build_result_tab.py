@@ -11,16 +11,17 @@ if __name__ == '__main__':
                           'average_epochs': []}
     multi_tissues_data = {'feature': [], 'LR': [], 'early_stop': [], 'type_data': [],
                           'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': [],
-                          'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [],
+                          #'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [],
                           'average_epochs': []}
     embedding_data = {'feature': [], 'LR': [], 'EL': [], 'embedding_size': [], 'early_stop': [],
                    'type_data': [], 'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': [],
-                   'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [], 'average_epochs': []}
+                   #'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [],
+                   'average_epochs': []}
 
     dendro_data = {'feature': [], 'LR': [], 'L1': [], 'DPF': [], 'embedding_size': [], 'early_stop': [],
                    'type_data': [], 'average_train_AUC': [], 'average_val_AUC': [], 'average_test_AUC': [],
-                   'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [], 'average_epochs': [],
-                   'tree': []}
+                   #'average_train_loss': [], 'average_val_loss': [], 'average_test_loss': [],
+                   'average_epochs': [], 'tree': []}
 
     print('Single tissue experiments:')
     for tissue_dir in os.listdir(os.path.join('results', 'single_tissue_experiments')):
