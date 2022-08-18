@@ -213,8 +213,8 @@ if __name__ == '__main__':
     best = 0
     pos = 0
     for row in range(multi_tissues_df.shape[0]):
-        if best < multi_tissues_df.loc[row, 'average_test_auc']:
-            best = multi_tissues_df.loc[row, 'average_test_auc']
+        if best < multi_tissues_df.loc[row, 'average_test_AUC']:
+            best = multi_tissues_df.loc[row, 'average_test_AUC']
             pos = row
 
     print('Best for multi tissue baseline')
@@ -223,8 +223,8 @@ if __name__ == '__main__':
     best = 0
     pos = 0
     for row in range(embedding_df.shape[0]):
-        if best < embedding_df.loc[row, 'average_test_auc']:
-            best = embedding_df.loc[row, 'average_test_auc']
+        if best < embedding_df.loc[row, 'average_test_AUC']:
+            best = embedding_df.loc[row, 'average_test_AUC']
             pos = row
 
     print('Best for embedding baseline')
@@ -236,8 +236,8 @@ if __name__ == '__main__':
         best = 0
         pos = 0
         for row in range(dendro_df.shape[0]):
-            if best < dendro_df.loc[row, 'average_test_auc']:
-                best = dendro_df.loc[row, 'average_test_auc']
+            if best < dendro_df.loc[row, 'average_test_AUC']:
+                best = dendro_df.loc[row, 'average_test_AUC']
                 pos = row
 
         print('Best for dendronet on ' + tree + 'tree: ')
