@@ -6,7 +6,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--feature', type=str, default='active')
     parser.add_argument('--single_tissues', type=str, nargs='+', default=[])
-    parser.add_argument('--LRs', type=float, nargs='+', default=[0.001, 0.0001])
+    parser.add_argument('--LRs', type=float, nargs='+', default=[0.001, 0.0001, 0.00001])
     parser.add_argument('--L1s', type=float, nargs='+', default=[0.1, 0.01, 0.001, 0.0])
     parser.add_argument('--DPFs', type=float, nargs='+', default=[0.1, 0.01, 0.001, 0.0001, 0.0])
     parser.add_argument('--ELs', type=float, nargs='+', default=[0.1, 0.01, 0.001, 0.0001, 0.0])
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--balanced', default=True, action='store_true')
     parser.add_argument('--unbalanced', dest='balanced', action='store_false')
     parser.add_argument('--force-train', type=bool, default=False, choices=[True, False],
-                        help='train even if result file exists')
+                        help='train even if result file exists already')
     parser.add_argument('--num-epochs', type=int, default=100)
     parser.add_argument('--models-to-train', type=str, default='smed', help='s: single, m:multiple, e:embedding, d:dendronet')
     parser.add_argument('--early-stopping', type=int, default=3, help='number of epoches after which, if no'

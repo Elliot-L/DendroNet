@@ -68,6 +68,8 @@ if __name__ == '__main__':
 
     if args.pc_file == 'random':
         pc_file = 'random_pc_matrix_7.json'
+    elif args.pc_file == 'data_driven':
+        pc_file = 'combined_pc_matrix.json'
     else:
         pc_file = args.pc_file + '_pc_matrix.json'
 
