@@ -209,3 +209,36 @@ if __name__ == '__main__':
     dendro_df = pd.DataFrame(dendro_data)
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
         print(dendro_df)
+
+    best = 0
+    pos = 0
+    for row in range(multi_tissues_df.shape[0]):
+        if best < multi_tissues_df.loc[row, 'average_test_auc']:
+            best = multi_tissues_df.loc[row, 'average_test_auc']
+            pos = row
+
+    print('Best for multi tissue baseline')
+    print(multi_tissues_df.loc[pos, :])
+
+    best = 0
+    pos = 0
+    for row in range(embedding_df.shape[0]):
+        if best < embedding_df.loc[row, 'average_test_auc']:
+            best = embedding_df.loc[row, 'average_test_auc']
+            pos = row
+
+    print('Best for embedding baseline')
+    print(embedding_df.loc[pos, :])
+
+    trees_used = list(set(dendro_df.loc[:, 'tree']))
+
+    for tree in trees_used:
+        best = 0
+        pos = 0
+        for row in range(dendro_df.shape[0]):
+            if best < dendro_df.loc[row, 'average_test_auc']:
+                best = dendro_df.loc[row, 'average_test_auc']
+                pos = row
+
+        print('Best for dendronet on ' + tree + 'tree: ')
+        print(dendro_df.loc[pos, :])
