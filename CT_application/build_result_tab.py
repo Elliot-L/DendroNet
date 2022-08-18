@@ -236,9 +236,10 @@ if __name__ == '__main__':
         best = 0
         pos = 0
         for row in range(dendro_df.shape[0]):
-            if best < dendro_df.loc[row, 'average_test_AUC']:
-                best = dendro_df.loc[row, 'average_test_AUC']
-                pos = row
+            if dendro_df.loc[row, 'tree'] == tree:
+                if best < dendro_df.loc[row, 'average_test_AUC']:
+                    best = dendro_df.loc[row, 'average_test_AUC']
+                    pos = row
 
-        print('Best for dendronet on ' + tree + 'tree: ')
+        print('Best for dendronet on ' + tree + ' tree: ')
         print(dendro_df.loc[pos, :])
