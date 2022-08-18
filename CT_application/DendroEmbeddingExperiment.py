@@ -65,6 +65,7 @@ if __name__ == '__main__':
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
+
     if args.pc_file == 'random':
         pc_file = 'random_pc_matrix_7.json'
     else:
@@ -433,10 +434,10 @@ if __name__ == '__main__':
 
     if not balanced:
         dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
-                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced_' + pc_file
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_unbalanced_' + args.pc_file
     else:
         dir_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) \
-                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced_' + pc_file
+                  + '_' + str(embedding_size) + '_' + str(early_stop) + '_balanced_' + args.pc_file
 
     dir_path = os.path.join('results', 'dendronet_embedding_experiments', dir_name)
     os.makedirs(dir_path, exist_ok=True)

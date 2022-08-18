@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('--L1s', type=float, nargs='+', default=[0.1, 0.01, 0.001, 0.0])
     parser.add_argument('--DPFs', type=float, nargs='+', default=[0.1, 0.01, 0.001, 0.0001, 0.0])
     parser.add_argument('--ELs', type=float, nargs='+', default=[0.1, 0.01, 0.001, 0.0001, 0.0])
-    parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[2, 5, 10, 28])
+    parser.add_argument('--embedding-sizes', type=int, nargs='+', default=[2, 5, 10, 28]) # 4 x 4 x 2 x 5
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 2, 3, 4, 5])
     parser.add_argument('--GPU', default=True, action='store_true')
     parser.add_argument('--CPU', dest='GPU', action='store_false')
