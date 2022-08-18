@@ -74,9 +74,6 @@ if __name__ == '__main__':
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
 
-    if args.pc_file == 'random':
-        pc_file = pc_file.split('.')[0] + '_7.' + pc_file.split('.')[1]
-
     with open(os.path.join('data_files', 'parent_child_matrices', pc_file), 'r') as dict_file:
         pickle = json.load(dict_file)
         pc_dict = jsonpickle.decode(pickle)
