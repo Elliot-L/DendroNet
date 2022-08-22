@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
     dendro_df = pd.DataFrame(dendro_data)
     dendro_df.sort_values(by=['tree'], inplace=True)
-    dendro_df.set_index(range(dendro_df.shape[0]), inplace=True)
+    dendro_df.set_index(pd.Index(range(dendro_df.shape[0])), inplace=True)
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
         print(dendro_df)
 
