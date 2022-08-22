@@ -207,7 +207,7 @@ if __name__ == '__main__':
         dendro_data['average_epochs'].append(average_epochs / len(auc_dict['epochs']))
 
     dendro_df = pd.DataFrame(dendro_data)
-    dendro_df.sort_values(by=['tree'])
+    dendro_df.sort_values(by=['tree'], inplace=True)
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
         print(dendro_df)
 
