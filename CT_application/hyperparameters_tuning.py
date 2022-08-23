@@ -65,7 +65,7 @@ if __name__ == '__main__':
                 tissue_file = os.path.join('results', 'single_tissue_experiments', tissue_name,
                                            feature + '_' + str(LR) + '_' + str(early_stop) + type_data)
                 print(tissue_file)
-                if not os.path.isfile(tissue_file) or force_train:
+                if not os.path.isdir(tissue_file) or force_train:
                     command = 'python CT_specific_conv_experiment.py' \
                               + ' --tissue ' + tissue_name \
                               + ' --feature ' + feature \
@@ -92,7 +92,7 @@ if __name__ == '__main__':
             multi_file = os.path.join('results', 'multi_tissue_experiments',
                                       feature + '_' + str(LR) + '_' + str(early_stop) + type_data)
             print(multi_file)
-            if not os.path.isfile(multi_file) or force_train:
+            if not os.path.isdir(multi_file) or force_train:
                 command = 'python MultipleCT_conv_exp.py' \
                           + ' --feature ' + feature \
                           + ' --LR ' + str(LR) \
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                                             feature + '_' + str(LR) + '_' + str(EL)
                                             + '_' + str(emb_size) + '_' + str(early_stop) + type_data)
                     print(emb_file)
-                    if not os.path.isfile(emb_file) or force_train:
+                    if not os.path.isdir(emb_file) or force_train:
                         command = 'python BaselineEmbeddingExperiment.py' \
                                   + ' --feature ' + feature \
                                   + ' --LR ' + str(LR) \
@@ -156,8 +156,7 @@ if __name__ == '__main__':
                                                        + tree)
 
                             print(dendro_file)
-                            print(os.path.isfile(dendro_file))
-                            if (not os.path.isfile(dendro_file)) or force_train:
+                            if (not os.path.isdir(dendro_file)) or force_train:
                                 command = 'python DendroEmbeddingExperiment.py' \
                                           + ' --feature ' + feature \
                                           + ' --LR ' + str(LR) \
