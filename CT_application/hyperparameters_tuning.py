@@ -155,7 +155,7 @@ if __name__ == '__main__':
                                                        + '_' + str(emb_size) + '_' + str(early_stop) + type_data + '_'
                                                        + tree)
                             print(dendro_file)
-                            if not os.path.isfile(dendro_file) or force_train:
+                            if (not os.path.isfile(dendro_file)) or force_train:
                                 command = 'python DendroEmbeddingExperiment.py' \
                                           + ' --feature ' + feature \
                                           + ' --LR ' + str(LR) \
@@ -176,6 +176,8 @@ if __name__ == '__main__':
                                     command += ' --balanced'
                                 else:
                                     command += ' --unbalanced'
+
+                                print(command)
 
                                 os.system(command)
 
