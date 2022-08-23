@@ -154,7 +154,9 @@ if __name__ == '__main__':
                                                        feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1)
                                                        + '_' + str(emb_size) + '_' + str(early_stop) + type_data + '_'
                                                        + tree)
+
                             print(dendro_file)
+                            print(os.path.isfile(dendro_file))
                             if (not os.path.isfile(dendro_file)) or force_train:
                                 command = 'python DendroEmbeddingExperiment.py' \
                                           + ' --feature ' + feature \
