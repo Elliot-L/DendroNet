@@ -196,8 +196,9 @@ if __name__ == '__main__':
         # The three subparts of the model:
 
         if init_embeddings and embedding_size == 28:
-            embedding_mat = np.array([[1 if tissue == t else 0 for t in tissue_names] for tissue in tissue_names])
-            print(embedding_mat)
+            embeddings_mat = np.array([[1 if tissue == t else 0 for t in tissue_names] for tissue in tissue_names])
+            print(embeddings_mat)
+            print(type(embeddings_mat))
         else:
             embeddings_mat = np.zeros(shape=(len(tissue_names), embedding_size))
 
