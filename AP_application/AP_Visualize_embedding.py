@@ -33,7 +33,7 @@ if __name__ == '__main__':
     exp_name = str(LR) + '_' + str(DPF) + '_' + str(L1) + '_' \
                + str(embedding_size) + '_' + str(early_stop) + data_type
 
-    with open(os.path.join('results', 'dendronet_embedding_experiments', exp_name, 'embeddings.json'), 'r') as emb_file:
+    with open(os.path.join('results', 'dendronet_embedding_experiments', exp_name, 'baselineEmbedding.json'), 'r') as emb_file:
         embedding_dict = json.load(emb_file)
 
     x = []

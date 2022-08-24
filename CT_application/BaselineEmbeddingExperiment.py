@@ -47,10 +47,11 @@ if __name__ == '__main__':
     # parser.add_argument('--whole-dataset', type=bool, choices=[True, False], default=False)
     parser.add_argument('--balanced', default=True, action='store_true')
     parser.add_argument('--unbalanced', dest='balanced', action='store_false')
-    parser.add_argument('--embedding-size', type=int, default=2)
+    parser.add_argument('--embedding-size', type=int, default=28)
     parser.add_argument('--seeds', type=int, nargs='+', default=[1])
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
+    parser.add_argument('--init-embeddings', default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -64,6 +65,7 @@ if __name__ == '__main__':
     seeds = args.seeds
     early_stop = args.early_stopping
     epochs = args.num_epochs
+    init_embeddings = args.init_embeddings
 
     print('Using CUDA: ' + str(torch.cuda.is_available() and USE_CUDA))
     device = torch.device("cuda:0" if (torch.cuda.is_available() and USE_CUDA) else "cpu")
@@ -193,7 +195,11 @@ if __name__ == '__main__':
     for seed in seeds:
         # The three subparts of the model:
 
-        embeddings_mat = np.zeros(shape=(len(tissue_names), embedding_size))
+        if init_embeddings and embedding_size == 28:
+            embedding_mat = np.array([[1 if tissue == t else 0 for t in tissue_names] for tissue in tissue_names])
+            print(embedding_mat)
+        else:
+            embeddings_mat = np.zeros(shape=(len(tissue_names), embedding_size))
 
         embedding_model = EmbeddingBaselineModule(device=device, embeddings_mat=embeddings_mat)
 
@@ -418,5 +424,5 @@ if __name__ == '__main__':
                 'embeddings_mat': embedding_model.embeddings_mat.clone().detach().cpu()},
                 os.path.join(dir_path, 'model.pt'))
 
-    with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'baselineEmbedding.json'), 'w') as outfile:
         json.dump(embeddings_output, outfile)
