@@ -425,5 +425,5 @@ if __name__ == '__main__':
                 'embeddings_mat': embedding_model.embeddings_mat.clone().detach().cpu()},
                 os.path.join(dir_path, 'model.pt'))
 
-    with open(os.path.join(dir_path, 'baselineEmbedding.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
         json.dump(embeddings_output, outfile)

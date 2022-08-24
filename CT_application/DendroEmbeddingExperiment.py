@@ -450,5 +450,5 @@ if __name__ == '__main__':
                 'dendronet_root': dendronet.root_weights.clone().detach().cpu()},
                os.path.join(dir_path, 'model.pt'))
 
-    with open(os.path.join(dir_path, 'baselineEmbedding.json'), 'w') as outfile:
+    with open(os.path.join(dir_path, 'embeddings.json'), 'w') as outfile:
         json.dump(embeddings_output, outfile)

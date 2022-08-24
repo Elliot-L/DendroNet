@@ -18,6 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--early-stopping', type=int, default=3)
     parser.add_argument('--num-epochs', type=int, default=100)
     parser.add_argument('--model', type=str, default='dendronet')
+    parser.add_argument('--categorie', type=str, default='best')
 
     args = parser.parse_args()
 
@@ -30,28 +31,42 @@ if __name__ == '__main__':
     embedding_size = args.embedding_size
     early_stop = args.early_stopping
     model = args.model
+    categorie = args.categorie
 
     if balanced:
         data_type = '_balanced'
     else:
         data_type = '_unbalanced'
 
-    if model == 'dendronet':
-        exp_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) + '_' \
-                        + str(embedding_size) + '_' + str(early_stop) + data_type
+    if categorie == 'normal':
+        if model == 'dendronet':
+            exp_name = feature + '_' + str(LR) + '_' + str(DPF) + '_' + str(L1) + '_' \
+                            + str(embedding_size) + '_' + str(early_stop) + data_type
 
-        with open(os.path.join('results', 'dendronet_embedding_experiments', exp_name, 'baselineEmbedding.json'), 'r') as emb_file:
-            embedding_dict = json.load(emb_file)
+            with open(os.path.join('results', 'dendronet_embedding_experiments', exp_name, 'embedding.json'), 'r') as emb_file:
+                embedding_dict = json.load(emb_file)
 
-    elif model == 'baseline':
-        exp_name = feature + '_' + str(LR) + '_' + str(EL) + '_' \
-                   + str(embedding_size) + '_' + str(early_stop) + data_type
+        elif model == 'baseline':
+            exp_name = feature + '_' + str(LR) + '_' + str(EL) + '_' \
+                       + str(embedding_size) + '_' + str(early_stop) + data_type
 
-        with open(os.path.join('results', 'baseline_embedding_experiments', exp_name, 'baselineEmbedding.json'),
-                  'r') as emb_file:
-            embedding_dict = json.load(emb_file)
+            with open(os.path.join('results', 'baseline_embedding_experiments', exp_name, 'baselineEmbedding.json'),
+                      'r') as emb_file:
+                embedding_dict = json.load(emb_file)
 
-    elif model == 'best':
+    elif categorie == 'best':
+        if model == 'dendronet':
+            with open(os.path.join('data_files', 'best_embeddings', 'baselineEmbedding.json'),
+                      'r') as emb_file:
+                embedding_dict = json.load(emb_file)
+
+        elif model == 'baseline':
+            exp_name = feature + '_' + str(LR) + '_' + str(EL) + '_' \
+                       + str(embedding_size) + '_' + str(early_stop) + data_type
+
+            with open(os.path.join('results', 'baseline_embedding_experiments', exp_name, 'baselineEmbedding.json'),
+                      'r') as emb_file:
+                embedding_dict = json.load(emb_file)
 
     """
     Tissue categories:
