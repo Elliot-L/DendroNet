@@ -245,3 +245,62 @@ if __name__ == '__main__':
 
         print('Best for dendronet on ' + tree + ' tree: ')
         print(dendro_df.loc[pos, :])
+
+    tissue_names = []
+
+    for t_file in os.listdir(os.path.join('data_files', 'CT_enhancer_features_matrices')):
+        t_name = t_file[0:-29]
+        tissue_names.append(t_name)
+
+    with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as enhancers_file:
+        enhancers_dict = json.load(enhancers_file)
+
+    enhancers_list = list(enhancers_dict.keys())
+
+    pos_counts = {ct: 0 for ct in tissue_names}
+    neg_counts = {ct: 0 for ct in tissue_names}
+    valid_counts = {ct: 0 for ct in tissue_names}
+
+    tissue_dfs = {}
+
+    for t in tissue_names:
+        t_df = pd.read_csv(os.path.join('data_files', 'CT_enhancer_features_matrices',
+                                        t + '_enhancer_features_matrix.csv'), index_col='cCRE_id')
+        t_df = t_df.loc[enhancers_list]
+        tissue_dfs[t] = t_df
+
+    for t in tissue_names:
+        for enhancer in enhancers_list:
+            if tissue_dfs[t].loc[enhancer, 'active'] == 1 or tissue_dfs[t].loc[enhancer, 'repressed'] == 1:
+                valid_counts[t] += 1
+                if tissue_dfs[t].loc[enhancer, 'active'] == 1:
+                    pos_counts[t] += 1
+    for t in tissue_names:
+        neg_counts[t] = valid_counts[t] - pos_counts[t]
+
+    total_samples = 0
+    for t in tissue_names:
+        total_samples += valid_counts[t]
+
+    proportions = {t: (valid_counts[t]/total_samples) for t in tissue_names}
+
+    average_single_tissue_perf = 0
+
+    for t in tissue_names:
+        best_auc = 0
+        for row in range(single_tissues_df.shape[0]):
+            if single_tissues_df.loc[row, 'tissue_name'] == t:
+                curr = single_tissues_df.loc[row, 'average_test_AUC']
+                if curr > best_auc:
+                    best_auc = curr
+
+        average_single_tissue_perf += best_auc * proportions[t]
+
+    print('Average performance of single tissue model:')
+    print(average_single_tissue_perf)
+
+
+
+
+
+

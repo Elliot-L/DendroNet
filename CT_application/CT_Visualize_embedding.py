@@ -3,40 +3,7 @@ import json
 import os
 import argparse
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--feature', type=str, default='active')
-    parser.add_argument('--LR', type=float, default=0.001)
-    parser.add_argument('--DPF', type=float, default=0.01)
-    parser.add_argument('--L1', type=float, default=0.01)
-    parser.add_argument('--EL', type=float, default=0.0)
-    parser.add_argument('--balanced', default=True, action='store_true')
-    parser.add_argument('--unbalanced', dest='balanced', action='store_false')
-    parser.add_argument('--embedding-size', type=int, default=2)
-    parser.add_argument('--seeds', type=int, nargs='+', default=[1])
-    parser.add_argument('--early-stopping', type=int, default=3)
-    parser.add_argument('--num-epochs', type=int, default=100)
-    parser.add_argument('--model', type=str, default='dendronet')
-    parser.add_argument('--categorie', type=str, default='best')
-
-    args = parser.parse_args()
-
-    feature = args.feature
-    LR = args.LR
-    DPF = args.DPF
-    L1 = args.L1
-    EL = args.EL
-    balanced = args.balanced
-    embedding_size = args.embedding_size
-    early_stop = args.early_stopping
-    model = args.model
-    categorie = args.categorie
-
-    if balanced:
-        data_type = '_balanced'
-    else:
-        data_type = '_unbalanced'
+def visualize_embedding(categorie, model, LR, DPF, EL, L1, data_type, embedding_size, early_stop):
 
     if categorie == 'normal':
         if model == 'dendronet':
@@ -56,7 +23,7 @@ if __name__ == '__main__':
 
     elif categorie == 'best':
         if model == 'dendronet':
-            with open(os.path.join('data_files', 'best_embeddings', 'baselineEmbedding.json'),
+            with open(os.path.join('data_files', 'best_embeddings', 'dendronetEmbedding.json'),
                       'r') as emb_file:
                 embedding_dict = json.load(emb_file)
 
@@ -64,7 +31,7 @@ if __name__ == '__main__':
             exp_name = feature + '_' + str(LR) + '_' + str(EL) + '_' \
                        + str(embedding_size) + '_' + str(early_stop) + data_type
 
-            with open(os.path.join('results', 'baseline_embedding_experiments', exp_name, 'baselineEmbedding.json'),
+            with open(os.path.join('data_files', 'best_embeddings', 'baselineEmbedding.json'),
                       'r') as emb_file:
                 embedding_dict = json.load(emb_file)
 
@@ -117,10 +84,55 @@ if __name__ == '__main__':
             plt.scatter(emb[0][0], emb[0][1], color='pink')
         else:
             print(tissue)
+    if categorie == 'normal':
+        if model == 'dendronet':
+            plt.title('Dendronet: DPF ' + str(DPF) + ' L1 ' + str(L1) + ' LR ' + str(LR))
+        elif model == 'baseline':
+            plt.title('Baseline: EL ' + str(EL) + ' LR ' + str(LR))
 
-    if model == 'dendronet':
-        plt.title('Dendronet: DPF ' + str(DPF) + ' L1 ' + str(L1) + ' LR ' + str(LR))
-    elif model == 'baseline':
-        plt.title('Baseline: EL ' + str(EL) + ' LR ' + str(LR))
+    elif categorie == 'best':
+        if model == 'dendronet':
+            plt.title('Best Dendronet')
+        elif model == 'baseline':
+            plt.title('Best Baseline')
 
     plt.show()
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--feature', type=str, default='active')
+    parser.add_argument('--LR', type=float, default=0.001)
+    parser.add_argument('--DPF', type=float, default=0.01)
+    parser.add_argument('--L1', type=float, default=0.01)
+    parser.add_argument('--EL', type=float, default=0.0)
+    parser.add_argument('--balanced', default=True, action='store_true')
+    parser.add_argument('--unbalanced', dest='balanced', action='store_false')
+    parser.add_argument('--embedding-size', type=int, default=2)
+    parser.add_argument('--seeds', type=int, nargs='+', default=[1])
+    parser.add_argument('--early-stopping', type=int, default=3)
+    parser.add_argument('--num-epochs', type=int, default=100)
+    parser.add_argument('--model', type=str, default='baseline')
+    parser.add_argument('--categorie', type=str, default='best')
+
+    args = parser.parse_args()
+
+    feature = args.feature
+    LR = args.LR
+    DPF = args.DPF
+    L1 = args.L1
+    EL = args.EL
+    balanced = args.balanced
+    embedding_size = args.embedding_size
+    early_stop = args.early_stopping
+    model = args.model
+    categorie = args.categorie
+
+    if balanced:
+        data_type = '_balanced'
+    else:
+        data_type = '_unbalanced'
+
+    visualize_embedding(categorie, model, LR, DPF, EL, L1, data_type, embedding_size, early_stop)
+
