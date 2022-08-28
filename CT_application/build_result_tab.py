@@ -252,14 +252,17 @@ if __name__ == '__main__':
         t_name = t_file[0:-29]
         tissue_names.append(t_name)
 
+    print(tissue_names)
+    print(len(tissue_names))
+
     with open(os.path.join('data_files', 'enhancers_seqs.json'), 'r') as enhancers_file:
         enhancers_dict = json.load(enhancers_file)
 
     enhancers_list = list(enhancers_dict.keys())
 
-    pos_counts = {ct: 0 for ct in tissue_names}
-    neg_counts = {ct: 0 for ct in tissue_names}
-    valid_counts = {ct: 0 for ct in tissue_names}
+    pos_counts = {t: 0 for t in tissue_names}
+    neg_counts = {t: 0 for t in tissue_names}
+    valid_counts = {t: 0 for t in tissue_names}
 
     tissue_dfs = {}
 
@@ -278,23 +281,40 @@ if __name__ == '__main__':
     for t in tissue_names:
         neg_counts[t] = valid_counts[t] - pos_counts[t]
 
-    total_samples = 0
-    for t in tissue_names:
-        total_samples += valid_counts[t]
+    print(pos_counts)
+    print(neg_counts)
 
-    proportions = {t: (valid_counts[t]/total_samples) for t in tissue_names}
+    true_counts = {}
+    total_samples = 0
+
+    for t in tissue_names:
+        if pos_counts[t] >= neg_counts[t]:
+            total_samples += 2 * neg_counts[t]
+            true_counts[t] = 2 * neg_counts[t]
+        else:
+            total_samples += 2 * pos_counts[t]
+            true_counts[t] = 2 * neg_counts[t]
+
+    print(true_counts)
+
+    proportions = {t: (true_counts[t]/total_samples) for t in tissue_names}
+
+    print(proportions)
 
     average_single_tissue_perf = 0
 
     for t in tissue_names:
         best_auc = 0
+        tissue_found = False
         for row in range(single_tissues_df.shape[0]):
             if single_tissues_df.loc[row, 'tissue_name'] == t:
+                tissue_found = True
                 curr = single_tissues_df.loc[row, 'average_test_AUC']
                 if curr > best_auc:
                     best_auc = curr
 
-        average_single_tissue_perf += best_auc * proportions[t]
+        if tissue_found:
+            average_single_tissue_perf += best_auc * proportions[t]
 
     print('Average performance of single tissue model:')
     print(average_single_tissue_perf)
